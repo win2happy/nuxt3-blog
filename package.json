@@ -1,0 +1,96 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "build-for-test": "cross-env VITESTING=\"true\" nuxt build",
+    "dev-for-test": "cross-env PORT=13000 VITESTING=\"true\" nuxt dev",
+    "prod-for-test": "cross-env PORT=13000 node .output/server/index.mjs",
+    "generate": "nuxt generate",
+    "local:change-pwd": "gulp change-passwd",
+    "local:generate-img-map": "gulp generate-image-map",
+    "local:download-img": "gulp download-image",
+    "local:substitute-img": "gulp substitute-image",
+    "local:upload-algolia": "gulp upload-algolia",
+    "test:unit": "vitest run --exclude ./e2e",
+    "test:e2e": "vitest run --dir ./e2e",
+    "test:prod-and-e2e": "start-server-and-test prod-for-test http://localhost:13000 test:e2e",
+    "test:dev-and-e2e": "start-server-and-test dev-for-test http://localhost:13000 test:e2e",
+    "eslint": "eslint --fix .",
+    "preview": "nuxt preview",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "axios": "^1.11.0",
+    "clipboard": "^2.0.11",
+    "crypto-js": "^4.2.0",
+    "dayjs": "^1.11.13",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.22",
+    "marked": "^16.1.1",
+    "mermaid": "^11.9.0",
+    "monaco-editor": "^0.52.2",
+    "pangu": "^7.2.0",
+    "viewerjs": "^1.11.7",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.32.0",
+    "@nuxt/eslint": "1.0.1",
+    "@nuxt/test-utils": "^3.19.2",
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@playwright/test": "^1.54.1",
+    "@types/crypto-js": "^4.2.2",
+    "@types/gulp": "^4.0.17",
+    "@types/headroom.js": "^0.12.4",
+    "@types/katex": "^0.16.7",
+    "@types/lodash": "^4.17.20",
+    "@types/marked": "^5.0.2",
+    "@types/multiparty": "^4.2.1",
+    "@types/prompts": "^2.4.9",
+    "@vue/test-utils": "^2.4.6",
+    "algoliasearch": "^5.35.0",
+    "cheerio": "^1.1.2",
+    "colors": "^1.4.0",
+    "cross-env": "^10.0.0",
+    "eslint": "^9.32.0",
+    "eslint-plugin-tailwindcss": "^3.18.2",
+    "eslint-plugin-vue": "^9.33.0",
+    "form-data": "^4.0.4",
+    "gulp": "^5.0.1",
+    "happy-dom": "^17.6.3",
+    "husky": "^9.1.7",
+    "js-base64": "^3.7.7",
+    "lint-staged": "^15.5.2",
+    "lodash": "^4.17.21",
+    "lucide-vue-next": "^0.477.0",
+    "nuxt": "^4.0.2",
+    "postcss-html": "^1.8.0",
+    "postcss-import": "^16.1.1",
+    "postcss-nesting": "^13.0.2",
+    "prompts": "^2.4.2",
+    "rollup-pluginutils": "^2.8.2",
+    "start-server-and-test": "^2.0.12",
+    "tailwind-merge": "^3.3.1",
+    "tinify": "^1.8.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vite-plugin-eslint": "^1.8.1",
+    "vitest": "^3.2.4"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,vue}": [
+      "eslint --fix"
+    ]
+  },
+  "engines": {
+    "node": "20.x"
+  },
+  "packageManager": "pnpm@9.13.2+sha512.88c9c3864450350e65a33587ab801acf946d7c814ed1134da4a924f6df5a2120fd36b46aab68f7cd1d413149112d53c7db3a4136624cfd00ff1846a0c6cef48a"
+}

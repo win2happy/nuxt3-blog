@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .form-item-invalid {
+    @apply before:content-['*'] !text-red-400 dark:!text-red-500;
+  }
+  .icon-button {
+    @apply size-10 transition flex items-center justify-center overflow-hidden cursor-pointer;
+    @apply rounded-full text-dark-500 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-700;
+    > svg {
+      @apply size-5;
+    }
+  }
+  .title-text {
+    @apply text-lg font-semibold text-dark-600 dark:text-dark-200;
+  }
+  .anim-shake {
+    transform-origin: center center;
+    transform-box: border-box;
+    backface-visibility: hidden;
+    perspective: 1000px;
+
+    &:hover svg {
+      @apply animate-shake;
+
+      path {
+        @apply text-primary-600 dark:text-primary-400;
+        &:first-of-type{
+          @apply text-red-500 dark:text-red-400;
+        }
+      }
+    }
+  }
+}
