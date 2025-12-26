@@ -7,7 +7,7 @@ export default {
 
   title: "Imuer视界", // 网站标题
   nickName: "IM", // 昵称
-  domain: "https://blog.pnt.pp.ua", // rss域名
+  domain: "https://imuer.pnt.pp.ua", // rss域名
   SEO_title: " - IM blog", // 搜索引擎显示的标题
   SEO_keywords: "IM,imuer's blog,Imuer视界,Imuer视界的博客", // keywords meta header
   MSClarityId: "uqyzrv8y66", // Microsoft的Clarity统计，https://clarity.microsoft.com/
