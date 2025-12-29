@@ -13,8 +13,9 @@ async function post(data: string, token_?: string) {
   if (!token) {
     throw new Error(translate("need-token"));
   }
+  const apiUrl = config.githubApiUrl || "https://api.github.com";
   return await axios.post(
-    "https://api.github.com/graphql",
+    `${apiUrl}/graphql`,
     { query: data },
     {
       headers: {

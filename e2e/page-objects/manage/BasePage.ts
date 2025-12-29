@@ -1,12 +1,14 @@
 import type { NuxtPage } from "@nuxt/test-utils";
 import { ref, unref } from "vue";
+import config from "../../../config";
 import type { CommitParams } from "../../../app/utils/common/types";
 
 export class ManageBasePage {
   protected requestDataRef = ref<CommitParams>();
 
   constructor(protected page: NuxtPage) {
-    page.route("https://api.github.com/graphql", async (route) => {
+    const apiUrl = config.githubApiUrl || "https://api.github.com";
+    page.route(`${apiUrl}/graphql`, async (route) => {
       this.requestDataRef.value = JSON.parse(route.request().postDataJSON().query);
       await route.fulfill({ json: { data: {} } });
     });
