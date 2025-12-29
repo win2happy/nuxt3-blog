@@ -156,5 +156,7 @@
   "view-changelog": "View Changelog",
   "how-to-upgrade": "How to Upgrade",
   "upgrade-step-1": "Go to your repository website",
-  "upgrade-step-2": "Click \"Sync fork\" → Click \"Update branch\""
+  "upgrade-step-2": "Click \"Sync fork\" → Click \"Update branch\"",
+  "need-verification": "Verification Required",
+  "please-verify-token": "Please verify your GitHub Token to access the management interface"
 }

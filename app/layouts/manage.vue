@@ -10,10 +10,9 @@ import { translate } from "~/utils/nuxt/i18n";
 import { rmLocalStorage, setLocalStorage } from "~/utils/nuxt/localStorage";
 import { notify } from "~/utils/nuxt/notify";
 import { calcRocketUrl, watchUntil } from "~/utils/nuxt/utils";
-import { isDev } from "~/utils/nuxt/constants";
 import { useStaging } from "~/utils/hooks/useStaging";
 
-const inputTokenDisabled = isDev || __NB_BUILDTIME_VITESTING__;
+const inputTokenDisabled = __NB_BUILDTIME_VITESTING__;
 
 const showPwdModal = useShowPwdModal();
 const loadingState = useLoadingState();
@@ -221,7 +220,23 @@ onMounted(() => {
     <div class="min-h-screen flex-1 overflow-hidden">
       <div class="mx-auto size-full max-w-[1440px] rounded-lg p-4 *:rounded-lg *:bg-white *:shadow-md *:dark:bg-dark-800 max-md:p-1">
         <client-only>
-          <slot />
+          <template v-if="isAuthor === true">
+            <slot />
+          </template>
+          <div
+            v-else
+            class="flex min-h-[80vh] items-center justify-center"
+          >
+            <div class="text-center">
+              <Key class="mx-auto mb-4 size-16 text-dark-300 dark:text-dark-600" />
+              <h2 class="mb-2 text-xl font-semibold text-dark-700 dark:text-dark-300">
+                {{ $t('need-verification') }}
+              </h2>
+              <p class="text-dark-500 dark:text-dark-400">
+                {{ $t('please-verify-token') }}
+              </p>
+            </div>
+          </div>
         </client-only>
       </div>
     </div>

@@ -28,11 +28,42 @@ async function checkVersion() {
 }
 
 export default defineNuxtPlugin((app) => {
-  if (isDev || __NB_BUILDTIME_VITESTING__) {
+  if (__NB_BUILDTIME_VITESTING__) {
+    // 仅在测试环境自动通过验证
     app.hook("app:suspense:resolve", () => {
       useGithubToken().value = "LocalServer";
       useRemoteLatestSha().value = __NB_CURRENT_GIT_SHA__;
       useIsAuthor().value = true;
+    });
+  } else if (isDev) {
+    // 开发环境也需要验证，但可以使用假token
+    app.hook("app:suspense:resolve", () => {
+      const localToken = getLocalStorage(GithubTokenKey);
+      if (localToken) {
+        // 如果有保存的token，进行验证
+        isAuthor(localToken)
+          .then((res) => {
+            notify({
+              title: res ? translate("token-verified") : translate("token-unverified"),
+              type: res ? "success" : "error"
+            });
+            useIsAuthor().value = res;
+            if (res) {
+              checkVersion();
+            }
+          })
+          .catch((e) => {
+            notify({
+              title: translate("token-unverified"),
+              type: "error",
+              description: e
+            });
+            useIsAuthor().value = false;
+          });
+      } else {
+        // 开发环境没有token时也需要验证
+        useIsAuthor().value = false;
+      }
     });
   } else {
     const localToken = getLocalStorage(GithubTokenKey);
