@@ -28,6 +28,8 @@
   "encrypt": "加密",
   "encrypted": "加密",
   "encrypted-content": "加密内容",
+  "encrypted-content-tip": "此内容已加密，需要密码才能查看",
+  "encrypted-article": "加密文章",
   "encryption-failed": "加密失败",
   "error": "出错了",
   "existed-tags": "已有标签",

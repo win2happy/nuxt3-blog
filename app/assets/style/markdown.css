@@ -321,4 +321,50 @@
       }
     }
   }
+
+  /* 加密内容提示块样式 */
+  & .encrypted-block-placeholder {
+    @apply my-8 mx-auto max-w-md p-6 rounded-xl border-2 border-dashed border-amber-400 dark:border-amber-500;
+    @apply bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20;
+    @apply shadow-lg backdrop-blur-sm;
+    @apply flex flex-col items-center gap-3 text-center;
+    transition: all 0.3s ease;
+
+    &:hover {
+      @apply shadow-xl border-amber-500 dark:border-amber-400 scale-[1.02];
+    }
+  }
+
+  & .encrypted-icon {
+    @apply text-5xl animate-pulse;
+    filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3));
+  }
+
+  & .encrypted-title {
+    @apply text-lg font-bold text-amber-700 dark:text-amber-400;
+    @apply tracking-wide;
+  }
+
+  & .encrypted-tip {
+    @apply text-sm text-amber-600 dark:text-amber-500;
+    @apply max-w-xs;
+  }
+
+  /* 完全加密文章的提示样式 - 更大更明显 */
+  & .encrypted-full-article {
+    @apply my-16 max-w-2xl p-12;
+    @apply text-lg;
+
+    & .encrypted-icon {
+      @apply text-7xl mb-4;
+    }
+
+    & .encrypted-title {
+      @apply text-2xl mb-3;
+    }
+
+    & .encrypted-tip {
+      @apply text-base max-w-md;
+    }
+  }
 }

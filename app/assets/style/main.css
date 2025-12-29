@@ -46,3 +46,36 @@ img[data-viewer] {
 ::-webkit-scrollbar-thumb {
   @apply rounded bg-dark-300 hover:bg-dark-400 dark:bg-dark-500 dark:hover:bg-dark-400;
 }
+
+/* 加密标记样式 */
+.encrypted-badge {
+  @apply inline-flex items-center justify-center;
+  @apply text-amber-600 dark:text-amber-400;
+  @apply text-lg;
+  filter: drop-shadow(0 1px 2px rgba(245, 158, 11, 0.4));
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.encrypted-badge-large {
+  @apply inline-flex items-center justify-center;
+  @apply text-amber-600 dark:text-amber-400;
+  @apply text-2xl;
+  filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.5));
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* 标题文本样式 */
+.title-text {
+  @apply text-lg font-medium text-dark-800 dark:text-dark-100;
+}

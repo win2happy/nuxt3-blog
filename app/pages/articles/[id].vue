@@ -87,8 +87,9 @@ initViewer(root);
       </aside> -->
 
       <main class="max-w-5xl flex-1 overflow-hidden rounded-lg bg-white p-6 shadow dark:bg-dark-800 max-md:px-2">
-        <h1 class="mb-4 text-2xl font-medium text-dark-900 dark:text-white">
-          {{ item.title }}
+        <h1 class="mb-4 text-2xl font-medium text-dark-900 dark:text-white flex items-center gap-3">
+          <span v-if="item.encrypt || item.encryptBlocks?.length" class="encrypted-badge-large" :title="$t('encrypted-article')">🔒</span>
+          <span>{{ item.title }}</span>
         </h1>
 
         <div class="mb-6 flex flex-wrap items-center gap-4 border-b border-dark-300 pb-3 text-sm text-dark-500 dark:border-dark-600 dark:text-dark-400">

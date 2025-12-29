@@ -28,6 +28,8 @@
   "encrypt": "Encrypt",
   "encrypted": "Encrypted",
   "encrypted-content": "Encrypted Content",
+  "encrypted-content-tip": "This content is encrypted and requires a password to view",
+  "encrypted-article": "Encrypted Article",
   "encryption-failed": "Encryption failed",
   "error": "Error occurred",
   "existed-tags": "Existing Tags",

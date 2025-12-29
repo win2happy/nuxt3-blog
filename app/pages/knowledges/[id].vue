@@ -35,6 +35,7 @@ initViewer(root);
             :href="item.link"
             class="mb-2 flex items-center text-2xl font-medium text-dark-900 dark:text-white max-md:mb-0"
           >
+            <span v-if="item.encrypt || item.encryptBlocks?.length" class="encrypted-badge-large mr-2" :title="$t('encrypted-article')">🔒</span>
             <Link class="mr-2 size-5 text-primary-500" />
             {{ item.title }}
           </a>

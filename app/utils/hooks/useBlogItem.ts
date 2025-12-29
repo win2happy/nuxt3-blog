@@ -1,6 +1,5 @@
 import type { CommonItem, HeaderTabUrl } from "../common/types";
 import { fetchMd } from "../nuxt/fetch";
-import { translate } from "../nuxt/i18n";
 import { useBlogList } from "./useBlogList";
 
 export const useBlogItem = async <T extends CommonItem>(id: string, url: HeaderTabUrl, showNotFound = true) => {
@@ -14,11 +13,35 @@ export const useBlogItem = async <T extends CommonItem>(id: string, url: HeaderT
   const decryptedMd = ref("");
   const successDecrypt = ref(false);
 
+  // 创建加密提示HTML的辅助函数（不依赖 translate）
+  const createEncryptedPlaceholder = (isFullArticle = false) => {
+    // 使用多语言占位符，稍后由前端替换
+    const lockIcon = "🔒";
+    const titleKey = isFullArticle ? "encrypted-article" : "encrypted-content";
+    const tipKey = "encrypted-content-tip";
+    
+    // 默认文本（中文）
+    const defaultTitle = isFullArticle ? "加密文章" : "加密内容";
+    const defaultTip = "此内容已加密，需要密码才能查看";
+    
+    const classes = isFullArticle 
+      ? "encrypted-block-placeholder encrypted-full-article"
+      : "encrypted-block-placeholder";
+    
+    return `<div class="${classes}">
+  <div class="encrypted-icon">${lockIcon}</div>
+  <div class="encrypted-title" data-i18n="${titleKey}">${defaultTitle}</div>
+  <div class="encrypted-tip" data-i18n="${tipKey}">${defaultTip}</div>
+</div>`;
+  };
+
   if (originItem) {
     const item = originItem;
     originMd = await fetchMd(url, String(originItem.id));
     if (item.encrypt) {
-      decryptedMd.value = originMd;
+      // 初始状态显示加密提示
+      decryptedMd.value = createEncryptedPlaceholder(true);
+      
       await encryptor.decryptOrWatchToDecrypt(
         async (decrypt) => {
           decryptedMd.value = await decrypt(originMd);
@@ -26,28 +49,36 @@ export const useBlogItem = async <T extends CommonItem>(id: string, url: HeaderT
         }
       );
     } else if (item.encryptBlocks) {
-      watch(githubToken, async (logined) => {
+      // 初始化：显示未加密内容 + 加密提示框
+      const initContent = () => {
         let newMarkdownContent = originMd;
-        for (const block of item.encryptBlocks!) {
+        const encryptedPlaceholder = `\n\n${createEncryptedPlaceholder(false)}\n\n`;
+        
+        // 从后往前替换，避免位置偏移问题
+        const sortedBlocks = [...item.encryptBlocks!].sort((a, b) => b.start - a.start);
+        for (const block of sortedBlocks) {
           const { start, end } = block;
-          newMarkdownContent = logined
-          // 如果已登录：给block显示为sticker表情
-            ? newMarkdownContent.slice(0, start) + translate("encrypted-content") + "![sticker](aru/59)" + newMarkdownContent.slice(end)
-          // 如果未登录：直接隐藏block
-            : newMarkdownContent.slice(0, start - 10) + newMarkdownContent.slice(end + 11);
+          newMarkdownContent = newMarkdownContent.slice(0, start) + encryptedPlaceholder + newMarkdownContent.slice(end);
+        }
+        return newMarkdownContent;
+      };
+      
+      // 立即设置初始内容（显示未加密部分 + 加密提示）
+      decryptedMd.value = initContent();
+
+      // 监听解密
+      await encryptor.decryptOrWatchToDecrypt(async (decrypt) => {
+        let newMarkdownContent = originMd;
+        // 从后往前解密，避免位置偏移问题
+        const sortedBlocks = [...item.encryptBlocks!].sort((a, b) => b.start - a.start);
+        for (const block of sortedBlocks) {
+          const { start, end } = block;
+          const decryptedBlock = await decrypt(newMarkdownContent.slice(start, end));
+          newMarkdownContent = newMarkdownContent.slice(0, start) + decryptedBlock + newMarkdownContent.slice(end);
         }
         decryptedMd.value = newMarkdownContent;
-
-        await encryptor.decryptOrWatchToDecrypt(async (decrypt) => {
-          let newMarkdownContent = originMd;
-          for (const block of item.encryptBlocks!) {
-            const { start, end } = block;
-            newMarkdownContent = newMarkdownContent.slice(0, start) + await decrypt(newMarkdownContent.slice(start, end)) + newMarkdownContent.slice(end);
-          }
-          decryptedMd.value = newMarkdownContent;
-          successDecrypt.value = true;
-        });
-      }, { immediate: true });
+        successDecrypt.value = true;
+      });
     } else {
       decryptedMd.value = originMd;
       successDecrypt.value = true;

@@ -84,7 +84,10 @@ const tabLengthMap = computed(() => {
               />
             </div>
             <div class="space-y-2">
-              <h3 class="title-text line-clamp-1 overflow-hidden text-ellipsis break-all transition group-hover:text-primary-700 dark:group-hover:text-primary-500">{{ item.title }}</h3>
+              <h3 class="title-text line-clamp-1 overflow-hidden text-ellipsis break-all transition group-hover:text-primary-700 dark:group-hover:text-primary-500 flex items-center gap-2">
+                <span v-if="item.encrypt || item.encryptBlocks?.length" class="encrypted-badge" :title="$t('encrypted-article')">🔒</span>
+                <span>{{ item.title }}</span>
+              </h3>
               <div class="mt-1 flex items-center">
                 <span
                   :class="twMerge(
