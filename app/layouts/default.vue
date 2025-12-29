@@ -125,24 +125,23 @@ const inputPwd = ref(encryptor.usePasswd.value);
               <Sun class="size-5" />
             </span>
           </button>
-          <div :class="$style.goManage">
-            <NuxtLink
-              :to="rocketUrl"
-              title="🚀"
-              class="icon-button anim-shake"
-            >
-              <Rocket />
-            </NuxtLink>
-            <div
-              :class="twMerge($style.pwd, encryptor.passwdCorrect.value && $style.pwdValid)"
-              :title="$t('passwd')"
-              @click="showPwdModal = true"
-            >
-              <span>
-                <Key />
-              </span>
-            </div>
-          </div>
+          <button
+            :class="twMerge(
+              'icon-button',
+              encryptor.passwdCorrect.value && $style.pwdValid
+            )"
+            :title="$t('passwd')"
+            @click="showPwdModal = true"
+          >
+            <Key />
+          </button>
+          <NuxtLink
+            :to="rocketUrl"
+            title="🚀"
+            class="icon-button anim-shake"
+          >
+            <Rocket />
+          </NuxtLink>
           <span
             class="icon-button !hidden max-md:!flex"
             @click="mobileMenuShow = !mobileMenuShow"
@@ -305,37 +304,8 @@ const inputPwd = ref(encryptor.usePasswd.value);
   }
 }
 
-.goManage {
-  @apply relative flex items-center justify-center;
-
-  > a {
-    @apply relative flex justify-center overflow-visible;
-  }
-
-  &:hover .pwd {
-    transform: translateY(100%) scaleY(100%);
-  }
-}
-
-.pwd {
-  @apply absolute bottom-0 origin-top transition;
-  @apply before:content-[''] before:block before:w-full before:h-3;
-
-  transform: translateY(100%) scaleY(0);
-
-  span {
-    @apply overflow-hidden flex items-center border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-800 cursor-pointer shadow-md px-4 py-2 rounded-lg;
-  }
-
-  svg {
-    @apply text-dark-700 dark:text-dark-300 size-4;
-  }
-}
-
 .pwdValid {
-  svg {
-    @apply text-primary-700 dark:text-primary-500;
-  }
+  @apply text-primary-700 dark:text-primary-500;
 }
 
 .footer {
