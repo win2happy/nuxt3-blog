@@ -163,15 +163,23 @@ onMounted(() => {
           <NuxtLink
             v-for="item in HeaderTabs"
             :key="item"
-            :to="`/manage${item}`"
-            :class="twMerge($style.menuItem, activeRoute.startsWith(item) && $style.menuItemActive)"
+            :to="isAuthor === true ? `/manage${item}` : '#'"
+            :class="twMerge(
+              $style.menuItem, 
+              activeRoute.startsWith(item) && $style.menuItemActive,
+              isAuthor !== true && 'opacity-50 cursor-not-allowed pointer-events-none'
+            )"
           >
             <component :is="IconMap[item]" />
             {{ $t(item) }}
           </NuxtLink>
           <NuxtLink
-            to="/manage/config"
-            :class="twMerge($style.menuItem, activeRoute.startsWith('/config') && $style.menuItemActive)"
+            :to="isAuthor === true ? '/manage/config' : '#'"
+            :class="twMerge(
+              $style.menuItem, 
+              activeRoute.startsWith('/config') && $style.menuItemActive,
+              isAuthor !== true && 'opacity-50 cursor-not-allowed pointer-events-none'
+            )"
           >
             <Settings />
             {{ $t('config') }}
@@ -189,19 +197,21 @@ onMounted(() => {
             </NuxtLink>
 
             <button
-              :class="$style.menuAction"
-              :title="$t('images')"
-              @click="showUploadImage = true"
+              :class="twMerge($style.menuAction, isAuthor !== true && 'opacity-50 cursor-not-allowed')"
+              :title="isAuthor === true ? $t('images') : $t('need-verification')"
+              :disabled="isAuthor !== true"
+              @click="isAuthor === true && (showUploadImage = true)"
             >
               <ImagePlus />
             </button>
 
             <button
               v-if="hasStagedItems"
-              :class="twMerge($style.menuAction, '!text-green-400')"
-              :title="$t('staged-items-count', [stagedItems.length])"
+              :class="twMerge($style.menuAction, '!text-green-400', isAuthor !== true && 'opacity-50 cursor-not-allowed')"
+              :title="isAuthor === true ? $t('staged-items-count', [stagedItems.length]) : $t('need-verification')"
+              :disabled="isAuthor !== true"
               data-testid="commit-staged-btn"
-              @click="showStagedModal = true"
+              @click="isAuthor === true && (showStagedModal = true)"
             >
               <Upload />
             </button>
