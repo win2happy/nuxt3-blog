@@ -84,7 +84,12 @@ const modalOk = async () => {
     });
     if (res) {
       setLocalStorage(GithubTokenKey, inputToken.value);
+      // 确保更新 isAuthor 状态
+      useIsAuthor().value = true;
       showPwdModal.value = false;
+    } else {
+      // 验证失败，设置为 false
+      useIsAuthor().value = false;
     }
   } catch (e) {
     notify({
@@ -92,6 +97,8 @@ const modalOk = async () => {
       type: "error",
       description: String(e)
     });
+    // 出错时也设置为 false
+    useIsAuthor().value = false;
   } finally {
     checkingToken.value = false;
   }
