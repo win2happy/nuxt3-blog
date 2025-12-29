@@ -21,6 +21,16 @@ initViewer(root);
   >
     <article class="mx-auto max-w-4xl overflow-hidden rounded-xl bg-white shadow-sm dark:bg-dark-800">
       <div class="px-6 max-md:px-3">
+        <!-- Partial encryption notice -->
+        <div
+          v-if="item.encryptBlocks && item.encryptBlocks.length > 0"
+          class="mt-6 mb-4 rounded-lg border-l-4 border-yellow-500 bg-yellow-50 p-4 dark:bg-yellow-900/20"
+        >
+          <p class="text-sm text-yellow-800 dark:text-yellow-300">
+            {{ $t('encrypted-partial-notice') }}
+          </p>
+        </div>
+
         <div class="my-8 grid grid-cols-1 items-start gap-6 max-md:my-4 md:grid-cols-2">
           <the-lazy-img
             v-for="img, idx in item.images"
