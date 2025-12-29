@@ -89,6 +89,7 @@ const toggleTags = (tag: string) => {
           >
             <div class="flex flex-wrap items-start justify-between gap-4">
               <h3 class="title-text max-w-xl transition group-hover:text-primary-600 dark:group-hover:text-primary-400">
+                <span v-if="item.encrypt || item.encryptBlocks" class="mr-2 text-yellow-600 dark:text-yellow-500" :title="$t('encrypted')">🔒</span>
                 {{ item.title }}
               </h3>
               <span

@@ -29,6 +29,16 @@ initViewer(root);
       </div>
 
       <div class="px-6 py-8 max-md:px-3">
+        <!-- Partial encryption notice -->
+        <div
+          v-if="item.encryptBlocks && item.encryptBlocks.length > 0"
+          class="mb-6 rounded-lg border-l-4 border-yellow-500 bg-yellow-50 p-4 dark:bg-yellow-900/20"
+        >
+          <p class="text-sm text-yellow-800 dark:text-yellow-300">
+            {{ $t('encrypted-partial-notice') }}
+          </p>
+        </div>
+
         <div class="mb-6 flex justify-between max-md:flex-col max-md:gap-2">
           <a
             target="_blank"
@@ -36,6 +46,7 @@ initViewer(root);
             class="mb-2 flex items-center text-2xl font-medium text-dark-900 dark:text-white max-md:mb-0"
           >
             <Link class="mr-2 size-5 text-primary-500" />
+            <span v-if="item.encrypt || item.encryptBlocks" class="mr-2 text-yellow-600 dark:text-yellow-500" :title="$t('encrypted')">🔒</span>
             {{ item.title }}
           </a>
           <div class="flex items-center space-x-4 text-sm text-dark-500 dark:text-dark-400">
