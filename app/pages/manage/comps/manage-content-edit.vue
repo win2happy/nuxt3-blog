@@ -23,8 +23,7 @@ const { stageItem, stagedItems, getStagedItem, deleteStagedItem } = useStaging()
 
 // 检查当前项目是否有暂存内容
 const hasCurrentStaged = computed(() => {
-  const currentId = Number(editingItem.value.id);
-  return getStagedItem(currentId, targetTab) !== undefined;
+  return currentTabStagedItems.value.length > 0;
 });
 
 const slots = defineSlots<Record<string, (_: { item: T; disabled: boolean }) => void>>();
@@ -109,15 +108,29 @@ const doDelete = async () => {
 };
 
 const showLoadStagedModal = ref(false);
+const showSelectStagedModal = ref(false);
+const showClearAllStagedModal = ref(false);
 const stagedItemToLoad = ref<{ item: T; md: string } | null>(null);
 
+// 追踪当前编辑内容是否来自加载的暂存（用于避免重复生成 ID）
+const loadedFromStagedId = ref<number | null>(null);
+
+// 获取当前 tab 的所有暂存项目
+const currentTabStagedItems = computed(() => {
+  return stagedItems.value.filter(item => item.targetTab === targetTab);
+});
+
 const doStage = async () => {
+  // 判断是否应该作为新项目处理
+  // 如果从暂存加载的，使用加载的 ID；否则根据 isNew 判断
+  const shouldGenerateNewId = loadedFromStagedId.value === null && isNew;
+
   const processedInfo = await getProcessedUploadInfo({
     editingItem: editingItem.value,
     editingMd: editingMd.value,
     targetTab,
     originList,
-    isNew: false,
+    isNew: shouldGenerateNewId, // 使用计算后的值
     encryptor,
     baseInfoElement: baseInfo.value
   });
@@ -126,11 +139,23 @@ const doStage = async () => {
     return;
   }
 
+  // 如果从暂存加载的，确保使用原暂存的 ID（覆盖而不是新增）
+  if (loadedFromStagedId.value !== null) {
+    processedInfo.item.id = loadedFromStagedId.value;
+  }
+
   stageItem(processedInfo.item, processedInfo.md, targetTab);
+
+  // 如果是新文章且生成了新 ID，更新当前编辑项的 ID 和追踪标记
+  if (shouldGenerateNewId && processedInfo.item.id !== editingItem.value.id) {
+    editingItem.value.id = processedInfo.item.id;
+    loadedFromStagedId.value = processedInfo.item.id; // 标记为从暂存加载
+  }
+
   notify({
     type: "success",
     title: translate("staged"),
-    description: translate("staged-items-count", [1])
+    description: translate("staged-items-count", [stagedItems.value.length])
   });
 };
 
@@ -168,31 +193,100 @@ const overrideEditingItem = async (item: T, md: string) => {
   });
 };
 
-// 为当前项目加载暂存内容
-const loadStagedForCurrentItem = async () => {
+// 打开选择暂存项目的模态框
+const loadStagedForCurrentItem = () => {
   const currentId = Number(editingItem.value.id);
   const stagedItem = getStagedItem<T>(currentId, targetTab);
 
-  if (stagedItem) {
-    await overrideEditingItem(deepClone(toRaw(stagedItem.item)), stagedItem.md);
+  // 如果当前项目有暂存，直接加载
+  if (stagedItem && currentTabStagedItems.value.length === 1) {
+    stagedItemToLoad.value = {
+      item: deepClone(toRaw(stagedItem.item)) as T,
+      md: stagedItem.md
+    };
+    showLoadStagedModal.value = true;
+  } else if (currentTabStagedItems.value.length > 0) {
+    // 如果有多个暂存项目，打开选择界面
+    showSelectStagedModal.value = true;
   }
+};
+
+// 选择一个暂存项目进行加载
+const selectStagedItem = (stagedItem: StagedItem<T>) => {
+  stagedItemToLoad.value = {
+    item: deepClone(toRaw(stagedItem.item)) as T,
+    md: stagedItem.md
+  };
+  showSelectStagedModal.value = false;
+  showLoadStagedModal.value = true;
 };
 
 // 删除当前项目的暂存内容
 const deleteStagedForCurrentItem = () => {
-  const currentId = Number(editingItem.value.id);
-  deleteStagedItem(currentId, targetTab);
+  if (!loadedFromStagedId.value && editingItem.value.id === 0) {
+    notify({
+      type: "warn",
+      title: translate("warning"),
+      description: translate("no-current-staged-to-delete")
+    });
+    return;
+  }
+
+  const idToDelete = loadedFromStagedId.value || editingItem.value.id;
+  deleteStagedItem(idToDelete, targetTab);
+
+  // 清除追踪标记
+  loadedFromStagedId.value = null;
 
   notify({
     type: "success",
-    title: translate("staged-deleted"),
-    description: translate("staged-deleted-desc")
+    title: translate("current-staged-deleted"),
+    description: translate("current-staged-deleted-desc")
+  });
+};
+
+// 打开清空所有暂存的确认框
+const clearAllStagedForCurrentTab = () => {
+  if (currentTabStagedItems.value.length === 0) {
+    notify({
+      type: "warn",
+      title: translate("warning"),
+      description: translate("no-staged-items-to-clear")
+    });
+    return;
+  }
+  showClearAllStagedModal.value = true;
+};
+
+// 确认清空当前分类的所有暂存内容
+const confirmClearAllStaged = () => {
+  showClearAllStagedModal.value = false;
+
+  // 删除当前 tab 的所有暂存项
+  const itemsToRemove = currentTabStagedItems.value.map(item => ({
+    id: item.id,
+    targetTab: item.targetTab
+  }));
+
+  for (const item of itemsToRemove) {
+    deleteStagedItem(item.id, item.targetTab);
+  }
+
+  // 清除追踪标记
+  loadedFromStagedId.value = null;
+
+  notify({
+    type: "success",
+    title: translate("all-staged-cleared"),
+    description: translate("all-staged-cleared-desc", [itemsToRemove.length])
   });
 };
 
 // 加载暂存的内容
 const loadStagedContent = async () => {
   if (stagedItemToLoad.value) {
+    // 记录加载的暂存 ID，后续暂存时会覆盖而不是新增
+    loadedFromStagedId.value = stagedItemToLoad.value.item.id;
     await overrideEditingItem(deepClone(toRaw(stagedItemToLoad.value.item)) as T, stagedItemToLoad.value.md);
   }
   showLoadStagedModal.value = false;
@@ -236,6 +330,12 @@ onMounted(() => {
           @click="loadStagedForCurrentItem"
         >
           {{ $t('load-staged') }}
+          <span
+            v-if="hasCurrentStaged"
+            class="dark:bg-primary-900/30 ml-1 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:text-primary-400"
+          >
+            {{ currentTabStagedItems.length }}
+          </span>
         </CommonButton>
         <CommonButton
           size="small"
@@ -244,7 +344,17 @@ onMounted(() => {
           data-testid="delete-staged-btn"
           @click="deleteStagedForCurrentItem"
         >
-          {{ $t('delete-staged') }}
+          {{ $t('delete-current-staged') }}
+        </CommonButton>
+        <CommonButton
+          size="small"
+          :disabled="!hasCurrentStaged"
+          :icon="Trash2"
+          theme="danger"
+          data-testid="clear-all-staged-btn"
+          @click="clearAllStagedForCurrentTab"
+        >
+          {{ $t('clear-all-staged') }}
         </CommonButton>
       </div>
 
@@ -404,6 +514,107 @@ onMounted(() => {
             </div>
           </div>
         </div>
+      </div>
+    </template>
+  </common-modal>
+
+  <!-- 选择暂存项目的模态框 -->
+  <common-modal
+    v-model="showSelectStagedModal"
+    modal-width="700px"
+    test-id="select-staged-modal"
+    :show-footer="false"
+  >
+    <template #title>
+      <span>{{ $t('select-staged-item') }}</span>
+    </template>
+    <template #body>
+      <div class="space-y-3">
+        <p class="text-sm text-dark-500 dark:text-dark-400">
+          {{ $t('select-staged-item-desc', [currentTabStagedItems.length]) }}
+        </p>
+        <div class="max-h-96 space-y-2 overflow-y-auto">
+          <div
+            v-for="item in currentTabStagedItems"
+            :key="`${item.targetTab}-${item.id}`"
+            class="dark:hover:bg-primary-900/20 cursor-pointer rounded-lg border border-dark-200 p-4 transition hover:border-primary-500 hover:bg-primary-50 dark:border-dark-700 dark:hover:border-primary-400"
+            @click="selectStagedItem(item as StagedItem<T>)"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 overflow-hidden">
+                <div class="mb-1 flex items-center gap-2">
+                  <h4 class="truncate font-medium text-dark-700 dark:text-dark-300">
+                    {{ 'title' in item.item ? item.item.title : `${$t('item')} ${item.id}` }}
+                  </h4>
+                  <span
+                    v-if="item.id === editingItem.id"
+                    class="dark:bg-primary-900/30 shrink-0 rounded bg-primary-100 px-2 py-0.5 text-xs text-primary-700 dark:text-primary-400"
+                  >
+                    {{ $t('current') }}
+                  </span>
+                </div>
+                <div class="mb-2 flex items-center gap-3 text-xs text-dark-500 dark:text-dark-400">
+                  <span>ID: {{ item.id }}</span>
+                  <span>{{ formatTime(item.item.modifyTime || item.item.time, 'full') }}</span>
+                </div>
+                <div
+                  v-if="'tags' in item.item && item.item.tags"
+                  class="flex flex-wrap gap-1"
+                >
+                  <span
+                    v-for="tag in (item.item.tags as string[]).slice(0, 3)"
+                    :key="tag"
+                    class="rounded bg-dark-100 px-2 py-0.5 text-xs text-dark-600 dark:bg-dark-700 dark:text-dark-400"
+                  >
+                    {{ tag }}
+                  </span>
+                  <span
+                    v-if="(item.item.tags as string[]).length > 3"
+                    class="rounded bg-dark-100 px-2 py-0.5 text-xs text-dark-600 dark:bg-dark-700 dark:text-dark-400"
+                  >
+                    +{{ (item.item.tags as string[]).length - 3 }}
+                  </span>
+                </div>
+              </div>
+              <div class="shrink-0 text-primary-500 dark:text-primary-400">
+                <svg
+                  class="size-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </common-modal>
+
+  <!-- 清空所有暂存的确认框 -->
+  <common-modal
+    v-model="showClearAllStagedModal"
+    confirm-theme="danger"
+    test-id="clear-all-staged-modal"
+    ok-test-id="confirm-clear-all-staged"
+    @confirm="confirmClearAllStaged"
+  >
+    <template #title>
+      {{ $t('confirm-clear-all-staged') }}
+    </template>
+    <template #body>
+      <div class="space-y-3">
+        <p>{{ $t('confirm-clear-all-staged-desc', [currentTabStagedItems.length]) }}</p>
+        <p class="text-sm text-red-500 dark:text-red-400">
+          {{ $t('this-action-cannot-be-undone') }}
+        </p>
       </div>
     </template>
   </common-modal>
