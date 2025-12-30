@@ -22,6 +22,21 @@ const relativeArticles = originList.filter(i => i.id !== item.id)
   .sort((a, b) => b.count - a.count)
   .slice(0, 5);
 
+// 计算上一篇和下一篇文章
+// 获取URL中的tag参数
+const route = useRoute();
+const tagParam = route.query.tag as string | undefined;
+const selectedTags = tagParam ? tagParam.split(",") : [];
+
+// 如果有标签筛选，则在该标签的文章列表中查找上一篇和下一篇
+const filteredList = selectedTags.length > 0
+  ? originList.filter(i => selectedTags.some(tag => i.tags.includes(tag)))
+  : originList;
+
+const currentIndex = filteredList.findIndex(i => i.id === item.id);
+const prevArticle = currentIndex > 0 ? filteredList[currentIndex - 1] : null;
+const nextArticle = currentIndex < filteredList.length - 1 ? filteredList[currentIndex + 1] : null;
+
 useCommonSEOTitle(computed(() => item.title), computed(() => item.tags));
 const activeAnchor = ref<string>();
 
@@ -88,7 +103,11 @@ initViewer(root);
 
       <main class="max-w-5xl flex-1 overflow-hidden rounded-lg bg-white p-6 shadow dark:bg-dark-800 max-md:px-2">
         <h1 class="mb-4 text-2xl font-medium text-dark-900 dark:text-white">
-          <span v-if="item.encrypt || item.encryptBlocks" class="mr-2 text-yellow-600 dark:text-yellow-500" :title="$t('encrypted')">🔒</span>
+          <span
+            v-if="item.encrypt || item.encryptBlocks"
+            class="mr-2 text-yellow-600 dark:text-yellow-500"
+            :title="$t('encrypted')"
+          >🔒</span>
           {{ item.title }}
         </h1>
 
@@ -122,6 +141,53 @@ initViewer(root);
           v-html="htmlContent"
         />
 
+        <!-- 上一篇/下一篇导航 -->
+        <nav
+          v-if="prevArticle || nextArticle"
+          class="my-8"
+        >
+          <div class="flex gap-4 max-md:flex-col">
+            <NuxtLink
+              v-if="prevArticle"
+              :to="{ path: `/articles/${prevArticle.customSlug || prevArticle.id}`, query: tagParam ? { tag: tagParam } : {} }"
+              class="group flex-1 rounded-lg border border-dark-300 p-4 transition hover:border-primary-500 hover:shadow-md dark:border-dark-600 dark:hover:border-primary-400"
+            >
+              <div class="flex items-center gap-3">
+                <div class="text-2xl">←</div>
+                <div class="flex-1 overflow-hidden">
+                  <div class="mb-1 text-xs text-dark-500 dark:text-dark-400">{{ $t('prevArticle') }}</div>
+                  <div class="truncate text-sm font-medium text-dark-700 group-hover:text-primary-600 dark:text-dark-300 dark:group-hover:text-primary-400">
+                    {{ prevArticle.title }}
+                  </div>
+                </div>
+              </div>
+            </NuxtLink>
+            <div
+              v-else
+              class="flex-1"
+            />
+            <NuxtLink
+              v-if="nextArticle"
+              :to="{ path: `/articles/${nextArticle.customSlug || nextArticle.id}`, query: tagParam ? { tag: tagParam } : {} }"
+              class="group flex-1 rounded-lg border border-dark-300 p-4 transition hover:border-primary-500 hover:shadow-md dark:border-dark-600 dark:hover:border-primary-400"
+            >
+              <div class="flex items-center gap-3">
+                <div class="flex-1 overflow-hidden text-right">
+                  <div class="mb-1 text-xs text-dark-500 dark:text-dark-400">{{ $t('nextArticle') }}</div>
+                  <div class="truncate text-sm font-medium text-dark-700 group-hover:text-primary-600 dark:text-dark-300 dark:group-hover:text-primary-400">
+                    {{ nextArticle.title }}
+                  </div>
+                </div>
+                <div class="text-2xl">→</div>
+              </div>
+            </NuxtLink>
+            <div
+              v-else
+              class="flex-1"
+            />
+          </div>
+        </nav>
+
         <aside
           v-if="relativeArticles.length"
           class="mt-8"
@@ -134,7 +200,7 @@ initViewer(root);
               <NuxtLink
                 v-for="{ item: i } in relativeArticles"
                 :key="i.id"
-                :to="`/articles/${i.customSlug || i.id}`"
+                :to="{ path: `/articles/${i.customSlug || i.id}`, query: tagParam ? { tag: tagParam } : {} }"
                 class="block rounded-md bg-dark-50 p-3 transition hover:bg-dark-100 dark:bg-dark-700 dark:hover:bg-dark-600"
               >
                 <h4 class="text-sm font-medium text-dark-700 dark:text-dark-300">{{ i.title }}</h4>

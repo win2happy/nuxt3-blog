@@ -107,6 +107,8 @@
   "menu": "Menu",
   "comments": "Comments",
   "relativeArticles": "Related Articles",
+  "prevArticle": "Previous",
+  "nextArticle": "Next",
   "back-home": "Back to Home",
   "save": "Save",
   "error-title": "Error Occurred",
