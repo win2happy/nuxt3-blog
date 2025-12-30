@@ -108,6 +108,8 @@
   "menu": "目录",
   "comments": "评论",
   "relativeArticles": "相关文章",
+  "prevArticle": "上一篇",
+  "nextArticle": "下一篇",
   "back-home": "返回首页",
   "save": "保存",
   "error-title": "发生错误",

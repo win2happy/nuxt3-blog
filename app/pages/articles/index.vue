@@ -83,13 +83,17 @@ const toggleTags = (tag: string) => {
           class="group relative overflow-hidden rounded-3xl border border-dark-100/70 bg-white/80 p-6 shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary-400 hover:bg-white dark:border-dark-700 dark:bg-dark-900/60 dark:hover:border-primary-500"
         >
           <NuxtLink
-            :to="`/articles/${item.customSlug || item.id}`"
+            :to="{ path: `/articles/${item.customSlug || item.id}`, query: tags.length > 0 ? { tag: tags.join(',') } : {} }"
             no-prefetch
             class="flex flex-col gap-4"
           >
             <div class="flex flex-wrap items-start justify-between gap-4">
               <h3 class="title-text max-w-xl transition group-hover:text-primary-600 dark:group-hover:text-primary-400">
-                <span v-if="item.encrypt || item.encryptBlocks" class="mr-2 text-yellow-600 dark:text-yellow-500" :title="$t('encrypted')">🔒</span>
+                <span
+                  v-if="item.encrypt || item.encryptBlocks"
+                  class="mr-2 text-yellow-600 dark:text-yellow-500"
+                  :title="$t('encrypted')"
+                >🔒</span>
                 {{ item.title }}
               </h3>
               <span
