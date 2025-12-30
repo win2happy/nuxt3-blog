@@ -57,6 +57,18 @@ const baseInfo = ref<HTMLElement>();
 
 const isValidUrlSegment = computed(() => !editingItem.value.customSlug || /^[a-zA-Z0-9\-_]+$/.test(editingItem.value.customSlug));
 
+// 打开发布选择界面
+const openPublishModal = () => {
+  if (hasCurrentStaged.value) {
+    // 如果有暂存内容，打开选择界面
+    selectedStagedForPublish.value = [];
+    showPublishModal.value = true;
+  } else {
+    // 如果没有暂存内容，直接发布当前内容
+    doUpload();
+  }
+};
+
 const doUpload = async () => {
   const info = await getProcessedUploadInfo({
     editingItem: editingItem.value,
@@ -110,7 +122,9 @@ const doDelete = async () => {
 const showLoadStagedModal = ref(false);
 const showSelectStagedModal = ref(false);
 const showClearAllStagedModal = ref(false);
+const showPublishModal = ref(false);
 const stagedItemToLoad = ref<{ item: T; md: string } | null>(null);
+const selectedStagedForPublish = ref<number[]>([]);
 
 // 追踪当前编辑内容是否来自加载的暂存（用于避免重复生成 ID）
 const loadedFromStagedId = ref<number | null>(null);
@@ -282,6 +296,123 @@ const confirmClearAllStaged = () => {
   });
 };
 
+// 发布当前内容和选中的暂存内容
+const publishWithStaged = async () => {
+  showPublishModal.value = false;
+  currentOperate.value = "upload";
+  toggleProcessing();
+
+  try {
+    const additions: Array<{ path: string; content: string }> = [];
+    const updatedList = [...originList];
+
+    // 处理当前编辑的内容
+    const currentInfo = await getProcessedUploadInfo({
+      editingItem: editingItem.value,
+      editingMd: editingMd.value,
+      targetTab,
+      originList,
+      isNew,
+      encryptor,
+      baseInfoElement: baseInfo.value
+    });
+
+    if (!currentInfo) {
+      return;
+    }
+
+    const { item: newItem, md: newMd } = currentInfo;
+
+    // 更新列表中的当前项
+    const foundIndex = updatedList.findIndex(i => i.id === newItem.id);
+    if (foundIndex >= 0) {
+      updatedList.splice(foundIndex, 1, newItem);
+    } else {
+      updatedList.unshift(newItem);
+    }
+
+    // 添加当前项的 markdown 文件
+    additions.push({
+      path: `public/rebuild${targetTab}/${newItem.id}.md`,
+      content: newMd
+    });
+
+    // 处理选中的暂存内容
+    const selectedStaged = currentTabStagedItems.value.filter(item =>
+      selectedStagedForPublish.value.includes(item.id)
+    );
+
+    for (const stagedItem of selectedStaged) {
+      const { item, md } = stagedItem;
+
+      // 确保暂存项有有效的 ID
+      if (!item.id || item.id === 0) {
+        const maxId = Math.max(0, ...updatedList.map(i => i.id));
+        item.id = maxId + 1;
+      }
+
+      // 更新列表
+      const stagedIndex = updatedList.findIndex(i => i.id === item.id);
+      if (stagedIndex >= 0) {
+        updatedList.splice(stagedIndex, 1, item as T);
+      } else {
+        updatedList.unshift(item as T);
+      }
+
+      // 添加 markdown 文件
+      additions.push({
+        path: `public/rebuild${targetTab}/${item.id}.md`,
+        content: md
+      });
+    }
+
+    // 添加 JSON 文件
+    additions.push({
+      path: `public/rebuild/json${targetTab}.json`,
+      content: JSON.stringify(updatedList)
+    });
+
+    const itemCount = 1 + selectedStaged.length;
+    const success = await createCommit(
+      `Update ${itemCount} ${targetTab.replace("/", "")} item${itemCount > 1 ? "s" : ""}`,
+      { additions }
+    );
+
+    if (success) {
+      useUnsavedContent().value = false;
+
+      // 删除已发布的暂存项
+      for (const id of selectedStagedForPublish.value) {
+        deleteStagedItem(id, targetTab);
+      }
+
+      notify({
+        type: "success",
+        title: translate("publish-success"),
+        description: translate("publish-success-desc", [itemCount])
+      });
+    }
+  } finally {
+    currentOperate.value = "";
+    toggleProcessing();
+  }
+};
+
+// 只发布当前内容（从发布选择界面）
+const publishCurrentOnly = async () => {
+  showPublishModal.value = false;
+  await doUpload();
+};
+
+// 全选/取消全选暂存项
+const toggleSelectAllStaged = () => {
+  if (selectedStagedForPublish.value.length === currentTabStagedItems.value.length) {
+    selectedStagedForPublish.value = [];
+  } else {
+    selectedStagedForPublish.value = currentTabStagedItems.value.map(item => item.id);
+  }
+};
+
 // 加载暂存的内容
 const loadStagedContent = async () => {
   if (stagedItemToLoad.value) {
@@ -377,7 +508,7 @@ onMounted(() => {
           :loading="processing && currentOperate === 'upload'"
           data-testid="item-upload-btn"
           theme="primary"
-          @click="doUpload"
+          @click="openPublishModal"
         >
           {{ $t(isNew ? "publish" : "update") }}
         </CommonButton>
@@ -615,6 +746,102 @@ onMounted(() => {
         <p class="text-sm text-red-500 dark:text-red-400">
           {{ $t('this-action-cannot-be-undone') }}
         </p>
+      </div>
+    </template>
+  </common-modal>
+
+  <!-- 发布选择模态框 -->
+  <common-modal
+    v-model="showPublishModal"
+    modal-width="700px"
+    test-id="publish-select-modal"
+    ok-test-id="publish-with-staged-btn"
+    cancel-test-id="publish-current-only-btn"
+    :ok-text="$t('publish-selected')"
+    :cancel-text="$t('publish-current-only')"
+    @confirm="publishWithStaged"
+    @cancel="publishCurrentOnly"
+  >
+    <template #title>
+      {{ $t('publish-select') }}
+    </template>
+    <template #body>
+      <div class="space-y-4">
+        <div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+          <p class="text-sm text-blue-700 dark:text-blue-300">
+            {{ $t('publish-select-desc') }}
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-dark-700 dark:text-dark-300">
+              {{ $t('select-staged-to-publish') }}
+            </span>
+            <button
+              class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+              @click="toggleSelectAllStaged"
+            >
+              {{ selectedStagedForPublish.length === currentTabStagedItems.length ? $t('deselect-all') : $t('select-all') }}
+            </button>
+          </div>
+
+          <div class="max-h-80 space-y-2 overflow-y-auto">
+            <div
+              v-for="item in currentTabStagedItems"
+              :key="item.id"
+              class="cursor-pointer rounded-lg border p-3 transition"
+              :class="selectedStagedForPublish.includes(item.id)
+                ? 'border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/20'
+                : 'border-dark-200 bg-white hover:border-dark-300 dark:border-dark-700 dark:bg-dark-800 dark:hover:border-dark-600'"
+              @click="() => {
+                const index = selectedStagedForPublish.indexOf(item.id);
+                if (index >= 0) {
+                  selectedStagedForPublish.splice(index, 1);
+                }
+                else {
+                  selectedStagedForPublish.push(item.id);
+                }
+              }"
+            >
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5">
+                  <input
+                    type="checkbox"
+                    :checked="selectedStagedForPublish.includes(item.id)"
+                    class="size-4 rounded border-dark-300 text-primary-600 focus:ring-primary-500 dark:border-dark-600"
+                    @click.stop="() => {
+                      const index = selectedStagedForPublish.indexOf(item.id);
+                      if (index >= 0) {
+                        selectedStagedForPublish.splice(index, 1);
+                      }
+                      else {
+                        selectedStagedForPublish.push(item.id);
+                      }
+                    }"
+                  >
+                </div>
+                <div class="flex-1 overflow-hidden">
+                  <div class="mb-1 flex items-center gap-2">
+                    <h4 class="truncate text-sm font-medium text-dark-700 dark:text-dark-300">
+                      {{ 'title' in item.item ? item.item.title : `${$t('item')} ${item.id}` }}
+                    </h4>
+                  </div>
+                  <div class="flex items-center gap-3 text-xs text-dark-500 dark:text-dark-400">
+                    <span>ID: {{ item.id }}</span>
+                    <span>{{ formatTime(item.item.modifyTime || item.item.time, 'full') }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-800">
+            <p class="text-dark-600 dark:text-dark-400">
+              {{ $t('publish-summary', [1 + selectedStagedForPublish.length]) }}
+            </p>
+          </div>
+        </div>
       </div>
     </template>
   </common-modal>
