@@ -29,6 +29,21 @@ const tabLengthMap = computed(() => {
   });
   return map;
 });
+
+// 分页相关
+const pageSize = ref(12);
+const currentPage = ref(1);
+
+const paginatedList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredList.value.slice(start, end);
+});
+
+// 当筛选条件变化时，重置到第一页
+watch(currentTab, () => {
+  currentPage.value = 1;
+});
 </script>
 
 <template>
@@ -65,7 +80,7 @@ const tabLengthMap = computed(() => {
         class="space-y-8"
       >
         <NuxtLink
-          v-for="item in filteredList"
+          v-for="item in paginatedList"
           :key="item.id"
           no-prefetch
           class="group flex items-center justify-between overflow-hidden rounded-2xl border border-transparent bg-white p-5 shadow-card transition hover:-translate-y-0.5 hover:border-primary-400 dark:bg-dark-800 dark:hover:border-primary-600"
@@ -85,7 +100,11 @@ const tabLengthMap = computed(() => {
             </div>
             <div class="space-y-2">
               <h3 class="title-text line-clamp-1 overflow-hidden text-ellipsis break-all transition group-hover:text-primary-700 dark:group-hover:text-primary-500">
-                <span v-if="item.encrypt || item.encryptBlocks" class="mr-2 text-yellow-600 dark:text-yellow-500" :title="$t('encrypted')">🔒</span>
+                <span
+                  v-if="item.encrypt || item.encryptBlocks"
+                  class="mr-2 text-yellow-600 dark:text-yellow-500"
+                  :title="$t('encrypted')"
+                >🔒</span>
                 {{ item.title }}
               </h3>
               <div class="mt-1 flex items-center">
@@ -103,6 +122,14 @@ const tabLengthMap = computed(() => {
           </div>
           <ChevronRight class="size-7 text-dark-400 transition group-hover:translate-x-1 group-hover:text-primary-500" />
         </NuxtLink>
+
+        <!-- 分页组件 -->
+        <common-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total-items="filteredList.length"
+          class="mt-8"
+        />
       </div>
 
       <div

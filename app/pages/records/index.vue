@@ -30,7 +30,22 @@ const years = computed(() => {
   return result.sort((a, b) => b.year - a.year);
 });
 
-const currentItems = computed(() => years.value.find(i => i.year === currentYear.value)?.items);
+const currentItems = computed(() => years.value.find(i => i.year === currentYear.value)?.items.filter(i => i._show) || []);
+
+// 分页相关
+const pageSize = ref(20);
+const currentPage = ref(1);
+
+const paginatedItems = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return currentItems.value.slice(start, end);
+});
+
+// 当年份变化时，重置到第一页
+watch(currentYear, () => {
+  currentPage.value = 1;
+});
 
 onMounted(() => {
   if (years.value.length && !currentYear.value) {
@@ -67,8 +82,7 @@ onMounted(() => {
         </h2>
         <div class="grid items-center justify-around gap-8 max-md:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           <div
-            v-for="item in currentItems"
-            v-show="item._show"
+            v-for="item in paginatedItems"
             :key="item.id"
             class="group flex justify-center"
             :title="formatTime(item.time)"
@@ -97,6 +111,15 @@ onMounted(() => {
             </NuxtLink>
           </div>
         </div>
+
+        <!-- 分页组件 -->
+        <common-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total-items="currentItems.length"
+          :page-size-options="[10, 20, 30, 50]"
+          class="mt-8"
+        />
       </div>
     </div>
     <div

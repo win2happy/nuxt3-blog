@@ -44,6 +44,21 @@ const toggleTags = (tag: string) => {
   }
   navigateTo({ query: { tag: newTags.join(",") } }, { replace: true });
 };
+
+// 分页相关
+const pageSize = ref(10);
+const currentPage = ref(1);
+
+const paginatedList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredList.value.slice(start, end);
+});
+
+// 当筛选条件变化时，重置到第一页
+watch(tags, () => {
+  currentPage.value = 1;
+});
 </script>
 
 <template>
@@ -77,7 +92,7 @@ const toggleTags = (tag: string) => {
         class="space-y-6"
       >
         <article
-          v-for="item in filteredList"
+          v-for="item in paginatedList"
           v-show="item._show"
           :key="item.id"
           class="group relative overflow-hidden rounded-3xl border border-dark-100/70 bg-white/80 p-6 shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary-400 hover:bg-white dark:border-dark-700 dark:bg-dark-900/60 dark:hover:border-primary-500"
@@ -121,6 +136,14 @@ const toggleTags = (tag: string) => {
             </div>
           </NuxtLink>
         </article>
+
+        <!-- 分页组件 -->
+        <common-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total-items="filteredList.length"
+          class="mt-8"
+        />
       </section>
 
       <section
