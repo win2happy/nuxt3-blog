@@ -150,13 +150,14 @@ initViewer(root);
             <NuxtLink
               v-if="prevArticle"
               :to="{ path: `/articles/${prevArticle.customSlug || prevArticle.id}`, query: tagParam ? { tag: tagParam } : {} }"
+              :title="prevArticle.title"
               class="group flex-1 rounded-lg border border-dark-300 p-4 transition hover:border-primary-500 hover:shadow-md dark:border-dark-600 dark:hover:border-primary-400"
             >
-              <div class="flex items-center gap-3">
-                <div class="text-2xl">←</div>
-                <div class="flex-1 overflow-hidden">
+              <div class="flex items-start gap-3">
+                <div class="mt-1 shrink-0 text-2xl">←</div>
+                <div class="min-w-0 flex-1">
                   <div class="mb-1 text-xs text-dark-500 dark:text-dark-400">{{ $t('prevArticle') }}</div>
-                  <div class="truncate text-sm font-medium text-dark-700 group-hover:text-primary-600 dark:text-dark-300 dark:group-hover:text-primary-400">
+                  <div class="line-clamp-2 text-sm font-medium text-dark-700 group-hover:text-primary-600 dark:text-dark-300 dark:group-hover:text-primary-400">
                     {{ prevArticle.title }}
                   </div>
                 </div>
@@ -169,16 +170,17 @@ initViewer(root);
             <NuxtLink
               v-if="nextArticle"
               :to="{ path: `/articles/${nextArticle.customSlug || nextArticle.id}`, query: tagParam ? { tag: tagParam } : {} }"
+              :title="nextArticle.title"
               class="group flex-1 rounded-lg border border-dark-300 p-4 transition hover:border-primary-500 hover:shadow-md dark:border-dark-600 dark:hover:border-primary-400"
             >
-              <div class="flex items-center gap-3">
-                <div class="flex-1 overflow-hidden text-right">
+              <div class="flex items-start gap-3">
+                <div class="min-w-0 flex-1 text-right">
                   <div class="mb-1 text-xs text-dark-500 dark:text-dark-400">{{ $t('nextArticle') }}</div>
-                  <div class="truncate text-sm font-medium text-dark-700 group-hover:text-primary-600 dark:text-dark-300 dark:group-hover:text-primary-400">
+                  <div class="line-clamp-2 text-sm font-medium text-dark-700 group-hover:text-primary-600 dark:text-dark-300 dark:group-hover:text-primary-400">
                     {{ nextArticle.title }}
                   </div>
                 </div>
-                <div class="text-2xl">→</div>
+                <div class="mt-1 shrink-0 text-2xl">→</div>
               </div>
             </NuxtLink>
             <div
