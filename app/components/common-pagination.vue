@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight } from "lucide-vue-next";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-vue-next";
 
 interface Props {
   currentPage: number;
@@ -20,6 +20,9 @@ const emit = defineEmits<{
 }>();
 
 const totalPages = computed(() => Math.ceil(props.totalItems / props.pageSize));
+
+// 页码跳转输入
+const jumpPageInput = ref("");
 
 // 计算显示的页码范围
 const visiblePages = computed(() => {
@@ -66,6 +69,22 @@ const changePageSize = (newSize: number) => {
     emit("update:currentPage", Math.max(1, newTotalPages));
   }
 };
+
+// 处理页码跳转
+const handleJumpPage = () => {
+  const page = parseInt(jumpPageInput.value, 10);
+  if (!isNaN(page) && page >= 1 && page <= totalPages.value) {
+    goToPage(page);
+    jumpPageInput.value = "";
+  }
+};
+
+// 处理输入框回车
+const handleJumpKeypress = (e: KeyboardEvent) => {
+  if (e.key === "Enter") {
+    handleJumpPage();
+  }
+};
 </script>
 
 <template>
@@ -100,9 +119,24 @@ const changePageSize = (newSize: number) => {
     <!-- 分页导航 -->
     <nav
       v-if="totalPages > 1"
-      class="flex items-center justify-center gap-2"
+      class="flex flex-wrap items-center justify-center gap-2"
       aria-label="Pagination"
     >
+      <!-- 首页 -->
+      <button
+        :disabled="currentPage === 1"
+        :class="[
+          'flex items-center justify-center rounded-lg px-2.5 py-2 text-sm font-medium transition',
+          currentPage === 1
+            ? 'cursor-not-allowed text-dark-300 dark:text-dark-600'
+            : 'dark:hover:bg-primary-900/20 text-dark-600 hover:bg-primary-50 hover:text-primary-600 dark:text-dark-300 dark:hover:text-primary-400'
+        ]"
+        :title="$t('first-page')"
+        @click="goToPage(1)"
+      >
+        <ChevronsLeft class="size-4" />
+      </button>
+
       <!-- 上一页 -->
       <button
         :disabled="currentPage === 1"
@@ -152,6 +186,41 @@ const changePageSize = (newSize: number) => {
         <span class="mr-1 max-md:hidden">{{ $t('next') }}</span>
         <ChevronRight class="size-4" />
       </button>
+
+      <!-- 尾页 -->
+      <button
+        :disabled="currentPage === totalPages"
+        :class="[
+          'flex items-center justify-center rounded-lg px-2.5 py-2 text-sm font-medium transition',
+          currentPage === totalPages
+            ? 'cursor-not-allowed text-dark-300 dark:text-dark-600'
+            : 'dark:hover:bg-primary-900/20 text-dark-600 hover:bg-primary-50 hover:text-primary-600 dark:text-dark-300 dark:hover:text-primary-400'
+        ]"
+        :title="$t('last-page')"
+        @click="goToPage(totalPages)"
+      >
+        <ChevronsRight class="size-4" />
+      </button>
+
+      <!-- 页码跳转 -->
+      <div class="ml-2 flex items-center gap-2 max-md:mt-2 max-md:w-full max-md:justify-center">
+        <span class="text-sm text-dark-600 dark:text-dark-300">{{ $t('go-to') }}</span>
+        <input
+          v-model="jumpPageInput"
+          type="number"
+          :min="1"
+          :max="totalPages"
+          :placeholder="String(currentPage)"
+          class="focus:ring-primary-500/20 w-16 rounded-lg border border-dark-300 bg-white px-2 py-1.5 text-center text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 dark:border-dark-600 dark:bg-dark-800 dark:focus:border-primary-400"
+          @keypress="handleJumpKeypress"
+        >
+        <button
+          class="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
+          @click="handleJumpPage"
+        >
+          {{ $t('go') }}
+        </button>
+      </div>
     </nav>
   </div>
 </template>

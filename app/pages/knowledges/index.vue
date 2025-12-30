@@ -31,7 +31,7 @@ const tabLengthMap = computed(() => {
 });
 
 // 分页相关
-const pageSize = ref(10);
+const pageSize = usePageSize("knowledges-page-size", 10);
 const currentPage = ref(1);
 
 const paginatedList = computed(() => {

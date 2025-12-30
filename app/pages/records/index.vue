@@ -33,7 +33,7 @@ const years = computed(() => {
 const currentItems = computed(() => years.value.find(i => i.year === currentYear.value)?.items.filter(i => i._show) || []);
 
 // 分页相关
-const pageSize = ref(10);
+const pageSize = usePageSize("records-page-size", 10);
 const currentPage = ref(1);
 
 const paginatedItems = computed(() => {
