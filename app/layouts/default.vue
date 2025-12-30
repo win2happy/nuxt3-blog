@@ -32,10 +32,16 @@ const navVisible = ref(true);
 const lastScrollY = ref(0);
 const scrollThreshold = 10; // 滚动阈值，避免小幅滚动触发
 
+// 回到顶部按钮显示控制
+const showBackToTop = ref(false);
+
 const handleScroll = () => {
   const currentScrollY = window.scrollY;
 
-  // 在顶部附近始终显示
+  // 控制回到顶部按钮显示（滚动超过300px时显示）
+  showBackToTop.value = currentScrollY > 300;
+
+  // 在顶部附近始终显示导航栏
   if (currentScrollY < 50) {
     navVisible.value = true;
     lastScrollY.value = currentScrollY;
@@ -55,6 +61,14 @@ const handleScroll = () => {
     }
     lastScrollY.value = currentScrollY;
   }
+};
+
+// 回到顶部函数
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
 };
 
 const toggleTheme = () => {
@@ -256,6 +270,30 @@ const inputPwd = ref(encryptor.usePasswd.value);
         >
       </template>
     </common-modal>
+
+    <!-- 回到顶部按钮 -->
+    <Transition name="back-to-top">
+      <button
+        v-show="showBackToTop"
+        :class="$style.backToTop"
+        :title="$t('back-to-top')"
+        @click="scrollToTop"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m18 15-6-6-6 6" />
+        </svg>
+      </button>
+    </Transition>
   </div>
 </template>
 
@@ -365,5 +403,43 @@ const inputPwd = ref(encryptor.usePasswd.value);
   a {
     @apply mx-2 text-primary-700 hover:text-primary-500 dark:text-primary-500 hover:dark:text-primary-600 inline-flex items-center gap-1;
   }
+}
+
+.backToTop {
+  @apply fixed bottom-8 right-8 z-header;
+  @apply w-12 h-12 rounded-full;
+  @apply bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600;
+  @apply text-white shadow-lg hover:shadow-xl;
+  @apply flex items-center justify-center;
+  @apply transition-all duration-300;
+  @apply cursor-pointer;
+}
+
+.backToTop:hover {
+  transform: translateY(-4px);
+}
+
+.backToTop:active {
+  transform: translateY(-2px);
+}
+</style>
+
+<style scoped>
+/* 回到顶部按钮过渡动画 */
+.back-to-top-enter-active,
+.back-to-top-leave-active {
+  transition: all 0.3s ease;
+}
+
+.back-to-top-enter-from,
+.back-to-top-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.8);
+}
+
+.back-to-top-enter-to,
+.back-to-top-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 </style>

@@ -76,6 +76,7 @@
   "selected-items": "<b style='margin: 0 8px; font-size: 1rem;'>{0}</b> items selected",
   "summary": "Summary",
   "switch-mode": "Switch to {0} mode",
+  "back-to-top": "Back to top",
   "tags": "Tags",
   "tags-not-allowed": "Tags cannot be added to encrypted articles",
   "title": "Title",
