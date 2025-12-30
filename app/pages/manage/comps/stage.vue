@@ -56,7 +56,8 @@ const handleCommitStaged = async () => {
       const updatedList = [...originList];
       for (const { item } of items) {
         if (!item.id) {
-          item.id = randomId(originList);
+          // 生成新 ID 时考虑已存在的列表
+          item.id = randomId(updatedList);
         }
         const foundIndex = updatedList.findIndex(i => i.id === item.id);
         if (foundIndex >= 0) {
