@@ -27,6 +27,50 @@ const setLocale = (locale: I18nCode) => {
   showI18n.value = false;
 };
 
+// 导航栏滚动显示/隐藏
+const navVisible = ref(true);
+const lastScrollY = ref(0);
+const scrollThreshold = 10; // 滚动阈值，避免小幅滚动触发
+
+// 回到顶部按钮显示控制
+const showBackToTop = ref(false);
+
+const handleScroll = () => {
+  const currentScrollY = window.scrollY;
+
+  // 控制回到顶部按钮显示（滚动超过300px时显示）
+  showBackToTop.value = currentScrollY > 300;
+
+  // 在顶部附近始终显示导航栏
+  if (currentScrollY < 50) {
+    navVisible.value = true;
+    lastScrollY.value = currentScrollY;
+    return;
+  }
+
+  // 判断滚动方向
+  const scrollDiff = currentScrollY - lastScrollY.value;
+
+  if (Math.abs(scrollDiff) > scrollThreshold) {
+    if (scrollDiff > 0) {
+      // 向下滚动 - 隐藏导航栏
+      navVisible.value = false;
+    } else {
+      // 向上滚动 - 显示导航栏
+      navVisible.value = true;
+    }
+    lastScrollY.value = currentScrollY;
+  }
+};
+
+// 回到顶部函数
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+};
+
 const toggleTheme = () => {
   themeAnimate.value = true;
   nextTick(() => {
@@ -40,6 +84,14 @@ const rocketUrl = computed(() => {
 
 onMounted(async () => {
   footerDomain.value = window.location.hostname;
+
+  // 添加滚动事件监听
+  window.addEventListener("scroll", handleScroll, { passive: true });
+});
+
+onUnmounted(() => {
+  // 移除滚动事件监听
+  window.removeEventListener("scroll", handleScroll);
 });
 
 const encryptor = useEncryptor();
@@ -56,7 +108,12 @@ const inputPwd = ref(encryptor.usePasswd.value);
         themeAnimate && $style.themeAnimateBg
       )"
     />
-    <nav :class="$style.nav">
+    <nav
+      :class="[
+        $style.nav,
+        !navVisible && $style.navHidden
+      ]"
+    >
       <div class="container mx-auto flex h-header items-center px-4 max-md:justify-between max-md:px-2 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center lg:px-8">
         <NuxtLink
           class="group shrink-0 md:justify-self-start"
@@ -177,7 +234,7 @@ const inputPwd = ref(encryptor.usePasswd.value);
       class="fixed left-0 top-0 z-headerLoading h-0.5 bg-primary-500"
       :style="{ width: `${loadingState}%` }"
     />
-    <section class="z-body grow">
+    <section class="z-body grow pt-header">
       <slot />
     </section>
     <footer :class="$style.footer">
@@ -213,6 +270,30 @@ const inputPwd = ref(encryptor.usePasswd.value);
         >
       </template>
     </common-modal>
+
+    <!-- 回到顶部按钮 -->
+    <Transition name="back-to-top">
+      <button
+        v-show="showBackToTop"
+        :class="$style.backToTop"
+        :title="$t('back-to-top')"
+        @click="scrollToTop"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m18 15-6-6-6 6" />
+        </svg>
+      </button>
+    </Transition>
   </div>
 </template>
 
@@ -261,10 +342,18 @@ const inputPwd = ref(encryptor.usePasswd.value);
 .nav {
   @apply w-full z-header max-md:!transform-none;
   @apply transition-all duration-300;
+  @apply fixed top-0 left-0 right-0;
+  @apply bg-nb-light dark:bg-nb-dark;
+  @apply shadow-sm;
+}
+
+.navHidden {
+  transform: translateY(-100%);
 }
 
 .mobileMenu {
   @apply flex flex-col mt-2 mb-4 px-4 md:hidden;
+  @apply bg-nb-light dark:bg-nb-dark;
 
   a {
     @apply flex items-center font-semibold pl-2 py-2 rounded text-base text-dark-600 dark:text-dark-200 hover:bg-dark-200 dark:hover:bg-dark-700 hover:text-primary-700;
@@ -314,5 +403,43 @@ const inputPwd = ref(encryptor.usePasswd.value);
   a {
     @apply mx-2 text-primary-700 hover:text-primary-500 dark:text-primary-500 hover:dark:text-primary-600 inline-flex items-center gap-1;
   }
+}
+
+.backToTop {
+  @apply fixed bottom-8 right-8 z-header;
+  @apply w-12 h-12 rounded-full;
+  @apply bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600;
+  @apply text-white shadow-lg hover:shadow-xl;
+  @apply flex items-center justify-center;
+  @apply transition-all duration-300;
+  @apply cursor-pointer;
+}
+
+.backToTop:hover {
+  transform: translateY(-4px);
+}
+
+.backToTop:active {
+  transform: translateY(-2px);
+}
+</style>
+
+<style scoped>
+/* 回到顶部按钮过渡动画 */
+.back-to-top-enter-active,
+.back-to-top-leave-active {
+  transition: all 0.3s ease;
+}
+
+.back-to-top-enter-from,
+.back-to-top-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.8);
+}
+
+.back-to-top-enter-to,
+.back-to-top-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 </style>

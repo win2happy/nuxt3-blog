@@ -22,6 +22,21 @@ const searchedList = computed(() => {
   });
 });
 
+// 分页相关
+const pageSize = usePageSize(`manage-${targetTab}-page-size`, 10);
+const currentPage = ref(1);
+
+const paginatedList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return searchedList.value.slice(start, end);
+});
+
+// 当搜索条件变化时，重置到第一页
+watch(searchedList, () => {
+  currentPage.value = 1;
+});
+
 const slots = defineSlots<Record<string, (_: { item: T; dataUrl: string; key: any }) => void>>();
 const header = Object.keys(slots).filter(
   key => !key.startsWith("_")
@@ -135,7 +150,7 @@ const deleteSelect = async () => {
             class="divide-y divide-dark-200 bg-white dark:divide-dark-700 dark:bg-dark-800"
           >
             <tr
-              v-for="item, idx in searchedList"
+              v-for="item, idx in paginatedList"
               :key="item.id"
               :class="twMerge(
                 'transition-colors hover:bg-dark-50 dark:hover:bg-dark-700',
@@ -172,6 +187,15 @@ const deleteSelect = async () => {
           </tbody>
         </table>
       </div>
+
+      <!-- 分页组件 -->
+      <common-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :total-items="searchedList.length"
+        :page-size-options="[5, 10, 20, 50, 100]"
+        class="mt-6"
+      />
     </div>
   </main>
 
