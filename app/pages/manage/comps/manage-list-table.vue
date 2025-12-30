@@ -23,7 +23,7 @@ const searchedList = computed(() => {
 });
 
 // 分页相关
-const pageSize = ref(20);
+const pageSize = ref(10);
 const currentPage = ref(1);
 
 const paginatedList = computed(() => {
@@ -193,7 +193,7 @@ const deleteSelect = async () => {
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :total-items="searchedList.length"
-        :page-size-options="[10, 20, 30, 50, 100]"
+        :page-size-options="[5, 10, 20, 50, 100]"
         class="mt-6"
       />
     </div>

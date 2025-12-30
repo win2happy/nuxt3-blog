@@ -33,7 +33,7 @@ const years = computed(() => {
 const currentItems = computed(() => years.value.find(i => i.year === currentYear.value)?.items.filter(i => i._show) || []);
 
 // 分页相关
-const pageSize = ref(20);
+const pageSize = ref(10);
 const currentPage = ref(1);
 
 const paginatedItems = computed(() => {
@@ -117,7 +117,7 @@ onMounted(() => {
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
           :total-items="currentItems.length"
-          :page-size-options="[10, 20, 30, 50]"
+          :page-size-options="[5, 10, 20, 50, 100]"
           class="mt-8"
         />
       </div>

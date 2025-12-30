@@ -31,7 +31,7 @@ const tabLengthMap = computed(() => {
 });
 
 // 分页相关
-const pageSize = ref(12);
+const pageSize = ref(10);
 const currentPage = ref(1);
 
 const paginatedList = computed(() => {
@@ -128,6 +128,7 @@ watch(currentTab, () => {
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
           :total-items="filteredList.length"
+          :page-size-options="[5, 10, 20, 50, 100]"
           class="mt-8"
         />
       </div>
