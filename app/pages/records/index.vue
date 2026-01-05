@@ -10,6 +10,15 @@ const currentYear = useRouteQuery("year", s => s ? parseInt(s) : undefined);
 
 const recordList = await useListPage<RecordItem>();
 
+const githubToken = useGithubToken();
+const encryptor = useEncryptor();
+
+// 加密文章筛选器
+const showEncryptedOnly = ref(false);
+
+// 判断用户是否已认证（有token或密码正确）
+const isAuthenticated = computed(() => !!githubToken.value || encryptor.passwdCorrect.value);
+
 const years = computed(() => {
   const result: {
     year: number;
@@ -30,7 +39,16 @@ const years = computed(() => {
   return result.sort((a, b) => b.year - a.year);
 });
 
-const currentItems = computed(() => years.value.find(i => i.year === currentYear.value)?.items.filter(i => i._show) || []);
+const currentItems = computed(() => {
+  let items = years.value.find(i => i.year === currentYear.value)?.items.filter(i => i._show) || [];
+
+  // 如果开启了"仅显示加密"过滤器，只显示加密的记录
+  if (showEncryptedOnly.value) {
+    items = items.filter(i => i.encrypt || i.encryptBlocks);
+  }
+
+  return items;
+});
 
 // 分页相关
 const pageSize = usePageSize("records-page-size", 10);
@@ -44,6 +62,11 @@ const paginatedItems = computed(() => {
 
 // 当年份变化时，重置到第一页
 watch(currentYear, () => {
+  currentPage.value = 1;
+});
+
+// 当加密筛选器变化时，重置到第一页
+watch(showEncryptedOnly, () => {
   currentPage.value = 1;
 });
 
@@ -71,6 +94,19 @@ onMounted(() => {
           >
             {{ year.year }}
           </NuxtLink>
+        </div>
+
+        <!-- 加密筛选按钮 - 仅在已认证时显示 -->
+        <div
+          v-if="isAuthenticated"
+          class="mt-6 flex justify-center"
+        >
+          <button
+            :class="twMerge($style.filterButton, showEncryptedOnly && $style.filterButtonActive)"
+            @click="showEncryptedOnly = !showEncryptedOnly"
+          >
+            🔒 {{ $t('show-encrypted-only') }}
+          </button>
         </div>
       </div>
 
@@ -146,6 +182,14 @@ onMounted(() => {
 
 .yearActive {
   @apply !bg-primary-600 text-white font-medium hover:bg-primary-700;
+}
+
+.filterButton {
+  @apply px-5 py-2 rounded-full font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/40 transition-all border-2 border-transparent;
+}
+
+.filterButtonActive {
+  @apply !bg-yellow-500 !text-white dark:!bg-yellow-600 font-bold border-yellow-600 dark:border-yellow-500 shadow-lg;
 }
 
 .lazyImg {
