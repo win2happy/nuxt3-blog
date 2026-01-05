@@ -101,7 +101,7 @@ initViewer(root);
         </div>
       </aside> -->
 
-      <main class="max-w-5xl flex-1 overflow-hidden rounded-lg bg-white p-6 shadow dark:bg-dark-800 max-md:px-2">
+      <main class="max-w-6xl flex-1 overflow-hidden rounded-lg bg-white p-6 shadow dark:bg-dark-800 max-md:px-2">
         <h1 class="mb-4 text-2xl font-medium text-dark-900 dark:text-white">
           <span
             v-if="item.encrypt || item.encryptBlocks"

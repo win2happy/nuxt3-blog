@@ -22,6 +22,8 @@ export type ArticleItem = ItemBase<{
   title: string;
   len: number;
   tags: string[];
+  excerpt?: string; // 文章摘要（分割线前的内容）
+  coverImage?: string; // 封面图片（第一张图片的URL）
 }>;
 
 export type RecordItem = ItemBase<{

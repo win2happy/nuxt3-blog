@@ -19,12 +19,12 @@ initViewer(root);
     ref="root"
     class="container mx-auto grow px-4 py-8 max-md:px-1 max-md:py-4"
   >
-    <article class="mx-auto max-w-4xl overflow-hidden rounded-xl bg-white shadow-sm dark:bg-dark-800">
+    <article class="mx-auto max-w-5xl overflow-hidden rounded-xl bg-white shadow-sm dark:bg-dark-800">
       <div class="px-6 max-md:px-3">
         <!-- Partial encryption notice -->
         <div
           v-if="item.encryptBlocks && item.encryptBlocks.length > 0"
-          class="mt-6 mb-4 rounded-lg border-l-4 border-yellow-500 bg-yellow-50 p-4 dark:bg-yellow-900/20"
+          class="mb-4 mt-6 rounded-lg border-l-4 border-yellow-500 bg-yellow-50 p-4 dark:bg-yellow-900/20"
         >
           <p class="text-sm text-yellow-800 dark:text-yellow-300">
             {{ $t('encrypted-partial-notice') }}
@@ -60,7 +60,7 @@ initViewer(root);
 
     <div
       v-if="item.showComments"
-      class="mx-auto mt-6 max-w-4xl overflow-hidden rounded-xl bg-white p-4 shadow-sm dark:bg-dark-800 max-md:px-2"
+      class="mx-auto mt-6 max-w-5xl overflow-hidden rounded-xl bg-white p-4 shadow-sm dark:bg-dark-800 max-md:px-2"
     >
       <Comments />
     </div>

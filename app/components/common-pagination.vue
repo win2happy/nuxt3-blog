@@ -25,30 +25,50 @@ const totalPages = computed(() => Math.ceil(props.totalItems / props.pageSize));
 const jumpPageInput = ref("");
 
 // 计算显示的页码范围
+// 规则：始终显示第一页和最后一页，当前页的前后各一页，其他用省略号
 const visiblePages = computed(() => {
   const pages: (number | string)[] = [];
   const current = props.currentPage;
   const total = totalPages.value;
 
+  // 调试信息
+  // console.log(`分页调试 - 当前页: ${current}, 总页数: ${total}`);
+
+  // 如果总页数小于等于7，显示所有页码（1 ... 前 当前 后 ... 尾）
   if (total <= 7) {
-    // 总页数少于等于7，显示所有页码
     for (let i = 1; i <= total; i++) {
       pages.push(i);
     }
-  } else {
-    // 总页数大于7，显示省略号
-    if (current <= 3) {
-      // 当前页在前面
-      pages.push(1, 2, 3, 4, "...", total);
-    } else if (current >= total - 2) {
-      // 当前页在后面
-      pages.push(1, "...", total - 3, total - 2, total - 1, total);
-    } else {
-      // 当前页在中间
-      pages.push(1, "...", current - 1, current, current + 1, "...", total);
-    }
+    // console.log('总页数≤7，显示所有页码:', pages);
+    return pages;
   }
 
+  // 始终显示第一页
+  pages.push(1);
+
+  // 计算需要显示的范围：当前页的前后各一页
+  const showStart = current - 1; // 当前页的前一页
+  const showEnd = current + 1; // 当前页的后一页
+
+  // 判断是否需要在第一页后添加省略号
+  if (showStart > 2) {
+    pages.push("...");
+  }
+
+  // 添加当前页附近的页码
+  for (let i = Math.max(2, showStart); i <= Math.min(total - 1, showEnd); i++) {
+    pages.push(i);
+  }
+
+  // 判断是否需要在最后一页前添加省略号
+  if (showEnd < total - 1) {
+    pages.push("...");
+  }
+
+  // 始终显示最后一页
+  pages.push(total);
+
+  // console.log('优化后的页码显示:', pages);
   return pages;
 });
 
@@ -97,7 +117,7 @@ const handleJumpKeypress = (e: KeyboardEvent) => {
       v-if="showPageSizeSelector"
       class="flex items-center gap-2 text-sm text-dark-600 dark:text-dark-300"
     >
-      <span>{{ $t('items-per-page') }}:</span>
+      <span class="whitespace-nowrap">{{ $t('items-per-page') }}:</span>
       <select
         :value="pageSize"
         class="focus:ring-primary-500/20 rounded-lg border border-dark-300 bg-white px-3 py-1.5 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 dark:border-dark-600 dark:bg-dark-800 dark:focus:border-primary-400"
@@ -111,7 +131,7 @@ const handleJumpKeypress = (e: KeyboardEvent) => {
           {{ size }}
         </option>
       </select>
-      <span class="text-dark-500 dark:text-dark-400">
+      <span class="text-dark-500 dark:text-dark-400 max-sm:hidden">
         {{ $t('total-items', [totalItems]) }}
       </span>
     </div>
@@ -119,7 +139,7 @@ const handleJumpKeypress = (e: KeyboardEvent) => {
     <!-- 分页导航 -->
     <nav
       v-if="totalPages > 1"
-      class="flex flex-wrap items-center justify-center gap-2"
+      class="flex items-center justify-center gap-2"
       aria-label="Pagination"
     >
       <!-- 首页 -->
@@ -141,15 +161,15 @@ const handleJumpKeypress = (e: KeyboardEvent) => {
       <button
         :disabled="currentPage === 1"
         :class="[
-          'flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition',
+          'flex items-center justify-center rounded-lg px-2.5 py-2 text-sm font-medium transition',
           currentPage === 1
             ? 'cursor-not-allowed text-dark-300 dark:text-dark-600'
             : 'dark:hover:bg-primary-900/20 text-dark-600 hover:bg-primary-50 hover:text-primary-600 dark:text-dark-300 dark:hover:text-primary-400'
         ]"
+        :title="$t('prev')"
         @click="goToPage(currentPage - 1)"
       >
         <ChevronLeft class="size-4" />
-        <span class="ml-1 max-md:hidden">{{ $t('prev') }}</span>
       </button>
 
       <!-- 页码 -->
@@ -176,14 +196,14 @@ const handleJumpKeypress = (e: KeyboardEvent) => {
       <button
         :disabled="currentPage === totalPages"
         :class="[
-          'flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition',
+          'flex items-center justify-center rounded-lg px-2.5 py-2 text-sm font-medium transition',
           currentPage === totalPages
             ? 'cursor-not-allowed text-dark-300 dark:text-dark-600'
             : 'dark:hover:bg-primary-900/20 text-dark-600 hover:bg-primary-50 hover:text-primary-600 dark:text-dark-300 dark:hover:text-primary-400'
         ]"
+        :title="$t('next')"
         @click="goToPage(currentPage + 1)"
       >
-        <span class="mr-1 max-md:hidden">{{ $t('next') }}</span>
         <ChevronRight class="size-4" />
       </button>
 
@@ -202,9 +222,9 @@ const handleJumpKeypress = (e: KeyboardEvent) => {
         <ChevronsRight class="size-4" />
       </button>
 
-      <!-- 页码跳转 -->
-      <div class="ml-2 flex items-center gap-2 max-md:mt-2 max-md:w-full max-md:justify-center">
-        <span class="text-sm text-dark-600 dark:text-dark-300">{{ $t('go-to') }}</span>
+      <!-- 页码跳转 - 移动端隐藏 -->
+      <div class="ml-2 hidden items-center gap-2 sm:flex">
+        <span class="whitespace-nowrap text-sm text-dark-600 dark:text-dark-300">{{ $t('go-to') }}</span>
         <input
           v-model="jumpPageInput"
           type="number"
@@ -215,7 +235,7 @@ const handleJumpKeypress = (e: KeyboardEvent) => {
           @keypress="handleJumpKeypress"
         >
         <button
-          class="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
+          class="whitespace-nowrap rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
           @click="handleJumpPage"
         >
           {{ $t('go') }}
