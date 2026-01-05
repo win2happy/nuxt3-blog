@@ -59,8 +59,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="container mx-auto max-w-5xl px-4 py-8 max-md:px-1 lg:px-8">
-    <div class="mx-auto mb-10 max-w-3xl">
+  <main class="container mx-auto max-w-6xl px-4 py-8 max-md:px-1 lg:px-8">
+    <div class="mx-auto mb-10 max-w-4xl">
       <h1 class="mb-6 text-center text-2xl font-bold text-dark-900 dark:text-white">
         {{ $t('search-all') }}
       </h1>

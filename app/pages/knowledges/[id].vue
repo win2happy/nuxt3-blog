@@ -18,7 +18,7 @@ initViewer(root);
     ref="root"
     class="container mx-auto grow px-4 py-8 max-md:px-1 max-md:py-2"
   >
-    <article class="mx-auto max-w-4xl overflow-hidden rounded-xl bg-white shadow-sm dark:bg-dark-800">
+    <article class="mx-auto max-w-5xl overflow-hidden rounded-xl bg-white shadow-sm dark:bg-dark-800">
       <div class="relative mt-4 flex w-full justify-center overflow-hidden p-1">
         <the-lazy-img
           :class="$style.img"
@@ -46,7 +46,11 @@ initViewer(root);
             class="mb-2 flex items-center text-2xl font-medium text-dark-900 dark:text-white max-md:mb-0"
           >
             <Link class="mr-2 size-5 text-primary-500" />
-            <span v-if="item.encrypt || item.encryptBlocks" class="mr-2 text-yellow-600 dark:text-yellow-500" :title="$t('encrypted')">🔒</span>
+            <span
+              v-if="item.encrypt || item.encryptBlocks"
+              class="mr-2 text-yellow-600 dark:text-yellow-500"
+              :title="$t('encrypted')"
+            >🔒</span>
             {{ item.title }}
           </a>
           <div class="flex items-center space-x-4 text-sm text-dark-500 dark:text-dark-400">
@@ -70,7 +74,7 @@ initViewer(root);
     </article>
     <div
       v-if="item.showComments"
-      class="mx-auto mt-4 max-w-4xl overflow-hidden rounded-xl bg-white p-4 shadow-sm dark:bg-dark-800 max-md:px-2"
+      class="mx-auto mt-4 max-w-5xl overflow-hidden rounded-xl bg-white p-4 shadow-sm dark:bg-dark-800 max-md:px-2"
     >
       <Comments />
     </div>

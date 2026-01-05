@@ -62,8 +62,8 @@ watch(tags, () => {
 </script>
 
 <template>
-  <main class="relative mx-auto max-w-6xl grow px-4 py-8 max-md:px-3">
-    <div class="relative mx-auto max-w-4xl space-y-10">
+  <main class="relative mx-auto max-w-7xl grow px-4 py-8 max-md:px-3">
+    <div class="relative mx-auto max-w-5xl space-y-10">
       <section
         v-if="articleTagList.size"
         class="rounded-3xl border border-transparent bg-white/70 p-6 shadow-card ring-1 ring-dark-100/70 backdrop-blur-md transition dark:bg-dark-900/50 dark:ring-dark-700"
