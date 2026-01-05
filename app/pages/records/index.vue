@@ -98,6 +98,14 @@ onMounted(() => {
                 :retry="false"
                 :class="$style.lazyImg"
               />
+              <!-- 加密标记 -->
+              <div
+                v-if="item.encrypt || item.encryptBlocks"
+                class="absolute right-2 top-2 flex items-center rounded-full bg-yellow-500/90 px-2.5 py-1 text-xs font-semibold text-white shadow-lg backdrop-blur-sm"
+                :title="$t('encrypted')"
+              >
+                🔒 {{ $t('encrypted') }}
+              </div>
               <div class="absolute inset-x-0 bottom-0 flex items-center bg-gradient-to-t from-black/80 to-transparent px-3 pb-1.5 pt-4 text-xs">
                 <div class="flex items-center text-white">
                   <Clock class="mr-1 size-4" />
