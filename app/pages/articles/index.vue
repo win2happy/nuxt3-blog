@@ -4,6 +4,8 @@ import { useListPage } from "~/utils/nuxt/public/list";
 import { Visitors, Words } from "~/utils/nuxt/public/components";
 import { formatTime } from "~/utils/nuxt/format-time";
 import { useRouteQuery } from "~/utils/hooks/useRouteQuery";
+import { fetchMd } from "~/utils/nuxt/fetch";
+import { extractArticlePreview } from "~/utils/common/extract-preview";
 
 definePageMeta({
   alias: "/"
@@ -18,6 +20,9 @@ const tags = useRouteQuery("tag", (tags) => {
 });
 
 const articlesList = await useListPage<ArticleItem>();
+
+// 存储文章预览信息的响应式对象
+const articlePreviews = reactive<Record<number, { excerpt: string; coverImage: string }>>({});
 
 const articleTagList = new Map<string, number>();
 
@@ -59,6 +64,40 @@ const paginatedList = computed(() => {
 watch(tags, () => {
   currentPage.value = 1;
 });
+
+// 已加载预览的文章ID集合
+const loadedPreviews = new Set<number>();
+
+// 加载文章预览信息（摘要和封面图片）
+const loadArticlePreviews = async () => {
+  const itemsToLoad = paginatedList.value.filter(
+    item => !loadedPreviews.has(item.id) && !articlePreviews[item.id]
+  );
+
+  if (itemsToLoad.length === 0) return;
+
+  // 使用 Promise.all 并行加载
+  await Promise.all(
+    itemsToLoad.map(async (item) => {
+      try {
+        const md = await fetchMd("/articles", String(item.customSlug || item.id));
+        const preview = extractArticlePreview(md);
+
+        // 存储到响应式对象中
+        articlePreviews[item.id] = preview;
+        loadedPreviews.add(item.id);
+      } catch (error) {
+        console.error(`Failed to load preview for article ${item.id}:`, error);
+        // 即使失败也标记为已加载，避免重复请求
+        articlePreviews[item.id] = { excerpt: "", coverImage: "" };
+        loadedPreviews.add(item.id);
+      }
+    })
+  );
+};
+
+// 监听分页列表变化，加载预览信息
+watch(paginatedList, loadArticlePreviews, { immediate: true });
 </script>
 
 <template>
@@ -118,6 +157,37 @@ watch(tags, () => {
                 {{ formatTime(item.time, "date") }}
               </span>
             </div>
+
+            <!-- 文章预览：左侧封面图片，右侧摘要文本 -->
+            <div
+              v-if="articlePreviews[item.id]?.coverImage || articlePreviews[item.id]?.excerpt"
+              class="flex flex-col gap-4 sm:flex-row"
+            >
+              <!-- 封面图片 -->
+              <div
+                v-if="articlePreviews[item.id]?.coverImage"
+                class="shrink-0 overflow-hidden rounded-lg"
+              >
+                <img
+                  :src="articlePreviews[item.id]!.coverImage"
+                  :alt="item.title"
+                  class="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105 sm:h-32 sm:w-48"
+                  loading="lazy"
+                  @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"
+                >
+              </div>
+
+              <!-- 摘要文本 -->
+              <div
+                v-if="articlePreviews[item.id]?.excerpt"
+                class="flex-1 overflow-hidden"
+              >
+                <p class="line-clamp-3 text-sm leading-relaxed text-dark-600 dark:text-dark-300 sm:line-clamp-4">
+                  {{ articlePreviews[item.id]!.excerpt }}
+                </p>
+              </div>
+            </div>
+
             <div
               v-if="item.tags.length"
               class="flex flex-wrap gap-2"
