@@ -69,7 +69,13 @@ const monthColors = [
   "bg-green-500 dark:bg-green-600",
   "bg-slate-700 dark:bg-slate-800",
   "bg-yellow-400 dark:bg-yellow-500",
-  "bg-purple-500 dark:bg-purple-600"
+  "bg-purple-500 dark:bg-purple-600",
+  "bg-blue-500 dark:bg-blue-600",
+  "bg-pink-500 dark:bg-pink-600",
+  "bg-indigo-500 dark:bg-indigo-600",
+  "bg-orange-500 dark:bg-orange-600",
+  "bg-teal-500 dark:bg-teal-600",
+  "bg-red-500 dark:bg-red-600"
 ];
 
 // 圆点边框颜色（空心圆点）
@@ -79,7 +85,13 @@ const monthDotColors = [
   "border-green-500 dark:border-green-600",
   "border-slate-700 dark:border-slate-800",
   "border-yellow-400 dark:border-yellow-500",
-  "border-purple-500 dark:border-purple-600"
+  "border-purple-500 dark:border-purple-600",
+  "border-blue-500 dark:border-blue-600",
+  "border-pink-500 dark:border-pink-600",
+  "border-indigo-500 dark:border-indigo-600",
+  "border-orange-500 dark:border-orange-600",
+  "border-teal-500 dark:border-teal-600",
+  "border-red-500 dark:border-red-600"
 ];
 
 // 卡片背景颜色（与月份标签一致）
@@ -89,7 +101,13 @@ const monthCardBgColors = [
   "bg-green-500 dark:bg-green-600",
   "bg-slate-700 dark:bg-slate-800",
   "bg-yellow-400 dark:bg-yellow-500",
-  "bg-purple-500 dark:bg-purple-600"
+  "bg-purple-500 dark:bg-purple-600",
+  "bg-blue-500 dark:bg-blue-600",
+  "bg-pink-500 dark:bg-pink-600",
+  "bg-indigo-500 dark:bg-indigo-600",
+  "bg-orange-500 dark:bg-orange-600",
+  "bg-teal-500 dark:bg-teal-600",
+  "bg-red-500 dark:bg-red-600"
 ];
 
 // 时间线颜色（与月份标签一致）
@@ -99,7 +117,13 @@ const monthLineColors = [
   "bg-green-500 dark:bg-green-600",
   "bg-slate-700 dark:bg-slate-800",
   "bg-yellow-400 dark:bg-yellow-500",
-  "bg-purple-500 dark:bg-purple-600"
+  "bg-purple-500 dark:bg-purple-600",
+  "bg-blue-500 dark:bg-blue-600",
+  "bg-pink-500 dark:bg-pink-600",
+  "bg-indigo-500 dark:bg-indigo-600",
+  "bg-orange-500 dark:bg-orange-600",
+  "bg-teal-500 dark:bg-teal-600",
+  "bg-red-500 dark:bg-red-600"
 ];
 
 const monthTriangleColors = [
@@ -108,7 +132,13 @@ const monthTriangleColors = [
   "border-r-green-500 dark:border-r-green-600",
   "border-r-slate-700 dark:border-r-slate-800",
   "border-r-yellow-400 dark:border-r-yellow-500",
-  "border-r-purple-500 dark:border-r-purple-600"
+  "border-r-purple-500 dark:border-r-purple-600",
+  "border-r-blue-500 dark:border-r-blue-600",
+  "border-r-pink-500 dark:border-r-pink-600",
+  "border-r-indigo-500 dark:border-r-indigo-600",
+  "border-r-orange-500 dark:border-r-orange-600",
+  "border-r-teal-500 dark:border-r-teal-600",
+  "border-r-red-500 dark:border-r-red-600"
 ];
 
 // 获取月份对应的颜色类
