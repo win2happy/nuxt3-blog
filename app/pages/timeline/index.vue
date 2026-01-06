@@ -166,7 +166,7 @@ const getTriangleColorClass = (month: number) => {
 
 <template>
   <main class="relative mx-auto max-w-7xl grow px-4 py-8 max-md:px-3">
-    <div class="relative mx-auto max-w-5xl">
+    <div class="relative mx-auto max-w-7xl">
       <!-- 页面标题 -->
       <header class="mb-12 text-center">
         <h1 class="mb-3 text-4xl font-bold text-dark-900 dark:text-dark-50">
