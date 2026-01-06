@@ -1,12 +1,147 @@
 <script setup lang="ts">
 import type { ArticleItem } from "~/utils/common/types";
 import { useListPage } from "~/utils/nuxt/public/list";
+import { fetchMd } from "~/utils/nuxt/fetch";
+import { extractArticlePreview } from "~/utils/common/extract-preview";
 
 definePageMeta({
   layout: "default"
 });
 
 const articlesList = await useListPage<ArticleItem>();
+
+// 文章预览信息存储
+const articlePreviews = reactive<Record<number, { excerpt: string; coverImage: string; loading: boolean }>>({});
+const loadedPreviews = new Set<number>();
+
+// 当前悬停的文章ID
+const hoveredArticleId = ref<number | null>(null);
+const hoverTimer = ref<NodeJS.Timeout | null>(null);
+
+// 悬浮窗位置状态
+const popoverPosition = ref<{ top?: string; bottom?: string; left?: string; right?: string }>({});
+
+// 计算悬浮窗位置
+const calculatePopoverPosition = (element: HTMLElement) => {
+  const rect = element.getBoundingClientRect();
+  const popoverWidth = 400;
+  const popoverHeight = 400; // 预估高度
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const padding = 16;
+  const marginTop = 8; // mt-2 的像素值
+
+  const position: { top?: string; bottom?: string; left?: string; right?: string } = {};
+
+  // 水平位置计算
+  // 优先在右侧显示
+  if (rect.right + popoverWidth + padding < viewportWidth) {
+    // 右侧有足够空间 - 显示在卡片右边
+    position.left = `${rect.width + 16}px`;
+  } else if (rect.left - popoverWidth - padding > 0) {
+    // 左侧有足够空间 - 显示在卡片左边
+    position.right = `${rect.width + 16}px`;
+  } else if (rect.left + popoverWidth < viewportWidth) {
+    // 下方对齐左边
+    position.left = "0";
+  } else {
+    // 下方对齐右边
+    position.right = "0";
+  }
+
+  // 垂直位置计算
+  // 优先在下方显示
+  if (rect.bottom + popoverHeight + padding < viewportHeight) {
+    // 下方有足够空间
+    position.top = "100%";
+  } else if (rect.top - popoverHeight - padding > 0) {
+    // 上方有足够空间
+    position.bottom = `calc(100% + ${marginTop}px)`;
+  } else {
+    // 下方空间不够，但仍然显示在下方（会出现滚动条）
+    position.top = "100%";
+  }
+
+  return position;
+};
+
+// 加载单篇文章的预览信息
+const loadArticlePreview = async (articleId: number, customSlug?: string) => {
+  // 如果已经加载过或正在加载，直接返回
+  if (loadedPreviews.has(articleId) || articlePreviews[articleId]?.loading) {
+    return;
+  }
+
+  // 标记为加载中
+  articlePreviews[articleId] = { excerpt: "", coverImage: "", loading: true };
+
+  try {
+    const md = await fetchMd("/articles", String(customSlug || articleId));
+    const preview = extractArticlePreview(md);
+
+    // 存储预览信息
+    articlePreviews[articleId] = {
+      excerpt: preview.excerpt || "暂无摘要",
+      coverImage: preview.coverImage,
+      loading: false
+    };
+    loadedPreviews.add(articleId);
+  } catch (error) {
+    console.error(`Failed to load preview for article ${articleId}:`, error);
+    // 即使失败也标记为已加载，避免重复请求
+    articlePreviews[articleId] = {
+      excerpt: "加载失败",
+      coverImage: "",
+      loading: false
+    };
+    loadedPreviews.add(articleId);
+  }
+};
+
+// 处理鼠标悬停
+const handleMouseEnter = (article: ArticleItem, event: MouseEvent) => {
+  // 清除之前的定时器
+  if (hoverTimer.value) {
+    clearTimeout(hoverTimer.value);
+  }
+
+  // 延迟300ms显示悬浮窗，避免快速划过时闪烁
+  hoverTimer.value = setTimeout(() => {
+    hoveredArticleId.value = article.id;
+
+    // 计算悬浮窗位置
+    const target = event.currentTarget as HTMLElement;
+    if (target) {
+      popoverPosition.value = calculatePopoverPosition(target);
+    }
+
+    // 如果没有预览信息，则加载
+    if (!loadedPreviews.has(article.id)) {
+      loadArticlePreview(article.id, article.customSlug);
+    }
+  }, 300);
+};
+
+// 处理鼠标离开
+const handleMouseLeave = () => {
+  // 清除定时器
+  if (hoverTimer.value) {
+    clearTimeout(hoverTimer.value);
+    hoverTimer.value = null;
+  }
+
+  // 延迟200ms隐藏悬浮窗，给用户移动到悬浮窗的时间
+  setTimeout(() => {
+    hoveredArticleId.value = null;
+  }, 200);
+};
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  if (hoverTimer.value) {
+    clearTimeout(hoverTimer.value);
+  }
+});
 
 // 按年份和月份分组文章
 interface TimelineGroup {
@@ -259,6 +394,8 @@ const getTriangleColorClass = (month: number) => {
                     'inline-block w-auto max-w-2xl break-words rounded-2xl border-0 px-5 py-3.5 shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl max-md:max-w-[calc(100vw-7.5rem)] max-md:px-4 max-md:py-3',
                     getMonthCardBgColorClass(monthGroup.month)
                   ]"
+                  @mouseenter="(e) => handleMouseEnter(article, e)"
+                  @mouseleave="handleMouseLeave"
                 >
                   <h4 class="break-words text-[17px] font-semibold leading-snug text-white transition hover:text-white/90 max-md:text-[15px]">
                     <span
@@ -269,6 +406,112 @@ const getTriangleColorClass = (month: number) => {
                     {{ article.title }}
                   </h4>
                 </NuxtLink>
+
+                <!-- 文章预览悬浮窗 -->
+                <Transition
+                  enter-active-class="transition duration-200 ease-out"
+                  enter-from-class="opacity-0 scale-95"
+                  enter-to-class="opacity-100 scale-100"
+                  leave-active-class="transition duration-150 ease-in"
+                  leave-from-class="opacity-100 scale-100"
+                  leave-to-class="opacity-0 scale-95"
+                >
+                  <div
+                    v-if="hoveredArticleId === article.id && articlePreviews[article.id]"
+                    :style="{
+                      top: popoverPosition.top,
+                      bottom: popoverPosition.bottom,
+                      left: popoverPosition.left,
+                      right: popoverPosition.right
+                    }"
+                    class="absolute z-50 mt-2 w-[400px] max-w-[90vw] rounded-xl border border-dark-200 bg-white p-4 shadow-2xl dark:border-dark-600 dark:bg-dark-800 max-md:hidden"
+                    @mouseenter="hoveredArticleId = article.id"
+                    @mouseleave="handleMouseLeave"
+                  >
+                    <!-- 加载中状态 -->
+                    <div
+                      v-if="articlePreviews[article.id]?.loading"
+                      class="flex items-center justify-center py-8"
+                    >
+                      <div class="size-6 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+                    </div>
+
+                    <!-- 预览内容 -->
+                    <div
+                      v-else
+                      class="space-y-3"
+                    >
+                      <!-- 封面图片 -->
+                      <div
+                        v-if="articlePreviews[article.id]?.coverImage"
+                        class="overflow-hidden rounded-lg"
+                      >
+                        <img
+                          :src="articlePreviews[article.id]?.coverImage"
+                          :alt="article.title"
+                          class="h-40 w-full object-cover"
+                        >
+                      </div>
+
+                      <!-- 文章标题 -->
+                      <h5 class="text-base font-semibold text-dark-900 dark:text-dark-50">
+                        {{ article.title }}
+                      </h5>
+
+                      <!-- 文章摘要 -->
+                      <p
+                        v-if="articlePreviews[article.id]?.excerpt"
+                        class="line-clamp-4 text-sm leading-relaxed text-dark-600 dark:text-dark-300"
+                      >
+                        {{ articlePreviews[article.id]?.excerpt }}
+                      </p>
+
+                      <!-- 底部信息 -->
+                      <div class="flex items-center justify-between border-t border-dark-100 pt-3 text-xs text-dark-400 dark:border-dark-700 dark:text-dark-500">
+                        <span>{{ new Date(article.time).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
+                        <span
+                          v-if="article.len"
+                          class="flex items-center gap-1"
+                        >
+                          <svg
+                            class="size-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                            />
+                          </svg>
+                          {{ Math.ceil(article.len / 400) }} {{ $t('min-read') }}
+                        </span>
+                      </div>
+
+                      <!-- 标签 -->
+                      <div
+                        v-if="article.tags && article.tags.length"
+                        class="flex flex-wrap gap-1.5"
+                      >
+                        <span
+                          v-for="tag in article.tags.slice(0, 3)"
+                          :key="tag"
+                          class="dark:bg-primary-900/30 rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-600 dark:text-primary-400"
+                        >
+                          {{ tag }}
+                        </span>
+                        <span
+                          v-if="article.tags.length > 3"
+                          class="rounded-full bg-dark-100 px-2 py-0.5 text-xs text-dark-500 dark:bg-dark-700 dark:text-dark-400"
+                        >
+                          +{{ article.tags.length - 3 }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Transition>
               </div>
             </div>
           </div>

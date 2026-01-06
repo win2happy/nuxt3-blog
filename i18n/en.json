@@ -203,5 +203,6 @@
   "month": "Month",
   "year": "Year",
   "day": "Day",
-  "start": "Start"
+  "start": "Start",
+  "min-read": "min read"
 }
