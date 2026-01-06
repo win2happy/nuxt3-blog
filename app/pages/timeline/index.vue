@@ -256,11 +256,11 @@ const getTriangleColorClass = (month: number) => {
                 <NuxtLink
                   :to="`/articles/${article.customSlug || article.id}`"
                   :class="[
-                    'inline-block max-w-2xl rounded-2xl border-0 px-5 py-3.5 shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl max-md:max-w-md max-md:px-4 max-md:py-3',
+                    'inline-block w-auto max-w-2xl break-words rounded-2xl border-0 px-5 py-3.5 shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl max-md:max-w-[calc(100vw-7rem)] max-md:px-4 max-md:py-3',
                     getMonthCardBgColorClass(monthGroup.month)
                   ]"
                 >
-                  <h4 class="text-[17px] font-semibold leading-snug text-white transition hover:text-white/90 max-md:text-[15px]">
+                  <h4 class="break-words text-[17px] font-semibold leading-snug text-white transition hover:text-white/90 max-md:text-[15px]">
                     <span
                       v-if="article.encrypt || article.encryptBlocks"
                       class="mr-1.5 text-yellow-300"
