@@ -9,6 +9,15 @@ const currentTab = useRouteQuery("type");
 
 const knowledgeList = await useListPage<KnowledgeItem>();
 
+const githubToken = useGithubToken();
+const encryptor = useEncryptor();
+
+// 加密文章筛选器
+const showEncryptedOnly = ref(false);
+
+// 判断用户是否已认证（有token或密码正确）
+const isAuthenticated = computed(() => !!githubToken.value || encryptor.passwdCorrect.value);
+
 const isAll = computed(
   () => !(KnowledgeTabs as string[]).includes(currentTab.value)
 );
@@ -19,7 +28,14 @@ const tabs = computed(() => [
 ]);
 
 const filteredList = computed(() => {
-  return (isAll.value ? knowledgeList : knowledgeList.filter(item => item.type === currentTab.value)).filter(i => !!i._show);
+  let items = (isAll.value ? knowledgeList : knowledgeList.filter(item => item.type === currentTab.value)).filter(i => !!i._show);
+
+  // 如果开启了"仅显示加密"过滤器，只显示加密的文化
+  if (showEncryptedOnly.value) {
+    items = items.filter(i => i.encrypt || i.encryptBlocks);
+  }
+
+  return items;
 });
 
 const tabLengthMap = computed(() => {
@@ -42,6 +58,11 @@ const paginatedList = computed(() => {
 
 // 当筛选条件变化时，重置到第一页
 watch(currentTab, () => {
+  currentPage.value = 1;
+});
+
+// 当加密筛选器变化时，重置到第一页
+watch(showEncryptedOnly, () => {
   currentPage.value = 1;
 });
 </script>
@@ -73,6 +94,19 @@ watch(currentTab, () => {
             </client-only>
           </NuxtLink>
         </nav>
+      </div>
+
+      <!-- 加密筛选按钮 - 仅在已认证时显示 -->
+      <div
+        v-if="isAuthenticated"
+        class="mb-8 flex justify-center"
+      >
+        <button
+          :class="twMerge($style.filterButton, showEncryptedOnly && $style.filterButtonActive)"
+          @click="showEncryptedOnly = !showEncryptedOnly"
+        >
+          🔒 {{ $t('show-encrypted-only') }}
+        </button>
       </div>
 
       <div
@@ -142,3 +176,13 @@ watch(currentTab, () => {
     </div>
   </main>
 </template>
+
+<style module>
+.filterButton {
+  @apply px-5 py-2 rounded-full font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/40 transition-all border-2 border-transparent;
+}
+
+.filterButtonActive {
+  @apply !bg-yellow-500 !text-white dark:!bg-yellow-600 font-bold border-yellow-600 dark:border-yellow-500 shadow-lg;
+}
+</style>

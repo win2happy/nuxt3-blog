@@ -6,6 +6,7 @@
   "/articles": "Articles",
   "articles-num": "articles",
   "avatar": "Avatar",
+  "/timeline": "Timeline",
   "book": "Books",
   "cancel": "Cancel",
   "click-to-retry": "Click to Retry",
@@ -132,6 +133,9 @@
   "error-feedback": "Provide Feedback",
   "search-all": "Search All",
   "search-all-placeholder": "Enter text to search...",
+  "search": "Search",
+  "show-encrypted-only": "Show Encrypted Only",
+  "show-more-sticker": "Show More Stickers",
   "stage": "Stage",
   "staged": "Staged",
   "staged-items": "Staged Items",
@@ -192,5 +196,12 @@
   "upgrade-step-1": "Go to your repository website",
   "upgrade-step-2": "Click \"Sync fork\" → Click \"Update branch\"",
   "need-verification": "Verification Required",
-  "please-verify-token": "Please verify your GitHub Token to access the management interface"
+  "please-verify-token": "Please verify your GitHub Token to access the management interface",
+  "timeline": "Timeline",
+  "timeline-description": "View the publication history of all articles in chronological order",
+  "total": "Total",
+  "month": "Month",
+  "year": "Year",
+  "day": "Day",
+  "start": "Start"
 }
