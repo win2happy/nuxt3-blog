@@ -69,7 +69,13 @@ const monthColors = [
   "bg-green-500 dark:bg-green-600",
   "bg-slate-700 dark:bg-slate-800",
   "bg-yellow-400 dark:bg-yellow-500",
-  "bg-purple-500 dark:bg-purple-600"
+  "bg-purple-500 dark:bg-purple-600",
+  "bg-blue-500 dark:bg-blue-600",
+  "bg-pink-500 dark:bg-pink-600",
+  "bg-indigo-500 dark:bg-indigo-600",
+  "bg-orange-500 dark:bg-orange-600",
+  "bg-teal-500 dark:bg-teal-600",
+  "bg-red-500 dark:bg-red-600"
 ];
 
 // 圆点边框颜色（空心圆点）
@@ -79,7 +85,13 @@ const monthDotColors = [
   "border-green-500 dark:border-green-600",
   "border-slate-700 dark:border-slate-800",
   "border-yellow-400 dark:border-yellow-500",
-  "border-purple-500 dark:border-purple-600"
+  "border-purple-500 dark:border-purple-600",
+  "border-blue-500 dark:border-blue-600",
+  "border-pink-500 dark:border-pink-600",
+  "border-indigo-500 dark:border-indigo-600",
+  "border-orange-500 dark:border-orange-600",
+  "border-teal-500 dark:border-teal-600",
+  "border-red-500 dark:border-red-600"
 ];
 
 // 卡片背景颜色（与月份标签一致）
@@ -89,7 +101,13 @@ const monthCardBgColors = [
   "bg-green-500 dark:bg-green-600",
   "bg-slate-700 dark:bg-slate-800",
   "bg-yellow-400 dark:bg-yellow-500",
-  "bg-purple-500 dark:bg-purple-600"
+  "bg-purple-500 dark:bg-purple-600",
+  "bg-blue-500 dark:bg-blue-600",
+  "bg-pink-500 dark:bg-pink-600",
+  "bg-indigo-500 dark:bg-indigo-600",
+  "bg-orange-500 dark:bg-orange-600",
+  "bg-teal-500 dark:bg-teal-600",
+  "bg-red-500 dark:bg-red-600"
 ];
 
 // 时间线颜色（与月份标签一致）
@@ -99,7 +117,13 @@ const monthLineColors = [
   "bg-green-500 dark:bg-green-600",
   "bg-slate-700 dark:bg-slate-800",
   "bg-yellow-400 dark:bg-yellow-500",
-  "bg-purple-500 dark:bg-purple-600"
+  "bg-purple-500 dark:bg-purple-600",
+  "bg-blue-500 dark:bg-blue-600",
+  "bg-pink-500 dark:bg-pink-600",
+  "bg-indigo-500 dark:bg-indigo-600",
+  "bg-orange-500 dark:bg-orange-600",
+  "bg-teal-500 dark:bg-teal-600",
+  "bg-red-500 dark:bg-red-600"
 ];
 
 const monthTriangleColors = [
@@ -108,28 +132,35 @@ const monthTriangleColors = [
   "border-r-green-500 dark:border-r-green-600",
   "border-r-slate-700 dark:border-r-slate-800",
   "border-r-yellow-400 dark:border-r-yellow-500",
-  "border-r-purple-500 dark:border-r-purple-600"
+  "border-r-purple-500 dark:border-r-purple-600",
+  "border-r-blue-500 dark:border-r-blue-600",
+  "border-r-pink-500 dark:border-r-pink-600",
+  "border-r-indigo-500 dark:border-r-indigo-600",
+  "border-r-orange-500 dark:border-r-orange-600",
+  "border-r-teal-500 dark:border-r-teal-600",
+  "border-r-red-500 dark:border-r-red-600"
 ];
 
 // 获取月份对应的颜色类
-const getMonthColorClass = (monthIndex: number) => {
-  return monthColors[monthIndex % monthColors.length];
+const getMonthColorClass = (month: number) => {
+  // 使用实际月份（1-12）减1作为索引
+  return monthColors[(month - 1) % monthColors.length];
 };
 
-const getMonthDotColorClass = (monthIndex: number) => {
-  return monthDotColors[monthIndex % monthDotColors.length];
+const getMonthDotColorClass = (month: number) => {
+  return monthDotColors[(month - 1) % monthDotColors.length];
 };
 
-const getMonthCardBgColorClass = (monthIndex: number) => {
-  return monthCardBgColors[monthIndex % monthCardBgColors.length];
+const getMonthCardBgColorClass = (month: number) => {
+  return monthCardBgColors[(month - 1) % monthCardBgColors.length];
 };
 
-const getMonthLineColorClass = (monthIndex: number) => {
-  return monthLineColors[monthIndex % monthLineColors.length];
+const getMonthLineColorClass = (month: number) => {
+  return monthLineColors[(month - 1) % monthLineColors.length];
 };
 
-const getTriangleColorClass = (monthIndex: number) => {
-  return monthTriangleColors[monthIndex % monthTriangleColors.length];
+const getTriangleColorClass = (month: number) => {
+  return monthTriangleColors[(month - 1) % monthTriangleColors.length];
 };
 </script>
 
@@ -158,7 +189,7 @@ const getTriangleColorClass = (monthIndex: number) => {
           class="relative"
         >
           <div
-            v-for="(monthGroup, monthIndex) in yearGroup.months"
+            v-for="monthGroup in yearGroup.months"
             :key="`${yearGroup.year}-${monthGroup.month}`"
             class="relative mb-6"
           >
@@ -166,7 +197,7 @@ const getTriangleColorClass = (monthIndex: number) => {
             <div
               :class="[
                 'absolute left-0 top-0 w-[3px] max-md:w-[2px]',
-                getMonthLineColorClass(monthIndex)
+                getMonthLineColorClass(monthGroup.month)
               ]"
               :style="{ height: 'calc(100% + 24px)' }"
             />
@@ -176,7 +207,7 @@ const getTriangleColorClass = (monthIndex: number) => {
               <div
                 :class="[
                   'absolute left-[-52px] z-20 rounded-md px-4 py-2 text-center text-white shadow-lg max-md:left-[-42px] max-md:px-3 max-md:py-1.5',
-                  getMonthColorClass(monthIndex)
+                  getMonthColorClass(monthGroup.month)
                 ]"
               >
                 <div class="whitespace-nowrap text-sm font-bold max-md:text-xs">
@@ -206,7 +237,7 @@ const getTriangleColorClass = (monthIndex: number) => {
                 <div
                   :class="[
                     'size-3.5 rounded-full border-[3px] bg-white shadow-md dark:bg-dark-900 max-md:size-3 max-md:border-2',
-                    getMonthDotColorClass(monthIndex)
+                    getMonthDotColorClass(monthGroup.month)
                   ]"
                 />
               </div>
@@ -218,7 +249,7 @@ const getTriangleColorClass = (monthIndex: number) => {
                   :class="[
                     'absolute -left-2 top-[13px]',
                     'size-0 border-y-[6px] border-r-8 border-y-transparent',
-                    getTriangleColorClass(monthIndex)
+                    getTriangleColorClass(monthGroup.month)
                   ]"
                 />
 
@@ -226,7 +257,7 @@ const getTriangleColorClass = (monthIndex: number) => {
                   :to="`/articles/${article.customSlug || article.id}`"
                   :class="[
                     'block rounded-lg border-0 p-5 transition-all duration-200 hover:shadow-lg max-md:p-4',
-                    getMonthCardBgColorClass(monthIndex)
+                    getMonthCardBgColorClass(monthGroup.month)
                   ]"
                 >
                   <h4 class="text-[17px] font-semibold leading-snug text-white transition hover:text-white/90 max-md:text-[15px]">
