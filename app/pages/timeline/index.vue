@@ -243,12 +243,12 @@ const getTriangleColorClass = (month: number) => {
               </div>
 
               <!-- 内容卡片 -->
-              <div class="relative ml-6 flex-1 max-md:ml-4">
-                <!-- 简洁的三角指示器 -->
+              <div class="relative ml-6 max-md:ml-4">
+                <!-- 对话框样式的三角指示器 -->
                 <div
                   :class="[
-                    'absolute -left-2 top-[13px]',
-                    'size-0 border-y-[6px] border-r-8 border-y-transparent',
+                    'absolute -left-3 top-[15px]',
+                    'size-0 border-y-8 border-r-[12px] border-y-transparent',
                     getTriangleColorClass(monthGroup.month)
                   ]"
                 />
@@ -256,7 +256,7 @@ const getTriangleColorClass = (month: number) => {
                 <NuxtLink
                   :to="`/articles/${article.customSlug || article.id}`"
                   :class="[
-                    'block rounded-lg border-0 p-5 transition-all duration-200 hover:shadow-lg max-md:p-4',
+                    'inline-block max-w-2xl rounded-2xl border-0 px-5 py-3.5 shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl max-md:max-w-md max-md:px-4 max-md:py-3',
                     getMonthCardBgColorClass(monthGroup.month)
                   ]"
                 >
