@@ -6,6 +6,7 @@
   "/articles": "文章",
   "articles-num": "篇",
   "avatar": "头像",
+  "/timeline": "时间轴",
   "book": "书籍",
   "cancel": "取消",
   "click-to-retry": "点击重试",
@@ -196,5 +197,12 @@
   "upgrade-step-1": "进入你的仓库网站",
   "upgrade-step-2": "点击 \"Sync fork\" → 点击 \"Update branch\"",
   "need-verification": "需要验证身份",
-  "please-verify-token": "请先验证 GitHub Token 以访问管理界面"
+  "please-verify-token": "请先验证 GitHub Token 以访问管理界面",
+  "timeline": "时间轴",
+  "timeline-description": "按时间顺序查看所有文章的发布历史",
+  "total": "共",
+  "month": "月",
+  "year": "年",
+  "day": "日",
+  "start": "开始"
 }

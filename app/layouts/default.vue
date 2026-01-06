@@ -132,6 +132,9 @@ const inputPwd = ref(encryptor.usePasswd.value);
           >
             {{ $t(item) }}
           </NuxtLink>
+          <NuxtLink to="/timeline">
+            {{ $t('/timeline') }}
+          </NuxtLink>
         </div>
         <div class="flex items-center gap-4 max-md:gap-2 md:justify-end md:justify-self-end">
           <NuxtLink
@@ -218,6 +221,9 @@ const inputPwd = ref(encryptor.usePasswd.value);
           :to="item"
         >
           {{ $t(item) }}
+        </NuxtLink>
+        <NuxtLink to="/timeline">
+          {{ $t('/timeline') }}
         </NuxtLink>
         <NuxtLink
           v-if="algoliaEnabled"
