@@ -142,24 +142,25 @@ const monthTriangleColors = [
 ];
 
 // 获取月份对应的颜色类
-const getMonthColorClass = (monthIndex: number) => {
-  return monthColors[monthIndex % monthColors.length];
+const getMonthColorClass = (month: number) => {
+  // 使用实际月份（1-12）减1作为索引
+  return monthColors[(month - 1) % monthColors.length];
 };
 
-const getMonthDotColorClass = (monthIndex: number) => {
-  return monthDotColors[monthIndex % monthDotColors.length];
+const getMonthDotColorClass = (month: number) => {
+  return monthDotColors[(month - 1) % monthDotColors.length];
 };
 
-const getMonthCardBgColorClass = (monthIndex: number) => {
-  return monthCardBgColors[monthIndex % monthCardBgColors.length];
+const getMonthCardBgColorClass = (month: number) => {
+  return monthCardBgColors[(month - 1) % monthCardBgColors.length];
 };
 
-const getMonthLineColorClass = (monthIndex: number) => {
-  return monthLineColors[monthIndex % monthLineColors.length];
+const getMonthLineColorClass = (month: number) => {
+  return monthLineColors[(month - 1) % monthLineColors.length];
 };
 
-const getTriangleColorClass = (monthIndex: number) => {
-  return monthTriangleColors[monthIndex % monthTriangleColors.length];
+const getTriangleColorClass = (month: number) => {
+  return monthTriangleColors[(month - 1) % monthTriangleColors.length];
 };
 </script>
 
@@ -188,7 +189,7 @@ const getTriangleColorClass = (monthIndex: number) => {
           class="relative"
         >
           <div
-            v-for="(monthGroup, monthIndex) in yearGroup.months"
+            v-for="monthGroup in yearGroup.months"
             :key="`${yearGroup.year}-${monthGroup.month}`"
             class="relative mb-6"
           >
@@ -196,7 +197,7 @@ const getTriangleColorClass = (monthIndex: number) => {
             <div
               :class="[
                 'absolute left-0 top-0 w-[3px] max-md:w-[2px]',
-                getMonthLineColorClass(monthIndex)
+                getMonthLineColorClass(monthGroup.month)
               ]"
               :style="{ height: 'calc(100% + 24px)' }"
             />
@@ -206,7 +207,7 @@ const getTriangleColorClass = (monthIndex: number) => {
               <div
                 :class="[
                   'absolute left-[-52px] z-20 rounded-md px-4 py-2 text-center text-white shadow-lg max-md:left-[-42px] max-md:px-3 max-md:py-1.5',
-                  getMonthColorClass(monthIndex)
+                  getMonthColorClass(monthGroup.month)
                 ]"
               >
                 <div class="whitespace-nowrap text-sm font-bold max-md:text-xs">
@@ -236,7 +237,7 @@ const getTriangleColorClass = (monthIndex: number) => {
                 <div
                   :class="[
                     'size-3.5 rounded-full border-[3px] bg-white shadow-md dark:bg-dark-900 max-md:size-3 max-md:border-2',
-                    getMonthDotColorClass(monthIndex)
+                    getMonthDotColorClass(monthGroup.month)
                   ]"
                 />
               </div>
@@ -248,7 +249,7 @@ const getTriangleColorClass = (monthIndex: number) => {
                   :class="[
                     'absolute -left-2 top-[13px]',
                     'size-0 border-y-[6px] border-r-8 border-y-transparent',
-                    getTriangleColorClass(monthIndex)
+                    getTriangleColorClass(monthGroup.month)
                   ]"
                 />
 
@@ -256,7 +257,7 @@ const getTriangleColorClass = (monthIndex: number) => {
                   :to="`/articles/${article.customSlug || article.id}`"
                   :class="[
                     'block rounded-lg border-0 p-5 transition-all duration-200 hover:shadow-lg max-md:p-4',
-                    getMonthCardBgColorClass(monthIndex)
+                    getMonthCardBgColorClass(monthGroup.month)
                   ]"
                 >
                   <h4 class="text-[17px] font-semibold leading-snug text-white transition hover:text-white/90 max-md:text-[15px]">
