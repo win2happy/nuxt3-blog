@@ -27,6 +27,9 @@ const encryptor = useEncryptor();
 // 加密文章筛选器
 const showEncryptedOnly = ref(false);
 
+// 标签折叠状态
+const showTags = ref(true);
+
 // 判断用户是否已认证（有token或密码正确）
 const isAuthenticated = computed(() => !!githubToken.value || encryptor.passwdCorrect.value);
 
@@ -371,26 +374,81 @@ const getMonthColorClass = (month: number) => {
         </div>
       </section>
 
+      <!-- 标签筛选区域 -->
       <section
         v-if="articleTagList.size"
-        class="rounded-3xl border border-transparent bg-white/70 p-6 shadow-card ring-1 ring-dark-100/70 backdrop-blur-md transition dark:bg-dark-900/50 dark:ring-dark-700"
       >
-        <header class="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-          <h2 class="text-sm font-medium text-dark-700 dark:text-dark-200 max-md:text-xs">
-            {{ $t('tags') }}
-          </h2>
-          <span class="text-[13px] text-dark-400 dark:text-dark-400">{{ filteredList.length }} {{ $t('articles-num') }}</span>
-        </header>
-        <div class="flex flex-wrap gap-2">
-          <the-tag
-            v-for="[tag, count] in articleTagList"
-            :key="tag"
-            :num="count"
-            :active="tags.includes(tag)"
-            @click="toggleTags(tag)"
+        <div class="rounded-3xl border border-dark-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-800">
+          <!-- 标签切换按钮 -->
+          <button
+            class="flex w-full items-center justify-between gap-2 px-6 py-4 transition hover:bg-dark-50 dark:hover:bg-dark-700/50"
+            @click="showTags = !showTags"
           >
-            {{ tag }}
-          </the-tag>
+            <div class="flex items-center gap-3">
+              <svg
+                class="size-5 text-primary-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                />
+              </svg>
+              <span class="text-sm font-semibold text-dark-900 dark:text-dark-50">{{ $t('tags') }}</span>
+              <span class="dark:bg-primary-900/30 rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-700 dark:text-primary-400">
+                {{ articleTagList.size }} 个标签 · {{ filteredList.length }} {{ $t('articles-num') }}
+              </span>
+            </div>
+            <svg
+              :class="[
+                'size-5 text-dark-400 transition-transform duration-200',
+                showTags ? 'rotate-180' : 'rotate-0'
+              ]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <!-- 展开的标签内容 -->
+          <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="max-h-0 opacity-0"
+            enter-to-class="max-h-[500px] opacity-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="max-h-[500px] opacity-100"
+            leave-to-class="max-h-0 opacity-0"
+          >
+            <div
+              v-if="showTags"
+              class="max-h-[500px] overflow-y-auto border-t border-dark-100 dark:border-dark-700"
+            >
+              <div class="space-y-3 p-5">
+                <div class="flex flex-wrap gap-2">
+                  <the-tag
+                    v-for="[tag, count] in articleTagList"
+                    :key="tag"
+                    :num="count"
+                    :active="tags.includes(tag)"
+                    @click="toggleTags(tag)"
+                  >
+                    {{ tag }}
+                  </the-tag>
+                </div>
+              </div>
+            </div>
+          </Transition>
         </div>
       </section>
 
