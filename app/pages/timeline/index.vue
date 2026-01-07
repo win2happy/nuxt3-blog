@@ -98,6 +98,15 @@ const loadArticlePreview = async (articleId: number, customSlug?: string) => {
   }
 };
 
+// 批量预加载文章预览信息
+const loadArticlePreviewsBatch = (articles: ArticleItem[]) => {
+  articles.forEach((article) => {
+    if (!loadedPreviews.has(article.id)) {
+      loadArticlePreview(article.id, article.customSlug);
+    }
+  });
+};
+
 // 处理鼠标悬停
 const handleMouseEnter = (article: ArticleItem, event: MouseEvent) => {
   // 清除之前的定时器
@@ -311,7 +320,52 @@ if (import.meta.client) {
     const savedMode = localStorage.getItem(VIEW_MODE_KEY) as ViewMode | null;
     if (savedMode && ["classic", "compact", "card", "calendar"].includes(savedMode)) {
       viewMode.value = savedMode;
+
+      // 如果保存的模式是卡片模式，预加载图片
+      if (savedMode === "card") {
+        nextTick(() => {
+          loadArticlePreviewsBatch(articlesList.slice(0, 20));
+        });
+      }
     }
+
+    // 监听卡片模式的滚动事件，懒加载更多预览
+    let scrollHandler: (() => void) | null = null;
+
+    watch(viewMode, (newMode) => {
+      // 移除旧的滚动监听器
+      if (scrollHandler) {
+        window.removeEventListener("scroll", scrollHandler);
+        scrollHandler = null;
+      }
+
+      // 如果是卡片模式，添加滚动监听器
+      if (newMode === "card") {
+        scrollHandler = () => {
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const windowHeight = window.innerHeight;
+          const documentHeight = document.documentElement.scrollHeight;
+
+          // 当滚动到距离底部 500px 时，加载更多预览
+          if (scrollTop + windowHeight >= documentHeight - 500) {
+            // 找到下一批未加载的文章
+            const nextBatch = articlesList.filter(article => !loadedPreviews.has(article.id)).slice(0, 10);
+            if (nextBatch.length > 0) {
+              loadArticlePreviewsBatch(nextBatch);
+            }
+          }
+        };
+
+        window.addEventListener("scroll", scrollHandler, { passive: true });
+      }
+    }, { immediate: true });
+
+    // 组件卸载时清理
+    onUnmounted(() => {
+      if (scrollHandler) {
+        window.removeEventListener("scroll", scrollHandler);
+      }
+    });
   });
 }
 
@@ -321,14 +375,10 @@ const switchViewMode = (mode: ViewMode) => {
     localStorage.setItem(VIEW_MODE_KEY, mode);
   }
 
-  // 切换到卡片模式时，预加载前10篇文章的预览
+  // 切换到卡片模式时，预加载前20篇文章的预览
   if (mode === "card") {
     nextTick(() => {
-      articlesList.slice(0, 10).forEach((article) => {
-        if (!loadedPreviews.has(article.id)) {
-          loadArticlePreview(article.id, article.customSlug);
-        }
-      });
+      loadArticlePreviewsBatch(articlesList.slice(0, 20));
     });
   }
 };
@@ -341,13 +391,84 @@ interface CalendarDay {
   day: number;
   articles: ArticleItem[];
   isCurrentMonth: boolean;
+  lunarDay?: string;
+  lunarMonth?: string;
+  festivals?: string[];
+  solarTerms?: string;
 }
 
 const selectedMonth = ref(new Date().getMonth());
 const selectedYear = ref(new Date().getFullYear());
 
+// 获取日期的农历和节日信息
+const getLunarInfo = async (date: Date) => {
+  // 只在客户端执行
+  if (!import.meta.client) {
+    return {
+      lunarDay: undefined,
+      lunarMonth: undefined,
+      festivals: undefined,
+      solarTerms: undefined
+    };
+  }
+
+  try {
+    // 动态导入 lunar-javascript
+    const { Solar, HolidayUtil } = await import("lunar-javascript");
+
+    const solar = Solar.fromDate(date);
+    const lunar = solar.getLunar();
+
+    // 获取农历日期
+    const lunarDay = lunar.getDayInChinese();
+    const lunarMonth = lunar.getMonthInChinese();
+
+    // 获取节日
+    const festivals: string[] = [];
+
+    // 公历节日 - 使用HolidayUtil
+    const holiday = HolidayUtil.getHoliday(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    if (holiday && holiday.getName) {
+      festivals.push(holiday.getName());
+    }
+
+    // 农历节日
+    const lunarFestivals = lunar.getFestivals();
+    if (lunarFestivals && lunarFestivals.length > 0) {
+      festivals.push(...lunarFestivals);
+    }
+
+    // 公历其他节日
+    const solarFestivals = solar.getFestivals();
+    if (solarFestivals && solarFestivals.length > 0) {
+      festivals.push(...solarFestivals);
+    }
+
+    // 节气 - 使用lunar的getJieQi方法
+    const solarTerms = lunar.getJieQi();
+
+    return {
+      lunarDay,
+      lunarMonth,
+      festivals: festivals.length > 0 ? festivals : undefined,
+      solarTerms: solarTerms || undefined
+    };
+  } catch (error) {
+    console.error("获取农历信息失败:", error);
+    return {
+      lunarDay: undefined,
+      lunarMonth: undefined,
+      festivals: undefined,
+      solarTerms: undefined
+    };
+  }
+};
+
 // 获取日历数据
-const calendarData = computed(() => {
+const calendarData = ref<CalendarDay[]>([]);
+
+// 生成基础日历数据（不含农历信息）
+const generateBaseCalendarData = () => {
   const year = selectedYear.value;
   const month = selectedMonth.value;
 
@@ -414,7 +535,34 @@ const calendarData = computed(() => {
   }
 
   return days;
-});
+};
+
+// 异步加载农历信息
+const loadLunarInfo = async () => {
+  const baseDays = generateBaseCalendarData();
+
+  // 并行加载所有日期的农历信息
+  const daysWithLunar = await Promise.all(
+    baseDays.map(async (day) => {
+      const lunarInfo = await getLunarInfo(day.date);
+      return {
+        ...day,
+        ...lunarInfo
+      };
+    })
+  );
+
+  calendarData.value = daysWithLunar;
+};
+
+// 监听月份变化，重新加载农历信息
+watch([selectedYear, selectedMonth], () => {
+  if (import.meta.client) {
+    loadLunarInfo();
+  } else {
+    calendarData.value = generateBaseCalendarData();
+  }
+}, { immediate: true });
 
 // 切换月份
 const changeMonth = (offset: number) => {
@@ -451,6 +599,49 @@ const toggleMonthCollapse = (year: number, month: number) => {
 // 检查月份是否折叠
 const isMonthCollapsed = (year: number, month: number) => {
   return collapsedMonths.value.has(`${year}-${month}`);
+};
+
+// 快速导航相关
+const showYearNav = ref(false);
+
+// 获取年份月份导航数据
+const yearMonthNav = computed(() => {
+  const navData: {
+    year: number;
+    months: { month: number; count: number }[];
+  }[] = [];
+
+  timelineData.value.forEach((yearGroup) => {
+    const months = yearGroup.months.map(monthGroup => ({
+      month: monthGroup.month,
+      count: monthGroup.articles.length
+    }));
+    navData.push({
+      year: yearGroup.year,
+      months
+    });
+  });
+
+  return navData;
+});
+
+// 滚动到指定年月
+const scrollToYearMonth = (year: number, month: number) => {
+  const elementId = `timeline-${year}-${month}`;
+  const element = document.getElementById(elementId);
+
+  if (element) {
+    const offset = 100; // 顶部偏移量，避免被固定导航遮挡
+    const elementPosition = element.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth"
+    });
+
+    showYearNav.value = false;
+  }
 };
 </script>
 
@@ -580,6 +771,126 @@ const isMonthCollapsed = (year: number, month: number) => {
         </div>
       </header>
 
+      <!-- 年份/月份快速导航 -->
+      <div
+        v-if="(viewMode === 'classic' || viewMode === 'compact') && yearMonthNav.length > 0"
+        class="sticky top-0 z-30 mb-6"
+      >
+        <div class="rounded-xl border border-dark-200 bg-white/95 shadow-sm backdrop-blur-sm dark:border-dark-700 dark:bg-dark-800/95">
+          <!-- 导航切换按钮 -->
+          <button
+            class="flex w-full items-center justify-between gap-2 px-4 py-3 transition hover:bg-dark-50 dark:hover:bg-dark-700/50"
+            @click="showYearNav = !showYearNav"
+          >
+            <div class="flex items-center gap-2">
+              <svg
+                class="size-5 text-primary-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              <span class="text-sm font-semibold text-dark-900 dark:text-dark-50">快速导航</span>
+              <span class="text-xs text-dark-400 dark:text-dark-500">
+                {{ yearMonthNav.length }} 年
+              </span>
+            </div>
+            <svg
+              :class="[
+                'size-5 text-dark-400 transition-transform duration-200',
+                showYearNav ? 'rotate-180' : 'rotate-0'
+              ]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <!-- 展开的导航内容 -->
+          <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="max-h-0 opacity-0"
+            enter-to-class="max-h-[500px] opacity-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="max-h-[500px] opacity-100"
+            leave-to-class="max-h-0 opacity-0"
+          >
+            <div
+              v-if="showYearNav"
+              class="max-h-[500px] overflow-y-auto border-t border-dark-100 dark:border-dark-700"
+            >
+              <div class="space-y-3 p-4">
+                <div
+                  v-for="yearData in yearMonthNav"
+                  :key="yearData.year"
+                  class="space-y-2"
+                >
+                  <!-- 年份标题 -->
+                  <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-3 py-1.5 shadow-sm">
+                      <svg
+                        class="size-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span class="text-sm font-bold text-white">{{ yearData.year }}{{ $t('year') }}</span>
+                    </div>
+                    <span class="text-xs text-dark-400 dark:text-dark-500">
+                      {{ yearData.months.reduce((sum, m) => sum + m.count, 0) }} {{ $t('articles-num') }}
+                    </span>
+                  </div>
+
+                  <!-- 月份按钮 -->
+                  <div class="flex flex-wrap gap-1.5 pl-2">
+                    <button
+                      v-for="monthData in yearData.months"
+                      :key="`${yearData.year}-${monthData.month}`"
+                      :class="[
+                        'group relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:shadow-md',
+                        getMonthColorClass(monthData.month),
+                        'text-white hover:-translate-y-0.5'
+                      ]"
+                      @click="scrollToYearMonth(yearData.year, monthData.month)"
+                    >
+                      <span>{{ monthData.month }}{{ $t('month') }}</span>
+                      <span class="flex size-5 items-center justify-center rounded-full bg-white/20 text-[10px] font-bold backdrop-blur-sm">
+                        {{ monthData.count }}
+                      </span>
+
+                      <!-- 悬停提示 -->
+                      <div class="absolute -top-8 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-dark-900 px-2 py-1 text-[10px] text-white shadow-lg group-hover:block dark:bg-dark-700">
+                        {{ monthData.count }} 篇文章
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </div>
+
       <!-- 经典模式 - 原有的时间轴视图 -->
       <div
         v-if="viewMode === 'classic'"
@@ -593,8 +904,9 @@ const isMonthCollapsed = (year: number, month: number) => {
         >
           <div
             v-for="monthGroup in yearGroup.months"
+            :id="`timeline-${yearGroup.year}-${monthGroup.month}`"
             :key="`${yearGroup.year}-${monthGroup.month}`"
-            class="relative mb-6"
+            class="relative mb-6 scroll-mt-24"
           >
             <!-- 月份对应的时间线段 -->
             <div
@@ -810,8 +1122,9 @@ const isMonthCollapsed = (year: number, month: number) => {
         >
           <div
             v-for="monthGroup in yearGroup.months"
+            :id="`timeline-${yearGroup.year}-${monthGroup.month}`"
             :key="`${yearGroup.year}-${monthGroup.month}`"
-            class="rounded-xl border border-dark-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-800"
+            class="scroll-mt-24 rounded-xl border border-dark-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-800"
           >
             <!-- 月份标题（可点击折叠） -->
             <button
@@ -1050,10 +1363,23 @@ const isMonthCollapsed = (year: number, month: number) => {
               {{ selectedYear }}{{ $t('year') }} {{ selectedMonth + 1 }}{{ $t('month') }}
             </h2>
             <button
-              class="dark:bg-primary-900/30 dark:hover:bg-primary-900/50 rounded-md bg-primary-50 px-2 py-1 text-xs font-medium text-primary-600 transition hover:bg-primary-100 dark:text-primary-400"
+              class="dark:!bg-primary-900/30 dark:hover:!bg-primary-900/50 flex items-center gap-1.5 rounded-md bg-primary-50 px-2.5 py-1.5 text-xs font-medium text-primary-600 transition hover:bg-primary-100 dark:text-primary-400"
               @click="goToToday"
             >
-              今天
+              <svg
+                class="size-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <span>跳转到今天</span>
             </button>
           </div>
 
@@ -1097,39 +1423,87 @@ const isMonthCollapsed = (year: number, month: number) => {
               v-for="(dayData, index) in calendarData"
               :key="index"
               :class="[
-                'group relative min-h-[80px] border-b border-r border-dark-100 p-1.5 transition dark:border-dark-700 max-md:min-h-header',
+                'group relative min-h-[90px] border-b border-r border-dark-100 p-1.5 transition dark:border-dark-700 max-md:min-h-[75px]',
                 !dayData.isCurrentMonth && 'bg-dark-50/50 dark:bg-dark-900/30',
-                dayData.articles.length > 0 && 'dark:hover:bg-primary-900/20 cursor-pointer hover:bg-primary-50',
-                (index + 1) % 7 === 0 && 'border-r-0'
+                dayData.articles.length > 0 && 'cursor-pointer',
+                dayData.articles.length > 0 && 'hover:bg-primary-100/50 dark:hover:bg-primary-800/30',
+                (index + 1) % 7 === 0 && 'border-r-0',
+                // 高亮今天
+                dayData.day === new Date().getDate()
+                  && dayData.month === new Date().getMonth() + 1
+                  && dayData.year === new Date().getFullYear()
+                  && dayData.isCurrentMonth
+                  && 'bg-primary-50/30 dark:bg-primary-900/20 ring-2 ring-inset ring-primary-400 dark:ring-primary-600'
               ]"
             >
-              <!-- 日期数字 -->
-              <div class="mb-1 flex items-center justify-between">
-                <span
-                  :class="[
-                    'text-xs font-medium',
-                    dayData.isCurrentMonth
-                      ? 'text-dark-700 dark:text-dark-300'
-                      : 'text-dark-400 dark:text-dark-600',
-                    dayData.day === new Date().getDate()
-                      && dayData.month === new Date().getMonth() + 1
-                      && dayData.year === new Date().getFullYear()
-                      && 'flex size-5 items-center justify-center rounded-full bg-primary-500 text-white'
-                  ]"
-                >
-                  {{ dayData.day }}
-                </span>
+              <!-- 日期数字和农历 -->
+              <div class="mb-1 flex flex-col gap-0.5">
+                <div class="flex items-center justify-between">
+                  <span
+                    :class="[
+                      'flex items-center justify-center text-sm font-medium',
+                      dayData.isCurrentMonth
+                        ? 'text-dark-700 dark:text-dark-300'
+                        : 'text-dark-400 dark:text-dark-600',
+                      // 今天的样式 - 醒目的圆形背景
+                      dayData.day === new Date().getDate()
+                        && dayData.month === new Date().getMonth() + 1
+                        && dayData.year === new Date().getFullYear()
+                        && dayData.isCurrentMonth
+                        && 'size-6 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 font-bold text-white shadow-md'
+                    ]"
+                  >
+                    {{ dayData.day }}
+                  </span>
 
-                <!-- 文章数量标识 -->
-                <span
-                  v-if="dayData.articles.length > 0"
+                  <!-- 文章数量标识 -->
+                  <span
+                    v-if="dayData.articles.length > 0"
+                    :class="[
+                      'flex size-4 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm',
+                      getMonthColorClass(dayData.month)
+                    ]"
+                  >
+                    {{ dayData.articles.length }}
+                  </span>
+                </div>
+
+                <!-- 农历日期 -->
+                <div
+                  v-if="dayData.lunarDay"
+                  class="text-[9px] font-medium leading-tight"
                   :class="[
-                    'flex size-4 items-center justify-center rounded-full text-[10px] font-bold text-white',
-                    getMonthColorClass(dayData.month)
+                    dayData.isCurrentMonth
+                      ? 'text-dark-500 dark:text-dark-400'
+                      : 'text-dark-400 dark:text-dark-500',
+                    { 'font-bold text-primary-600 dark:text-primary-400': dayData.lunarDay === '初一' }
                   ]"
                 >
-                  {{ dayData.articles.length }}
-                </span>
+                  {{ dayData.lunarDay === '初一' ? (dayData.lunarMonth + '月') : dayData.lunarDay }}
+                </div>
+              </div>
+
+              <!-- 节日和节气 -->
+              <div
+                v-if="dayData.festivals || dayData.solarTerms"
+                class="mb-0.5 space-y-0.5"
+              >
+                <!-- 节气 -->
+                <div
+                  v-if="dayData.solarTerms"
+                  class="truncate rounded bg-gradient-to-r from-green-100 to-green-50 px-1 py-0.5 text-[9px] font-semibold text-green-700 shadow-sm dark:from-green-900/40 dark:to-green-900/30 dark:text-green-400"
+                  :title="dayData.solarTerms"
+                >
+                  {{ dayData.solarTerms }}
+                </div>
+                <!-- 节日 -->
+                <div
+                  v-if="dayData.festivals && dayData.festivals.length > 0"
+                  class="truncate rounded bg-gradient-to-r from-red-100 to-red-50 px-1 py-0.5 text-[9px] font-semibold text-red-700 shadow-sm dark:from-red-900/40 dark:to-red-900/30 dark:text-red-400"
+                  :title="dayData.festivals.join('、')"
+                >
+                  {{ dayData.festivals[0] }}
+                </div>
               </div>
 
               <!-- 文章列表（只显示1篇） -->
@@ -1140,7 +1514,7 @@ const isMonthCollapsed = (year: number, month: number) => {
                 <NuxtLink
                   :to="`/articles/${dayData.articles[0].customSlug || dayData.articles[0].id}`"
                   :class="[
-                    'block truncate rounded px-1.5 py-0.5 text-[10px] font-medium text-white transition hover:opacity-80',
+                    'block truncate rounded px-1.5 py-0.5 text-[10px] font-medium text-white shadow-sm transition hover:opacity-80 hover:shadow-md',
                     getMonthColorClass(dayData.month)
                   ]"
                   :title="dayData.articles[0].title"
@@ -1158,15 +1532,31 @@ const isMonthCollapsed = (year: number, month: number) => {
           </div>
         </div>
 
-        <!-- 当月文章列表 - 更紧凑 -->
+        <!-- 当月文章列表 - 更紧凑美观 -->
         <div class="rounded-xl border border-dark-200 bg-white p-4 shadow-sm dark:border-dark-700 dark:bg-dark-800">
           <h3 class="mb-3 flex items-center gap-2 text-base font-semibold text-dark-900 dark:text-dark-50">
+            <svg
+              class="size-4 text-primary-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
             <span>本月文章</span>
-            <span class="dark:bg-primary-900/30 rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-600 dark:text-primary-400">
+            <span class="dark:bg-primary-900/30 flex items-center rounded-full bg-primary-100 px-2.5 py-0.5 text-xs font-bold text-primary-600 shadow-sm dark:text-primary-400">
               {{ calendarData.filter(d => d.isCurrentMonth && d.articles.length > 0).reduce((sum, d) => sum + d.articles.length, 0) }}
             </span>
           </h3>
-          <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            v-if="calendarData.filter(d => d.isCurrentMonth && d.articles.length > 0).length > 0"
+            class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+          >
             <template
               v-for="dayData in calendarData.filter(d => d.isCurrentMonth && d.articles.length > 0)"
               :key="`day-${dayData.year}-${dayData.month}-${dayData.day}`"
@@ -1175,23 +1565,29 @@ const isMonthCollapsed = (year: number, month: number) => {
                 v-for="article in dayData.articles"
                 :key="`article-${article.id}`"
                 :to="`/articles/${article.customSlug || article.id}`"
-                class="group flex items-center gap-2 rounded-lg border border-dark-200 bg-white p-2 transition hover:border-primary-300 hover:shadow-md dark:border-dark-700 dark:bg-dark-700/50 dark:hover:border-primary-700"
+                class="group flex items-center gap-2.5 rounded-lg border border-dark-200 bg-white p-2.5 shadow-sm transition hover:border-primary-300 hover:shadow-md dark:border-dark-700 dark:bg-dark-700/50 dark:hover:border-primary-700"
               >
                 <div
                   :class="[
-                    'flex size-8 shrink-0 items-center justify-center rounded-md text-xs font-bold text-white',
+                    'flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white shadow-sm',
                     getMonthColorClass(dayData.month)
                   ]"
                 >
                   {{ dayData.day }}
                 </div>
                 <div class="min-w-0 flex-1">
-                  <h4 class="truncate text-xs font-medium text-dark-800 group-hover:text-primary-600 dark:text-dark-200 dark:group-hover:text-primary-400">
+                  <h4 class="line-clamp-2 text-xs font-medium leading-snug text-dark-800 group-hover:text-primary-600 dark:text-dark-200 dark:group-hover:text-primary-400">
                     {{ article.title }}
                   </h4>
                 </div>
               </NuxtLink>
             </template>
+          </div>
+          <div
+            v-else
+            class="py-8 text-center text-sm text-dark-400 dark:text-dark-500"
+          >
+            本月暂无文章
           </div>
         </div>
       </div>

@@ -27,6 +27,9 @@ const encryptor = useEncryptor();
 // 加密文章筛选器
 const showEncryptedOnly = ref(false);
 
+// 标签折叠状态
+const showTags = ref(true);
+
 // 判断用户是否已认证（有token或密码正确）
 const isAuthenticated = computed(() => !!githubToken.value || encryptor.passwdCorrect.value);
 
@@ -119,31 +122,333 @@ const loadArticlePreviews = async () => {
 
 // 监听分页列表变化，加载预览信息
 watch(paginatedList, loadArticlePreviews, { immediate: true });
+
+// 快速导航相关
+const showYearNav = ref(false);
+
+// 按年份和月份分组文章
+interface TimelineGroup {
+  year: number;
+  months: {
+    month: number;
+    articles: ArticleItem[];
+  }[];
+}
+
+const timelineData = computed<TimelineGroup[]>(() => {
+  // 使用 filteredList 而不是 articlesList，这样导航会根据筛选条件更新
+  const sortedArticles = [...filteredList.value].sort((a, b) => b.time - a.time);
+
+  const grouped = new Map<number, Map<number, ArticleItem[]>>();
+
+  sortedArticles.forEach((article) => {
+    const date = new Date(article.time);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+
+    if (!grouped.has(year)) {
+      grouped.set(year, new Map());
+    }
+
+    const yearGroup = grouped.get(year)!;
+    if (!yearGroup.has(month)) {
+      yearGroup.set(month, []);
+    }
+
+    yearGroup.get(month)!.push(article);
+  });
+
+  // 转换为数组格式
+  const result: TimelineGroup[] = [];
+
+  Array.from(grouped.keys())
+    .sort((a, b) => b - a)
+    .forEach((year) => {
+      const months = Array.from(grouped.get(year)!.keys())
+        .sort((a, b) => b - a)
+        .map(month => ({
+          month,
+          articles: grouped.get(year)!.get(month)!
+        }));
+
+      result.push({ year, months });
+    });
+
+  return result;
+});
+
+// 获取年份月份导航数据
+const yearMonthNav = computed(() => {
+  const navData: {
+    year: number;
+    months: { month: number; count: number }[];
+  }[] = [];
+
+  timelineData.value.forEach((yearGroup) => {
+    const months = yearGroup.months.map(monthGroup => ({
+      month: monthGroup.month,
+      count: monthGroup.articles.length
+    }));
+    navData.push({
+      year: yearGroup.year,
+      months
+    });
+  });
+
+  return navData;
+});
+
+// 滚动到指定年月的文章
+const scrollToYearMonth = (year: number, month: number) => {
+  // 找到该年月的第一篇文章
+  const targetArticle = timelineData.value
+    .find(y => y.year === year)
+    ?.months.find(m => m.month === month)
+    ?.articles[0];
+
+  if (!targetArticle) return;
+
+  // 找到该文章在 filteredList 中的位置
+  const articleIndex = filteredList.value.findIndex(a => a.id === targetArticle.id);
+  if (articleIndex === -1) return;
+
+  // 计算应该跳转到哪一页
+  const targetPage = Math.floor(articleIndex / pageSize.value) + 1;
+  currentPage.value = targetPage;
+
+  // 等待页面渲染后再滚动
+  nextTick(() => {
+    // 关闭导航
+    showYearNav.value = false;
+
+    // 滚动到页面顶部
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  });
+};
+
+// 月份颜色主题（与时间轴页面保持一致）
+const monthColors = [
+  "bg-cyan-400 dark:bg-cyan-500",
+  "bg-slate-600 dark:bg-slate-700",
+  "bg-green-500 dark:bg-green-600",
+  "bg-slate-700 dark:bg-slate-800",
+  "bg-yellow-400 dark:bg-yellow-500",
+  "bg-purple-500 dark:bg-purple-600",
+  "bg-blue-500 dark:bg-blue-600",
+  "bg-pink-500 dark:bg-pink-600",
+  "bg-indigo-500 dark:bg-indigo-600",
+  "bg-orange-500 dark:bg-orange-600",
+  "bg-teal-500 dark:bg-teal-600",
+  "bg-red-500 dark:bg-red-600"
+];
+
+const getMonthColorClass = (month: number) => {
+  return monthColors[(month - 1) % monthColors.length];
+};
 </script>
 
 <template>
   <main class="relative mx-auto max-w-7xl grow px-4 py-8 max-md:px-3">
     <div class="relative mx-auto max-w-7xl space-y-10">
+      <!-- 年份/月份快速导航 -->
+      <section
+        v-if="yearMonthNav.length > 0"
+        class="sticky top-0 z-30"
+      >
+        <div class="rounded-3xl border border-dark-200 bg-white/95 shadow-sm backdrop-blur-sm dark:border-dark-700 dark:bg-dark-800/95">
+          <!-- 导航切换按钮 -->
+          <button
+            class="flex w-full items-center justify-between gap-2 px-6 py-4 transition hover:bg-dark-50 dark:hover:bg-dark-700/50"
+            @click="showYearNav = !showYearNav"
+          >
+            <div class="flex items-center gap-3">
+              <svg
+                class="size-5 text-primary-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              <span class="text-sm font-semibold text-dark-900 dark:text-dark-50">快速导航</span>
+              <span class="dark:bg-primary-900/30 rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-700 dark:text-primary-400">
+                {{ yearMonthNav.length }} 年 · {{ yearMonthNav.reduce((sum, y) => sum + y.months.length, 0) }} 月
+              </span>
+            </div>
+            <svg
+              :class="[
+                'size-5 text-dark-400 transition-transform duration-200',
+                showYearNav ? 'rotate-180' : 'rotate-0'
+              ]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <!-- 展开的导航内容 -->
+          <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="max-h-0 opacity-0"
+            enter-to-class="max-h-[500px] opacity-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="max-h-[500px] opacity-100"
+            leave-to-class="max-h-0 opacity-0"
+          >
+            <div
+              v-if="showYearNav"
+              class="max-h-[500px] overflow-y-auto border-t border-dark-100 dark:border-dark-700"
+            >
+              <div class="space-y-4 p-5">
+                <div
+                  v-for="yearData in yearMonthNav"
+                  :key="yearData.year"
+                  class="space-y-2.5"
+                >
+                  <!-- 年份标题 -->
+                  <div class="flex items-center gap-2.5">
+                    <div class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2 shadow-md">
+                      <svg
+                        class="size-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span class="text-base font-bold text-white">{{ yearData.year }}{{ $t('year') }}</span>
+                    </div>
+                    <span class="text-sm text-dark-400 dark:text-dark-500">
+                      {{ yearData.months.reduce((sum, m) => sum + m.count, 0) }} {{ $t('articles-num') }}
+                    </span>
+                  </div>
+
+                  <!-- 月份按钮 -->
+                  <div class="flex flex-wrap gap-2 pl-2">
+                    <button
+                      v-for="monthData in yearData.months"
+                      :key="`${yearData.year}-${monthData.month}`"
+                      :class="[
+                        'group relative flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all hover:shadow-lg',
+                        getMonthColorClass(monthData.month),
+                        'text-white hover:-translate-y-1'
+                      ]"
+                      @click="scrollToYearMonth(yearData.year, monthData.month)"
+                    >
+                      <span>{{ monthData.month }}{{ $t('month') }}</span>
+                      <span class="flex size-6 items-center justify-center rounded-full bg-white/25 text-xs font-bold backdrop-blur-sm">
+                        {{ monthData.count }}
+                      </span>
+
+                      <!-- 悬停提示 -->
+                      <div class="pointer-events-none absolute -top-9 left-1/2 z-50 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-dark-900 px-3 py-1.5 text-xs text-white shadow-xl group-hover:block dark:bg-dark-700">
+                        点击查看 {{ monthData.count }} 篇文章
+                        <div class="absolute -bottom-1 left-1/2 size-2 -translate-x-1/2 rotate-45 bg-dark-900 dark:bg-dark-700" />
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </section>
+
+      <!-- 标签筛选区域 -->
       <section
         v-if="articleTagList.size"
-        class="rounded-3xl border border-transparent bg-white/70 p-6 shadow-card ring-1 ring-dark-100/70 backdrop-blur-md transition dark:bg-dark-900/50 dark:ring-dark-700"
       >
-        <header class="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-          <h2 class="text-sm font-medium text-dark-700 dark:text-dark-200 max-md:text-xs">
-            {{ $t('tags') }}
-          </h2>
-          <span class="text-[13px] text-dark-400 dark:text-dark-400">{{ filteredList.length }} {{ $t('articles-num') }}</span>
-        </header>
-        <div class="flex flex-wrap gap-2">
-          <the-tag
-            v-for="[tag, count] in articleTagList"
-            :key="tag"
-            :num="count"
-            :active="tags.includes(tag)"
-            @click="toggleTags(tag)"
+        <div class="rounded-3xl border border-dark-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-800">
+          <!-- 标签切换按钮 -->
+          <button
+            class="flex w-full items-center justify-between gap-2 px-6 py-4 transition hover:bg-dark-50 dark:hover:bg-dark-700/50"
+            @click="showTags = !showTags"
           >
-            {{ tag }}
-          </the-tag>
+            <div class="flex items-center gap-3">
+              <svg
+                class="size-5 text-primary-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                />
+              </svg>
+              <span class="text-sm font-semibold text-dark-900 dark:text-dark-50">{{ $t('tags') }}</span>
+              <span class="dark:bg-primary-900/30 rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-700 dark:text-primary-400">
+                {{ articleTagList.size }} 个标签 · {{ filteredList.length }} {{ $t('articles-num') }}
+              </span>
+            </div>
+            <svg
+              :class="[
+                'size-5 text-dark-400 transition-transform duration-200',
+                showTags ? 'rotate-180' : 'rotate-0'
+              ]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <!-- 展开的标签内容 -->
+          <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="max-h-0 opacity-0"
+            enter-to-class="max-h-[500px] opacity-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="max-h-[500px] opacity-100"
+            leave-to-class="max-h-0 opacity-0"
+          >
+            <div
+              v-if="showTags"
+              class="max-h-[500px] overflow-y-auto border-t border-dark-100 dark:border-dark-700"
+            >
+              <div class="space-y-3 p-5">
+                <div class="flex flex-wrap gap-2">
+                  <the-tag
+                    v-for="[tag, count] in articleTagList"
+                    :key="tag"
+                    :num="count"
+                    :active="tags.includes(tag)"
+                    @click="toggleTags(tag)"
+                  >
+                    {{ tag }}
+                  </the-tag>
+                </div>
+              </div>
+            </div>
+          </Transition>
         </div>
       </section>
 
