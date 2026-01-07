@@ -3,11 +3,13 @@ import type { ArticleItem } from "~/utils/common/types";
 import { useListPage } from "~/utils/nuxt/public/list";
 import { fetchMd } from "~/utils/nuxt/fetch";
 import { extractArticlePreview } from "~/utils/common/extract-preview";
+import { translate } from "~/utils/nuxt/i18n";
 
 definePageMeta({
   layout: "default"
 });
 
+const { i18nCode } = useI18nCode();
 const articlesList = await useListPage<ArticleItem>();
 
 // 文章预览信息存储
@@ -81,7 +83,7 @@ const loadArticlePreview = async (articleId: number, customSlug?: string) => {
 
     // 存储预览信息
     articlePreviews[articleId] = {
-      excerpt: preview.excerpt || "暂无摘要",
+      excerpt: preview.excerpt || translate("no-excerpt"),
       coverImage: preview.coverImage,
       loading: false
     };
@@ -90,7 +92,7 @@ const loadArticlePreview = async (articleId: number, customSlug?: string) => {
     console.error(`Failed to load preview for article ${articleId}:`, error);
     // 即使失败也标记为已加载，避免重复请求
     articlePreviews[articleId] = {
-      excerpt: "加载失败",
+      excerpt: translate("load-failed"),
       coverImage: "",
       loading: false
     };
@@ -205,6 +207,11 @@ const timelineData = computed<TimelineGroup[]>(() => {
 
 // 统计总文章数
 const totalArticles = computed(() => articlesList.length);
+
+// 根据当前语言返回对应的日期 locale
+const currentLocale = computed(() => {
+  return i18nCode.value === "zh" ? "zh-CN" : "en-US";
+});
 
 // 月份颜色主题（循环使用）
 const monthColors = [
@@ -671,7 +678,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                   ? 'bg-primary-500 text-white shadow-sm'
                   : 'text-dark-600 hover:bg-dark-50 dark:text-dark-400 dark:hover:bg-dark-700'
               ]"
-              :title="'经典模式'"
+              :title="$t('view-mode-classic')"
               @click="switchViewMode('classic')"
             >
               <svg
@@ -687,7 +694,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span class="max-sm:hidden">经典</span>
+              <span class="max-sm:hidden">{{ $t('view-mode-classic').replace('模式', '').replace(' Mode', '') }}</span>
             </button>
 
             <button
@@ -697,7 +704,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                   ? 'bg-primary-500 text-white shadow-sm'
                   : 'text-dark-600 hover:bg-dark-50 dark:text-dark-400 dark:hover:bg-dark-700'
               ]"
-              :title="'紧凑模式'"
+              :title="$t('view-mode-compact')"
               @click="switchViewMode('compact')"
             >
               <svg
@@ -713,7 +720,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                   d="M4 6h16M4 12h16M4 18h16"
                 />
               </svg>
-              <span class="max-sm:hidden">紧凑</span>
+              <span class="max-sm:hidden">{{ $t('view-mode-compact').replace('模式', '').replace(' Mode', '') }}</span>
             </button>
 
             <button
@@ -723,7 +730,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                   ? 'bg-primary-500 text-white shadow-sm'
                   : 'text-dark-600 hover:bg-dark-50 dark:text-dark-400 dark:hover:bg-dark-700'
               ]"
-              :title="'卡片模式'"
+              :title="$t('view-mode-card')"
               @click="switchViewMode('card')"
             >
               <svg
@@ -739,7 +746,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                   d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
                 />
               </svg>
-              <span class="max-sm:hidden">卡片</span>
+              <span class="max-sm:hidden">{{ $t('view-mode-card').replace('模式', '').replace(' Mode', '') }}</span>
             </button>
 
             <button
@@ -749,7 +756,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                   ? 'bg-primary-500 text-white shadow-sm'
                   : 'text-dark-600 hover:bg-dark-50 dark:text-dark-400 dark:hover:bg-dark-700'
               ]"
-              :title="'日历模式'"
+              :title="$t('view-mode-calendar')"
               @click="switchViewMode('calendar')"
             >
               <svg
@@ -765,7 +772,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              <span class="max-sm:hidden">日历</span>
+              <span class="max-sm:hidden">{{ $t('view-mode-calendar').replace('模式', '').replace(' Mode', '') }}</span>
             </button>
           </div>
         </div>
@@ -796,9 +803,9 @@ const scrollToYearMonth = (year: number, month: number) => {
                   d="M13 10V3L4 14h7v7l9-11h-7z"
                 />
               </svg>
-              <span class="text-sm font-semibold text-dark-900 dark:text-dark-50">快速导航</span>
+              <span class="text-sm font-semibold text-dark-900 dark:text-dark-50">{{ $t('quick-nav') }}</span>
               <span class="text-xs text-dark-400 dark:text-dark-500">
-                {{ yearMonthNav.length }} 年
+                {{ yearMonthNav.length }} {{ $t('year') }}
               </span>
             </div>
             <svg
@@ -880,7 +887,7 @@ const scrollToYearMonth = (year: number, month: number) => {
 
                       <!-- 悬停提示 -->
                       <div class="absolute -top-8 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-dark-900 px-2 py-1 text-[10px] text-white shadow-lg group-hover:block dark:bg-dark-700">
-                        {{ monthData.count }} 篇文章
+                        {{ $t('articles-count', [monthData.count]) }}
                       </div>
                     </button>
                   </div>
@@ -973,7 +980,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                     'inline-block w-auto max-w-2xl break-words rounded-2xl border-0 px-5 py-3.5 shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl max-md:max-w-[calc(100vw-7.5rem)] max-md:px-4 max-md:py-3',
                     getMonthCardBgColorClass(monthGroup.month)
                   ]"
-                  @mouseenter="(e) => handleMouseEnter(article, e)"
+                  @mouseenter="(e: MouseEvent) => handleMouseEnter(article, e)"
                   @mouseleave="handleMouseLeave"
                 >
                   <h4 class="break-words text-[17px] font-semibold leading-snug text-white transition hover:text-white/90 max-md:text-[15px]">
@@ -1047,7 +1054,7 @@ const scrollToYearMonth = (year: number, month: number) => {
 
                       <!-- 底部信息 -->
                       <div class="flex items-center justify-between border-t border-dark-100 pt-3 text-xs text-dark-400 dark:border-dark-700 dark:text-dark-500">
-                        <span>{{ new Date(article.time).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
+                        <span>{{ new Date(article.time).toLocaleDateString(currentLocale, { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
                         <span
                           v-if="article.len"
                           class="flex items-center gap-1"
@@ -1256,7 +1263,7 @@ const scrollToYearMonth = (year: number, month: number) => {
           <div class="absolute left-3 top-3 rounded-lg bg-white/95 px-2.5 py-1 shadow-md backdrop-blur-sm dark:bg-dark-800/95">
             <div class="text-center">
               <div class="text-[10px] font-medium text-dark-500 dark:text-dark-400">
-                {{ new Date(article.time).toLocaleDateString('zh-CN', { month: 'short' }) }}
+                {{ new Date(article.time).toLocaleDateString(currentLocale, { month: 'short' }) }}
               </div>
               <div class="text-lg font-bold text-primary-600 dark:text-primary-400">
                 {{ new Date(article.time).getDate() }}
@@ -1355,7 +1362,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            <span class="max-sm:hidden">上月</span>
+            <span class="max-sm:hidden">{{ $t('prev-month') }}</span>
           </button>
 
           <div class="flex items-center gap-2">
@@ -1379,7 +1386,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              <span>跳转到今天</span>
+              <span>{{ $t('jump-to-today') }}</span>
             </button>
           </div>
 
@@ -1387,7 +1394,7 @@ const scrollToYearMonth = (year: number, month: number) => {
             class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-dark-600 transition hover:bg-dark-100 dark:text-dark-400 dark:hover:bg-dark-700"
             @click="changeMonth(1)"
           >
-            <span class="max-sm:hidden">下月</span>
+            <span class="max-sm:hidden">{{ $t('next-month') }}</span>
             <svg
               class="size-4"
               fill="none"
@@ -1548,7 +1555,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            <span>本月文章</span>
+            <span>{{ $t('current-month-articles') }}</span>
             <span class="dark:bg-primary-900/30 flex items-center rounded-full bg-primary-100 px-2.5 py-0.5 text-xs font-bold text-primary-600 shadow-sm dark:text-primary-400">
               {{ calendarData.filter(d => d.isCurrentMonth && d.articles.length > 0).reduce((sum, d) => sum + d.articles.length, 0) }}
             </span>
@@ -1587,7 +1594,7 @@ const scrollToYearMonth = (year: number, month: number) => {
             v-else
             class="py-8 text-center text-sm text-dark-400 dark:text-dark-500"
           >
-            本月暂无文章
+            {{ $t('no-articles-this-month') }}
           </div>
         </div>
       </div>

@@ -278,9 +278,9 @@ const getMonthColorClass = (month: number) => {
                   d="M13 10V3L4 14h7v7l9-11h-7z"
                 />
               </svg>
-              <span class="text-sm font-semibold text-dark-900 dark:text-dark-50">快速导航</span>
+              <span class="text-sm font-semibold text-dark-900 dark:text-dark-50">{{ $t('quick-nav') }}</span>
               <span class="dark:bg-primary-900/30 rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-700 dark:text-primary-400">
-                {{ yearMonthNav.length }} 年 · {{ yearMonthNav.reduce((sum, y) => sum + y.months.length, 0) }} 月
+                {{ yearMonthNav.length }} {{ $t('year') }} · {{ yearMonthNav.reduce((sum, y) => sum + y.months.length, 0) }} {{ $t('month') }}
               </span>
             </div>
             <svg
@@ -362,7 +362,7 @@ const getMonthColorClass = (month: number) => {
 
                       <!-- 悬停提示 -->
                       <div class="pointer-events-none absolute -top-9 left-1/2 z-50 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-dark-900 px-3 py-1.5 text-xs text-white shadow-xl group-hover:block dark:bg-dark-700">
-                        点击查看 {{ monthData.count }} 篇文章
+                        {{ $t('click-to-view-articles', [monthData.count]) }}
                         <div class="absolute -bottom-1 left-1/2 size-2 -translate-x-1/2 rotate-45 bg-dark-900 dark:bg-dark-700" />
                       </div>
                     </button>
@@ -400,7 +400,7 @@ const getMonthColorClass = (month: number) => {
               </svg>
               <span class="text-sm font-semibold text-dark-900 dark:text-dark-50">{{ $t('tags') }}</span>
               <span class="dark:bg-primary-900/30 rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-700 dark:text-primary-400">
-                {{ articleTagList.size }} 个标签 · {{ filteredList.length }} {{ $t('articles-num') }}
+                {{ articleTagList.size }} {{ $t('tags') }} · {{ filteredList.length }} {{ $t('articles-num') }}
               </span>
             </div>
             <svg
