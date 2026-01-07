@@ -98,6 +98,15 @@ const loadArticlePreview = async (articleId: number, customSlug?: string) => {
   }
 };
 
+// 批量预加载文章预览信息
+const loadArticlePreviewsBatch = (articles: ArticleItem[]) => {
+  articles.forEach((article) => {
+    if (!loadedPreviews.has(article.id)) {
+      loadArticlePreview(article.id, article.customSlug);
+    }
+  });
+};
+
 // 处理鼠标悬停
 const handleMouseEnter = (article: ArticleItem, event: MouseEvent) => {
   // 清除之前的定时器
@@ -311,7 +320,52 @@ if (import.meta.client) {
     const savedMode = localStorage.getItem(VIEW_MODE_KEY) as ViewMode | null;
     if (savedMode && ["classic", "compact", "card", "calendar"].includes(savedMode)) {
       viewMode.value = savedMode;
+
+      // 如果保存的模式是卡片模式，预加载图片
+      if (savedMode === "card") {
+        nextTick(() => {
+          loadArticlePreviewsBatch(articlesList.slice(0, 20));
+        });
+      }
     }
+
+    // 监听卡片模式的滚动事件，懒加载更多预览
+    let scrollHandler: (() => void) | null = null;
+
+    watch(viewMode, (newMode) => {
+      // 移除旧的滚动监听器
+      if (scrollHandler) {
+        window.removeEventListener("scroll", scrollHandler);
+        scrollHandler = null;
+      }
+
+      // 如果是卡片模式，添加滚动监听器
+      if (newMode === "card") {
+        scrollHandler = () => {
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const windowHeight = window.innerHeight;
+          const documentHeight = document.documentElement.scrollHeight;
+
+          // 当滚动到距离底部 500px 时，加载更多预览
+          if (scrollTop + windowHeight >= documentHeight - 500) {
+            // 找到下一批未加载的文章
+            const nextBatch = articlesList.filter(article => !loadedPreviews.has(article.id)).slice(0, 10);
+            if (nextBatch.length > 0) {
+              loadArticlePreviewsBatch(nextBatch);
+            }
+          }
+        };
+
+        window.addEventListener("scroll", scrollHandler, { passive: true });
+      }
+    }, { immediate: true });
+
+    // 组件卸载时清理
+    onUnmounted(() => {
+      if (scrollHandler) {
+        window.removeEventListener("scroll", scrollHandler);
+      }
+    });
   });
 }
 
@@ -321,14 +375,10 @@ const switchViewMode = (mode: ViewMode) => {
     localStorage.setItem(VIEW_MODE_KEY, mode);
   }
 
-  // 切换到卡片模式时，预加载前10篇文章的预览
+  // 切换到卡片模式时，预加载前20篇文章的预览
   if (mode === "card") {
     nextTick(() => {
-      articlesList.slice(0, 10).forEach((article) => {
-        if (!loadedPreviews.has(article.id)) {
-          loadArticlePreview(article.id, article.customSlug);
-        }
-      });
+      loadArticlePreviewsBatch(articlesList.slice(0, 20));
     });
   }
 };
