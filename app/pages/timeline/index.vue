@@ -391,13 +391,84 @@ interface CalendarDay {
   day: number;
   articles: ArticleItem[];
   isCurrentMonth: boolean;
+  lunarDay?: string;
+  lunarMonth?: string;
+  festivals?: string[];
+  solarTerms?: string;
 }
 
 const selectedMonth = ref(new Date().getMonth());
 const selectedYear = ref(new Date().getFullYear());
 
+// 获取日期的农历和节日信息
+const getLunarInfo = async (date: Date) => {
+  // 只在客户端执行
+  if (!import.meta.client) {
+    return {
+      lunarDay: undefined,
+      lunarMonth: undefined,
+      festivals: undefined,
+      solarTerms: undefined
+    };
+  }
+
+  try {
+    // 动态导入 lunar-javascript
+    const { Solar, HolidayUtil } = await import("lunar-javascript");
+
+    const solar = Solar.fromDate(date);
+    const lunar = solar.getLunar();
+
+    // 获取农历日期
+    const lunarDay = lunar.getDayInChinese();
+    const lunarMonth = lunar.getMonthInChinese();
+
+    // 获取节日
+    const festivals: string[] = [];
+
+    // 公历节日 - 使用HolidayUtil
+    const holiday = HolidayUtil.getHoliday(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    if (holiday && holiday.getName) {
+      festivals.push(holiday.getName());
+    }
+
+    // 农历节日
+    const lunarFestivals = lunar.getFestivals();
+    if (lunarFestivals && lunarFestivals.length > 0) {
+      festivals.push(...lunarFestivals);
+    }
+
+    // 公历其他节日
+    const solarFestivals = solar.getFestivals();
+    if (solarFestivals && solarFestivals.length > 0) {
+      festivals.push(...solarFestivals);
+    }
+
+    // 节气 - 使用lunar的getJieQi方法
+    const solarTerms = lunar.getJieQi();
+
+    return {
+      lunarDay,
+      lunarMonth,
+      festivals: festivals.length > 0 ? festivals : undefined,
+      solarTerms: solarTerms || undefined
+    };
+  } catch (error) {
+    console.error("获取农历信息失败:", error);
+    return {
+      lunarDay: undefined,
+      lunarMonth: undefined,
+      festivals: undefined,
+      solarTerms: undefined
+    };
+  }
+};
+
 // 获取日历数据
-const calendarData = computed(() => {
+const calendarData = ref<CalendarDay[]>([]);
+
+// 生成基础日历数据（不含农历信息）
+const generateBaseCalendarData = () => {
   const year = selectedYear.value;
   const month = selectedMonth.value;
 
@@ -464,7 +535,34 @@ const calendarData = computed(() => {
   }
 
   return days;
-});
+};
+
+// 异步加载农历信息
+const loadLunarInfo = async () => {
+  const baseDays = generateBaseCalendarData();
+
+  // 并行加载所有日期的农历信息
+  const daysWithLunar = await Promise.all(
+    baseDays.map(async (day) => {
+      const lunarInfo = await getLunarInfo(day.date);
+      return {
+        ...day,
+        ...lunarInfo
+      };
+    })
+  );
+
+  calendarData.value = daysWithLunar;
+};
+
+// 监听月份变化，重新加载农历信息
+watch([selectedYear, selectedMonth], () => {
+  if (import.meta.client) {
+    loadLunarInfo();
+  } else {
+    calendarData.value = generateBaseCalendarData();
+  }
+}, { immediate: true });
 
 // 切换月份
 const changeMonth = (offset: number) => {
@@ -1265,10 +1363,23 @@ const scrollToYearMonth = (year: number, month: number) => {
               {{ selectedYear }}{{ $t('year') }} {{ selectedMonth + 1 }}{{ $t('month') }}
             </h2>
             <button
-              class="dark:bg-primary-900/30 dark:hover:bg-primary-900/50 rounded-md bg-primary-50 px-2 py-1 text-xs font-medium text-primary-600 transition hover:bg-primary-100 dark:text-primary-400"
+              class="dark:!bg-primary-900/30 dark:hover:!bg-primary-900/50 flex items-center gap-1.5 rounded-md bg-primary-50 px-2.5 py-1.5 text-xs font-medium text-primary-600 transition hover:bg-primary-100 dark:text-primary-400"
               @click="goToToday"
             >
-              今天
+              <svg
+                class="size-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <span>跳转到今天</span>
             </button>
           </div>
 
@@ -1312,39 +1423,87 @@ const scrollToYearMonth = (year: number, month: number) => {
               v-for="(dayData, index) in calendarData"
               :key="index"
               :class="[
-                'group relative min-h-[80px] border-b border-r border-dark-100 p-1.5 transition dark:border-dark-700 max-md:min-h-header',
+                'group relative min-h-[90px] border-b border-r border-dark-100 p-1.5 transition dark:border-dark-700 max-md:min-h-[75px]',
                 !dayData.isCurrentMonth && 'bg-dark-50/50 dark:bg-dark-900/30',
-                dayData.articles.length > 0 && 'dark:hover:bg-primary-900/20 cursor-pointer hover:bg-primary-50',
-                (index + 1) % 7 === 0 && 'border-r-0'
+                dayData.articles.length > 0 && 'cursor-pointer',
+                dayData.articles.length > 0 && 'hover:bg-primary-100/50 dark:hover:bg-primary-800/30',
+                (index + 1) % 7 === 0 && 'border-r-0',
+                // 高亮今天
+                dayData.day === new Date().getDate()
+                  && dayData.month === new Date().getMonth() + 1
+                  && dayData.year === new Date().getFullYear()
+                  && dayData.isCurrentMonth
+                  && 'bg-primary-50/30 dark:bg-primary-900/20 ring-2 ring-inset ring-primary-400 dark:ring-primary-600'
               ]"
             >
-              <!-- 日期数字 -->
-              <div class="mb-1 flex items-center justify-between">
-                <span
-                  :class="[
-                    'text-xs font-medium',
-                    dayData.isCurrentMonth
-                      ? 'text-dark-700 dark:text-dark-300'
-                      : 'text-dark-400 dark:text-dark-600',
-                    dayData.day === new Date().getDate()
-                      && dayData.month === new Date().getMonth() + 1
-                      && dayData.year === new Date().getFullYear()
-                      && 'flex size-5 items-center justify-center rounded-full bg-primary-500 text-white'
-                  ]"
-                >
-                  {{ dayData.day }}
-                </span>
+              <!-- 日期数字和农历 -->
+              <div class="mb-1 flex flex-col gap-0.5">
+                <div class="flex items-center justify-between">
+                  <span
+                    :class="[
+                      'flex items-center justify-center text-sm font-medium',
+                      dayData.isCurrentMonth
+                        ? 'text-dark-700 dark:text-dark-300'
+                        : 'text-dark-400 dark:text-dark-600',
+                      // 今天的样式 - 醒目的圆形背景
+                      dayData.day === new Date().getDate()
+                        && dayData.month === new Date().getMonth() + 1
+                        && dayData.year === new Date().getFullYear()
+                        && dayData.isCurrentMonth
+                        && 'size-6 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 font-bold text-white shadow-md'
+                    ]"
+                  >
+                    {{ dayData.day }}
+                  </span>
 
-                <!-- 文章数量标识 -->
-                <span
-                  v-if="dayData.articles.length > 0"
+                  <!-- 文章数量标识 -->
+                  <span
+                    v-if="dayData.articles.length > 0"
+                    :class="[
+                      'flex size-4 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm',
+                      getMonthColorClass(dayData.month)
+                    ]"
+                  >
+                    {{ dayData.articles.length }}
+                  </span>
+                </div>
+
+                <!-- 农历日期 -->
+                <div
+                  v-if="dayData.lunarDay"
+                  class="text-[9px] font-medium leading-tight"
                   :class="[
-                    'flex size-4 items-center justify-center rounded-full text-[10px] font-bold text-white',
-                    getMonthColorClass(dayData.month)
+                    dayData.isCurrentMonth
+                      ? 'text-dark-500 dark:text-dark-400'
+                      : 'text-dark-400 dark:text-dark-500',
+                    { 'font-bold text-primary-600 dark:text-primary-400': dayData.lunarDay === '初一' }
                   ]"
                 >
-                  {{ dayData.articles.length }}
-                </span>
+                  {{ dayData.lunarDay === '初一' ? (dayData.lunarMonth + '月') : dayData.lunarDay }}
+                </div>
+              </div>
+
+              <!-- 节日和节气 -->
+              <div
+                v-if="dayData.festivals || dayData.solarTerms"
+                class="mb-0.5 space-y-0.5"
+              >
+                <!-- 节气 -->
+                <div
+                  v-if="dayData.solarTerms"
+                  class="truncate rounded bg-gradient-to-r from-green-100 to-green-50 px-1 py-0.5 text-[9px] font-semibold text-green-700 shadow-sm dark:from-green-900/40 dark:to-green-900/30 dark:text-green-400"
+                  :title="dayData.solarTerms"
+                >
+                  {{ dayData.solarTerms }}
+                </div>
+                <!-- 节日 -->
+                <div
+                  v-if="dayData.festivals && dayData.festivals.length > 0"
+                  class="truncate rounded bg-gradient-to-r from-red-100 to-red-50 px-1 py-0.5 text-[9px] font-semibold text-red-700 shadow-sm dark:from-red-900/40 dark:to-red-900/30 dark:text-red-400"
+                  :title="dayData.festivals.join('、')"
+                >
+                  {{ dayData.festivals[0] }}
+                </div>
               </div>
 
               <!-- 文章列表（只显示1篇） -->
@@ -1355,7 +1514,7 @@ const scrollToYearMonth = (year: number, month: number) => {
                 <NuxtLink
                   :to="`/articles/${dayData.articles[0].customSlug || dayData.articles[0].id}`"
                   :class="[
-                    'block truncate rounded px-1.5 py-0.5 text-[10px] font-medium text-white transition hover:opacity-80',
+                    'block truncate rounded px-1.5 py-0.5 text-[10px] font-medium text-white shadow-sm transition hover:opacity-80 hover:shadow-md',
                     getMonthColorClass(dayData.month)
                   ]"
                   :title="dayData.articles[0].title"
@@ -1373,15 +1532,31 @@ const scrollToYearMonth = (year: number, month: number) => {
           </div>
         </div>
 
-        <!-- 当月文章列表 - 更紧凑 -->
+        <!-- 当月文章列表 - 更紧凑美观 -->
         <div class="rounded-xl border border-dark-200 bg-white p-4 shadow-sm dark:border-dark-700 dark:bg-dark-800">
           <h3 class="mb-3 flex items-center gap-2 text-base font-semibold text-dark-900 dark:text-dark-50">
+            <svg
+              class="size-4 text-primary-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
             <span>本月文章</span>
-            <span class="dark:bg-primary-900/30 rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-600 dark:text-primary-400">
+            <span class="dark:bg-primary-900/30 flex items-center rounded-full bg-primary-100 px-2.5 py-0.5 text-xs font-bold text-primary-600 shadow-sm dark:text-primary-400">
               {{ calendarData.filter(d => d.isCurrentMonth && d.articles.length > 0).reduce((sum, d) => sum + d.articles.length, 0) }}
             </span>
           </h3>
-          <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            v-if="calendarData.filter(d => d.isCurrentMonth && d.articles.length > 0).length > 0"
+            class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+          >
             <template
               v-for="dayData in calendarData.filter(d => d.isCurrentMonth && d.articles.length > 0)"
               :key="`day-${dayData.year}-${dayData.month}-${dayData.day}`"
@@ -1390,23 +1565,29 @@ const scrollToYearMonth = (year: number, month: number) => {
                 v-for="article in dayData.articles"
                 :key="`article-${article.id}`"
                 :to="`/articles/${article.customSlug || article.id}`"
-                class="group flex items-center gap-2 rounded-lg border border-dark-200 bg-white p-2 transition hover:border-primary-300 hover:shadow-md dark:border-dark-700 dark:bg-dark-700/50 dark:hover:border-primary-700"
+                class="group flex items-center gap-2.5 rounded-lg border border-dark-200 bg-white p-2.5 shadow-sm transition hover:border-primary-300 hover:shadow-md dark:border-dark-700 dark:bg-dark-700/50 dark:hover:border-primary-700"
               >
                 <div
                   :class="[
-                    'flex size-8 shrink-0 items-center justify-center rounded-md text-xs font-bold text-white',
+                    'flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white shadow-sm',
                     getMonthColorClass(dayData.month)
                   ]"
                 >
                   {{ dayData.day }}
                 </div>
                 <div class="min-w-0 flex-1">
-                  <h4 class="truncate text-xs font-medium text-dark-800 group-hover:text-primary-600 dark:text-dark-200 dark:group-hover:text-primary-400">
+                  <h4 class="line-clamp-2 text-xs font-medium leading-snug text-dark-800 group-hover:text-primary-600 dark:text-dark-200 dark:group-hover:text-primary-400">
                     {{ article.title }}
                   </h4>
                 </div>
               </NuxtLink>
             </template>
+          </div>
+          <div
+            v-else
+            class="py-8 text-center text-sm text-dark-400 dark:text-dark-500"
+          >
+            本月暂无文章
           </div>
         </div>
       </div>

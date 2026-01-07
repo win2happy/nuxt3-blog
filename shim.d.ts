@@ -3,6 +3,30 @@ declare module "*?raw" {
   export default content;
 }
 
+// lunar-javascript 类型声明
+declare module "lunar-javascript" {
+  export class Solar {
+    static fromDate(date: Date): Solar;
+    getLunar(): Lunar;
+    getFestivals(): string[];
+  }
+
+  export class Lunar {
+    getDayInChinese(): string;
+    getMonthInChinese(): string;
+    getFestivals(): string[];
+    getJieQi(): string;
+  }
+
+  export class Holiday {
+    getName(): string;
+  }
+
+  export namespace HolidayUtil {
+    function getHoliday(year: number, month: number, day: number): Holiday | null;
+  }
+}
+
 // Need a better way
 declare module "ls:*github" {
   export const deleteList: typeof import("./utils/nuxt/manage/github")["deleteList"];
