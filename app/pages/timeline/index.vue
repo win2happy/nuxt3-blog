@@ -452,6 +452,49 @@ const toggleMonthCollapse = (year: number, month: number) => {
 const isMonthCollapsed = (year: number, month: number) => {
   return collapsedMonths.value.has(`${year}-${month}`);
 };
+
+// 快速导航相关
+const showYearNav = ref(false);
+
+// 获取年份月份导航数据
+const yearMonthNav = computed(() => {
+  const navData: {
+    year: number;
+    months: { month: number; count: number }[];
+  }[] = [];
+
+  timelineData.value.forEach((yearGroup) => {
+    const months = yearGroup.months.map(monthGroup => ({
+      month: monthGroup.month,
+      count: monthGroup.articles.length
+    }));
+    navData.push({
+      year: yearGroup.year,
+      months
+    });
+  });
+
+  return navData;
+});
+
+// 滚动到指定年月
+const scrollToYearMonth = (year: number, month: number) => {
+  const elementId = `timeline-${year}-${month}`;
+  const element = document.getElementById(elementId);
+
+  if (element) {
+    const offset = 100; // 顶部偏移量，避免被固定导航遮挡
+    const elementPosition = element.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth"
+    });
+
+    showYearNav.value = false;
+  }
+};
 </script>
 
 <template>
@@ -580,6 +623,126 @@ const isMonthCollapsed = (year: number, month: number) => {
         </div>
       </header>
 
+      <!-- 年份/月份快速导航 -->
+      <div
+        v-if="(viewMode === 'classic' || viewMode === 'compact') && yearMonthNav.length > 0"
+        class="sticky top-0 z-30 mb-6"
+      >
+        <div class="rounded-xl border border-dark-200 bg-white/95 shadow-sm backdrop-blur-sm dark:border-dark-700 dark:bg-dark-800/95">
+          <!-- 导航切换按钮 -->
+          <button
+            class="flex w-full items-center justify-between gap-2 px-4 py-3 transition hover:bg-dark-50 dark:hover:bg-dark-700/50"
+            @click="showYearNav = !showYearNav"
+          >
+            <div class="flex items-center gap-2">
+              <svg
+                class="size-5 text-primary-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              <span class="text-sm font-semibold text-dark-900 dark:text-dark-50">快速导航</span>
+              <span class="text-xs text-dark-400 dark:text-dark-500">
+                {{ yearMonthNav.length }} 年
+              </span>
+            </div>
+            <svg
+              :class="[
+                'size-5 text-dark-400 transition-transform duration-200',
+                showYearNav ? 'rotate-180' : 'rotate-0'
+              ]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <!-- 展开的导航内容 -->
+          <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="max-h-0 opacity-0"
+            enter-to-class="max-h-[500px] opacity-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="max-h-[500px] opacity-100"
+            leave-to-class="max-h-0 opacity-0"
+          >
+            <div
+              v-if="showYearNav"
+              class="max-h-[500px] overflow-y-auto border-t border-dark-100 dark:border-dark-700"
+            >
+              <div class="space-y-3 p-4">
+                <div
+                  v-for="yearData in yearMonthNav"
+                  :key="yearData.year"
+                  class="space-y-2"
+                >
+                  <!-- 年份标题 -->
+                  <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-3 py-1.5 shadow-sm">
+                      <svg
+                        class="size-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span class="text-sm font-bold text-white">{{ yearData.year }}{{ $t('year') }}</span>
+                    </div>
+                    <span class="text-xs text-dark-400 dark:text-dark-500">
+                      {{ yearData.months.reduce((sum, m) => sum + m.count, 0) }} {{ $t('articles-num') }}
+                    </span>
+                  </div>
+
+                  <!-- 月份按钮 -->
+                  <div class="flex flex-wrap gap-1.5 pl-2">
+                    <button
+                      v-for="monthData in yearData.months"
+                      :key="`${yearData.year}-${monthData.month}`"
+                      :class="[
+                        'group relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:shadow-md',
+                        getMonthColorClass(monthData.month),
+                        'text-white hover:-translate-y-0.5'
+                      ]"
+                      @click="scrollToYearMonth(yearData.year, monthData.month)"
+                    >
+                      <span>{{ monthData.month }}{{ $t('month') }}</span>
+                      <span class="flex size-5 items-center justify-center rounded-full bg-white/20 text-[10px] font-bold backdrop-blur-sm">
+                        {{ monthData.count }}
+                      </span>
+
+                      <!-- 悬停提示 -->
+                      <div class="absolute -top-8 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-dark-900 px-2 py-1 text-[10px] text-white shadow-lg group-hover:block dark:bg-dark-700">
+                        {{ monthData.count }} 篇文章
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </div>
+
       <!-- 经典模式 - 原有的时间轴视图 -->
       <div
         v-if="viewMode === 'classic'"
@@ -593,8 +756,9 @@ const isMonthCollapsed = (year: number, month: number) => {
         >
           <div
             v-for="monthGroup in yearGroup.months"
+            :id="`timeline-${yearGroup.year}-${monthGroup.month}`"
             :key="`${yearGroup.year}-${monthGroup.month}`"
-            class="relative mb-6"
+            class="relative mb-6 scroll-mt-24"
           >
             <!-- 月份对应的时间线段 -->
             <div
@@ -810,8 +974,9 @@ const isMonthCollapsed = (year: number, month: number) => {
         >
           <div
             v-for="monthGroup in yearGroup.months"
+            :id="`timeline-${yearGroup.year}-${monthGroup.month}`"
             :key="`${yearGroup.year}-${monthGroup.month}`"
-            class="rounded-xl border border-dark-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-800"
+            class="scroll-mt-24 rounded-xl border border-dark-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-800"
           >
             <!-- 月份标题（可点击折叠） -->
             <button
