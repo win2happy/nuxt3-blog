@@ -4,12 +4,14 @@
 export function extractArticlePreview(markdown: string): {
   excerpt: string;
   coverImage: string;
+  contentTags: string[];
 } {
   let excerpt = "";
   let coverImage = "";
+  let contentTags: string[] = [];
 
   if (!markdown) {
-    return { excerpt, coverImage };
+    return { excerpt, coverImage, contentTags };
   }
 
   // 先提取整篇文章的第一张图片作为封面（无论在哪里）
@@ -41,5 +43,21 @@ export function extractArticlePreview(markdown: string): {
     excerpt = excerpt.substring(0, 200) + "...";
   }
 
-  return { excerpt, coverImage };
+  // 从文章末尾提取标签（格式如：#标签1 #标签2）
+  const lines = markdown.trim().split("\n");
+  const lastNonEmptyLines = lines
+    .slice(-5) // 取最后5行
+    .filter(line => line.trim())
+    .reverse();
+
+  for (const line of lastNonEmptyLines) {
+    // 匹配形如 #标签1 #标签2 的行
+    const tagMatches = line.match(/#([^\s#]+)/g);
+    if (tagMatches && tagMatches.length > 0) {
+      contentTags = tagMatches.map(tag => tag.substring(1)); // 移除 # 号
+      break;
+    }
+  }
+
+  return { excerpt, coverImage, contentTags };
 }
