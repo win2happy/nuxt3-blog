@@ -1,0 +1,38 @@
+name: Upload Algolia Search Index
+
+# 触发条件：推送到主分支或手动触发
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'public/rebuild/**'  # 只在内容变化时触发
+      - 'config.ts'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  upload-algolia:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Upload to Algolia
+        env:
+          ALGOLIA_ADMIN_KEY: ${{ secrets.ALGOLIA_ADMIN_KEY }}
+        run: npm run local:upload-algolia
+        
+      - name: Upload result
+        if: success()
+        run: |
+          echo "✅ Algolia 索引上传成功！"
+          echo "访问 https://www.algolia.com/dashboard 查看索引数据"
