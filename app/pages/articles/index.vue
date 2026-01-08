@@ -34,7 +34,7 @@ const showTags = ref(true);
 const isAuthenticated = computed(() => !!githubToken.value || encryptor.passwdCorrect.value);
 
 // 存储文章预览信息的响应式对象
-const articlePreviews = reactive<Record<number, { excerpt: string; coverImage: string }>>({});
+const articlePreviews = reactive<Record<number, { excerpt: string; coverImage: string; contentTags: string[] }>>({});
 
 const articleTagList = new Map<string, number>();
 
@@ -113,7 +113,7 @@ const loadArticlePreviews = async () => {
       } catch (error) {
         console.error(`Failed to load preview for article ${item.id}:`, error);
         // 即使失败也标记为已加载，避免重复请求
-        articlePreviews[item.id] = { excerpt: "", coverImage: "" };
+        articlePreviews[item.id] = { excerpt: "", coverImage: "", contentTags: [] };
         loadedPreviews.add(item.id);
       }
     })
@@ -542,6 +542,16 @@ const getMonthColorClass = (month: number) => {
             <div class="flex flex-wrap items-center gap-4 text-[13px] text-dark-500 dark:text-dark-300">
               <Words :len="item.len" />
               <Visitors :visitors="item._visitors" />
+              <template v-if="articlePreviews[item.id]?.contentTags?.length">
+                <span class="text-dark-300 dark:text-dark-600">|</span>
+                <span
+                  v-for="contentTag in articlePreviews[item.id]!.contentTags"
+                  :key="`content-${contentTag}`"
+                  class="text-[12px] text-dark-500 transition group-hover:text-primary-600 dark:text-dark-300 dark:group-hover:text-primary-400"
+                >
+                  {{ contentTag }}
+                </span>
+              </template>
             </div>
           </NuxtLink>
         </article>
