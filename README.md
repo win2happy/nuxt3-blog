@@ -4,20 +4,20 @@
 <h1 align="center">💎Nuxt3-Blog</h1>
 
 
-[![](https://img.shields.io/github/license/yunyuyuan/nuxt3-blog)](/LICENSE) ![](https://img.shields.io/badge/vue-v3-%234FC08D?logo=vue.js) ![](https://img.shields.io/badge/nuxt-v3-%2300DC82?logo=nuxt.js)
+[![](https://img.shields.io/github/license/win2happy/nuxt3-blog)](/LICENSE) ![](https://img.shields.io/badge/vue-v3-%234FC08D?logo=vue.js) ![](https://img.shields.io/badge/nuxt-v3-%2300DC82?logo=nuxt.js)
 
 
 [English Readme](/README.en.md) | 中文说明
 
 **🚀已通过[NitroJS](https://nitro.unjs.io/)多平台部署（NitroJS是Nuxt3的[官方引擎](https://nuxt.com/docs/guide/concepts/server-engine)）**
-> Vercel:[https://blog.yunyuyuan.net](https://blog.yunyuyuan.net)
+> Vercel:[https://imuer.pnt.pp.ua/](https://imuer.pnt.pp.ua/)
 > 
-> Cloudflare Page:[https://blog-cfpage.yunyuyuan.net](https://blog-cfpage.yunyuyuan.net)
+> Cloudflare Page:[https://imuer-cf.pnt.pp.ua/](https://imuer-cf.pnt.pp.ua/)
 > 
-> Netlify:[https://blog-netlify.yunyuyuan.net](https://blog-netlify.yunyuyuan.net)
+> Netlify:[https://imuer-net.pnt.pp.ua/](https://imuer-net.pnt.pp.ua/)
 >
-**🚀self hosted部署（参考[我的文章](https://blog.yunyuyuan.net/articles/8346)）**
-> Drone:[https://blog-drone-cf.yunyuyuan.net](https://blog-drone-cf.yunyuyuan.net)，这里的`cf`意思是使用cloudflare做内网穿透
+**🚀self hosted部署（参考[我的文章](https://imuer.pnt.pp.ua/articles/8346)）**
+> Drone:[https://imuer-dr.pnt.pp.ua/](https://imuer.pnt.pp.ua/)，这里的`cf`意思是使用cloudflare做内网穿透
 
 # 博客特性
 * 💻 **5分钟完成搭建**。快速搭建，不用写一行代码。
@@ -33,7 +33,7 @@
 
 # 教我搭建
 
-## 详细搭建教程请参考 [wiki](https://github.com/yunyuyuan/nuxt3-blog/wiki)
+## 详细搭建教程请参考 [wiki](https://github.com/win2happy/nuxt3-blog/wiki)
 
 博客原理示例：
 <center>
@@ -66,7 +66,7 @@
 - [x] 一键拉取上游github仓库更新 
 - [ ] IV for AES encryption
 - [x] 块级加密
-- [x] SSR, 用于自建([参考](https://blog.yunyuyuan.net/articles/8346))
+- [x] SSR, 用于自建([参考](https://imuer.pnt.pp.ua/articles/8346))
 - [x] 支持 cloudflare page,netlify 以及其他服务
 
 # 项目结构
@@ -118,8 +118,3 @@
   "prepare": "husky" // 安装husky
 }
 ```
-
-# 更新日志
-
-[CHANGELOG.md](/CHANGELOG.md)
-

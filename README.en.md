@@ -4,19 +4,19 @@
 <h1 align="center">💎Nuxt3-Blog</h1>
 
 
-[![](https://img.shields.io/github/license/yunyuyuan/nuxt3-blog)](/LICENSE) ![](https://img.shields.io/badge/vue-v3-%234FC08D?logo=vue.js) ![](https://img.shields.io/badge/nuxt-v3-%2300DC82?logo=nuxt.js)
+[![](https://img.shields.io/github/license/win2happy/nuxt3-blog)](/LICENSE) ![](https://img.shields.io/badge/vue-v3-%234FC08D?logo=vue.js) ![](https://img.shields.io/badge/nuxt-v3-%2300DC82?logo=nuxt.js)
 
 English Readme | [中文说明](/README.md)
 
 **🚀Deployed on multiple platforms via [NitroJS](https://nitro.unjs.io/) (the [official engine](https://nuxt.com/docs/guide/concepts/server-engine) for Nuxt3)**
-> Vercel: [https://blog.yunyuyuan.net](https://blog.yunyuyuan.net)
+> Vercel: [https://imuer.pnt.pp.ua/](https://imuer.pnt.pp.ua/)
 > 
-> Cloudflare Page: [https://blog-cfpage.yunyuyuan.net](https://blog-cfpage.yunyuyuan.net)
+> Cloudflare Page: [https://imuer-cf.pnt.pp.ua/](https://imuer-cf.pnt.pp.ua/)
 > 
-> Netlify: [https://blog-netlify.yunyuyuan.net](https://blog-netlify.yunyuyuan.net)
+> Netlify: [https://imuer-net.pnt.pp.ua/](https://imuer.pnt-net.pp.ua/)
 >
-**🚀Self-hosted deployment (refer to [my article](https://blog.yunyuyuan.net/articles/8346))**
-> Drone: [https://blog-drone-cf.yunyuyuan.net](https://blog-drone-cf.yunyuyuan.net), where `cf` means using Cloudflare for intranet penetration
+**🚀Self-hosted deployment (refer to [my article](https://imuer.pnt.pp.ua/articles/8346))**
+> Drone: [https://imuer-dr.pnt.pp.ua/](https://imuer-dr.pnt.pp.ua/), where `cf` means using Cloudflare for intranet penetration
 
 
 # Blog Features
@@ -33,7 +33,7 @@ English Readme | [中文说明](/README.md)
 
 # Setup Guide
 
-## For detailed setup tutorial, please refer to the [wiki](https://github.com/yunyuyuan/nuxt3-blog/wiki)
+## For detailed setup tutorial, please refer to the [wiki](https://github.com/win2happy/nuxt3-blog/wiki)
 
 Blog principle example:
 <center>
@@ -64,7 +64,7 @@ Blog principle example:
 - [x] One-click pull updates from upstream GitHub repository
 - [ ] IV for AES encryption
 - [x] Block-level encryption
-- [x] SSR for self-hosting ([reference](https://blog.yunyuyuan.net/articles/8346))
+- [x] SSR for self-hosting ([reference](https://blog.win2happy.net/articles/8346))
 - [x] Support for Cloudflare Pages, Netlify, and other services
 
 # Project Structure
@@ -116,12 +116,3 @@ Blog principle example:
   "prepare": "husky" // Install husky
 }
 ```
-
-# Changelog
-
-[CHANGELOG.md](/CHANGELOG.md)
-
-# Other
-* Technical support/discussion QQ group: 745105612
-* Email: me@yunyuyuan.net
-* Discord: https://discord.gg/HtSehSMYXa
