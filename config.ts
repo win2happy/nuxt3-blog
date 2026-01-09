@@ -28,6 +28,7 @@ export default {
   themeColor: ["cyan", "sky", "teal", "emerald", "purple", "indigo", "fuchsia", "orange", "amber"], // 主题色，如果有多个颜色，则随机使用，参考 https://tailwindcss.com/docs/colors
   themeColorDark: "neutral", // 主题色(夜间模式)
   defaultLang: "zh", // default language, "zh" and "en" are supported currently
+  mobileNavMode: "content-tabs", // 移动端导航栏模式："function-buttons" (主导航显示：语言/主题/密码/火箭，下拉菜单显示：Articles/Records/Knowledges/timeline/搜索) 或 "content-tabs" (主导航显示：Articles/Records/Knowledges/搜索/主题，下拉菜单显示：时间轴/语言/密码/火箭)
   about: [
     "幽深宇宙已岁逾百亿，惟闪烁星光点缀生机",
     "我常仰望浩瀚天际，思念在同一颗星球的你",

@@ -18,6 +18,11 @@ watch(() => route.path, () => {
   mobileMenuShow.value = false;
 });
 
+// 移动端导航菜单配置
+// function-buttons: 主导航显示功能按钮（语言、主题、密码、火箭），下拉显示内容标签（Articles等）
+// content-tabs: 主导航显示内容标签（Articles等），下拉显示功能按钮和时间轴
+const isContentTabsMode = computed(() => config.mobileNavMode === "content-tabs");
+
 const themeAnimate = ref(false);
 const footerDomain = ref("");
 
@@ -121,6 +126,8 @@ const inputPwd = ref(encryptor.usePasswd.value);
         >
           <span class="text-xl font-medium text-primary-700 drop-shadow hover:text-primary-500 dark:text-primary-300 dark:hover:text-primary-500">{{ config.nickName }}</span>
         </NuxtLink>
+
+        <!-- 桌面端导航 - 保持不变 -->
         <div
           :class="$style.pcMenu"
           class="md:justify-self-center"
@@ -136,9 +143,32 @@ const inputPwd = ref(encryptor.usePasswd.value);
             {{ $t('/timeline') }}
           </NuxtLink>
         </div>
+
+        <!-- 移动端主导航 - content-tabs 模式显示内容标签 -->
+        <div
+          v-if="isContentTabsMode"
+          :class="$style.mobileMainNav"
+        >
+          <NuxtLink
+            v-for="item in HeaderTabs"
+            :key="item"
+            :to="item"
+          >
+            {{ $t(item) }}
+          </NuxtLink>
+        </div>
+
         <div class="flex items-center gap-4 max-md:gap-2 md:justify-end md:justify-self-end">
           <NuxtLink
-            v-if="algoliaEnabled"
+            v-if="algoliaEnabled && isContentTabsMode"
+            class="icon-button"
+            :title="$t('search-all')"
+            to="/search"
+          >
+            <Search />
+          </NuxtLink>
+          <NuxtLink
+            v-if="algoliaEnabled && !isContentTabsMode"
             class="icon-button max-md:hidden"
             :title="$t('search-all')"
             to="/search"
@@ -146,7 +176,7 @@ const inputPwd = ref(encryptor.usePasswd.value);
             <Search />
           </NuxtLink>
           <button
-            class="icon-button relative !overflow-visible"
+            :class="['icon-button relative !overflow-visible', isContentTabsMode && 'max-md:hidden']"
             @click="showI18n = true"
           >
             <Languages />
@@ -175,7 +205,8 @@ const inputPwd = ref(encryptor.usePasswd.value);
             :class="twMerge(
               'icon-button',
               $style.themeMode,
-              themeMode === 'dark' && $style.modeDark
+              themeMode === 'dark' && $style.modeDark,
+              isContentTabsMode && 'max-md:hidden'
             )"
             :title="$t('switch-mode', [$t(`mode-${themeMode === 'light' ? 'dark' : 'light'}`)])"
             @click="toggleTheme"
@@ -188,7 +219,8 @@ const inputPwd = ref(encryptor.usePasswd.value);
           <button
             :class="twMerge(
               'icon-button',
-              encryptor.passwdCorrect.value && $style.pwdValid
+              encryptor.passwdCorrect.value && $style.pwdValid,
+              isContentTabsMode && 'max-md:hidden'
             )"
             :title="$t('passwd')"
             @click="showPwdModal = true"
@@ -198,7 +230,7 @@ const inputPwd = ref(encryptor.usePasswd.value);
           <NuxtLink
             :to="rocketUrl"
             title="🚀"
-            class="icon-button anim-shake"
+            :class="['icon-button anim-shake', isContentTabsMode && 'max-md:hidden']"
           >
             <Rocket />
           </NuxtLink>
@@ -215,24 +247,65 @@ const inputPwd = ref(encryptor.usePasswd.value);
         v-show="mobileMenuShow"
         :class="$style.mobileMenu"
       >
-        <NuxtLink
-          v-for="item in HeaderTabs"
-          :key="item"
-          :to="item"
-        >
-          {{ $t(item) }}
-        </NuxtLink>
-        <NuxtLink to="/timeline">
-          {{ $t('/timeline') }}
-        </NuxtLink>
-        <NuxtLink
-          v-if="algoliaEnabled"
-          class="icon-button !w-full"
-          :title="$t('search-all')"
-          to="/search"
-        >
-          <Search />
-        </NuxtLink>
+        <!-- timeline-first 模式：下拉显示内容标签 -->
+        <template v-if="!isContentTabsMode">
+          <NuxtLink
+            v-for="item in HeaderTabs"
+            :key="item"
+            :to="item"
+          >
+            {{ $t(item) }}
+          </NuxtLink>
+          <NuxtLink
+            v-if="algoliaEnabled"
+            :to="'/search'"
+          >
+            {{ $t('search-all') }}
+          </NuxtLink>
+        </template>
+
+        <!-- content-tabs 模式：下拉显示功能按钮和时间轴 -->
+        <template v-else>
+          <NuxtLink to="/timeline">
+            {{ $t('/timeline') }}
+          </NuxtLink>
+
+          <!-- 语言选择 -->
+          <div class="mt-2 border-t border-dark-200 pt-2 dark:border-dark-700">
+            <div class="px-2 py-1 text-xs font-semibold text-dark-500 dark:text-dark-400">
+              {{ $t('language') }}
+            </div>
+            <client-only>
+              <button
+                v-for="locale of i18nLocales"
+                :key="locale.code"
+                :class="[
+                  'flex w-full items-center gap-2 rounded py-2 pl-2 text-base font-semibold text-dark-600 hover:bg-dark-200 hover:text-primary-700 dark:text-dark-200 dark:hover:bg-dark-700',
+                  i18nCode === locale.code && 'dark:bg-primary-900/20 bg-primary-50 text-primary-700 dark:text-primary-500'
+                ]"
+                @click="setLocale(locale.code); mobileMenuShow = false"
+              >
+                <Languages class="size-5" />
+                {{ locale.name }}
+              </button>
+            </client-only>
+          </div>
+
+          <button
+            class="flex items-center gap-2 rounded py-2 pl-2 text-base font-semibold text-dark-600 hover:bg-dark-200 hover:text-primary-700 dark:text-dark-200 dark:hover:bg-dark-700"
+            @click="showPwdModal = true; mobileMenuShow = false"
+          >
+            <Key class="size-5" />
+            {{ $t('passwd') }}
+          </button>
+          <NuxtLink
+            :to="rocketUrl"
+            class="flex items-center gap-2"
+          >
+            <Rocket class="size-5" />
+            🚀
+          </NuxtLink>
+        </template>
       </div>
     </nav>
     <span
@@ -371,6 +444,14 @@ const inputPwd = ref(encryptor.usePasswd.value);
 
   a {
     @apply -mb-[4px] font-semibold flex flex-col items-center gap-[3px] text-lg text-dark-600 dark:text-dark-200 hover:text-primary-700 dark:hover:text-primary-400 after:block after:h-[2px] after:w-[120%] after:bg-transparent after:transition hover:after:bg-primary-700;
+  }
+}
+
+.mobileMainNav {
+  @apply flex md:hidden gap-4 justify-center;
+
+  a {
+    @apply -mb-[4px] font-semibold flex flex-col items-center gap-[3px] text-base text-dark-600 dark:text-dark-200 hover:text-primary-700 dark:hover:text-primary-400 after:block after:h-[2px] after:w-[120%] after:bg-transparent after:transition hover:after:bg-primary-700;
   }
 }
 
