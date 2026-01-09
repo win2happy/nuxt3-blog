@@ -43,6 +43,7 @@
   "input-tags": "输入标签，用英文逗号分隔(',')",
   "input-text-to-search": "输入文字进行搜索",
   "/knowledges": "文化",
+  "language": "语言",
   "link": "链接",
   "list-manage": "{0} 列表管理",
   "loading": "加载中",

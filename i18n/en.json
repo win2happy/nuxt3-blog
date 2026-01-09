@@ -43,6 +43,7 @@
   "input-tags": "Enter tags, separated by commas (',')",
   "input-text-to-search": "Enter text to search",
   "/knowledges": "Knowledges",
+  "language": "Language",
   "link": "Link",
   "list-manage": "{0} List Management",
   "loading": "Loading",
