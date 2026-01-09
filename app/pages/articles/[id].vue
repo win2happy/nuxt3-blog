@@ -39,20 +39,37 @@ const nextArticle = currentIndex < filteredList.length - 1 ? filteredList[curren
 
 useCommonSEOTitle(computed(() => item.title), computed(() => item.tags));
 const activeAnchor = ref<string>();
+let scrollTimeout: NodeJS.Timeout | null = null;
 
 const onScroll = () => {
   try {
-    const links = Array.from(markdownRef.value!.querySelectorAll<HTMLLinkElement>("h1>a, h2>a, h3>a, h4>a, h5>a, h6>a")).reverse();
-    for (const link of links) {
-      if (link.getBoundingClientRect().y <= 52) {
-        const hash = link.getAttribute("href");
-        activeAnchor.value = menuItems.value.find(anchor => anchor.url === hash?.slice(1))?.url;
-        return;
-      }
+    // 防抖处理，避免频繁更新
+    if (scrollTimeout) {
+      clearTimeout(scrollTimeout);
     }
-    // 未找到
-    activeAnchor.value = menuItems.value[0]?.url;
+
+    scrollTimeout = setTimeout(() => {
+      const links = Array.from(markdownRef.value!.querySelectorAll<HTMLLinkElement>("h1>a, h2>a, h3>a, h4>a, h5>a, h6>a")).reverse();
+      // 使用更合理的阈值：顶部导航高度 + 一些余量
+      const threshold = 100;
+
+      for (const link of links) {
+        const rect = link.getBoundingClientRect();
+        if (rect.y <= threshold) {
+          const hash = link.getAttribute("href");
+          activeAnchor.value = menuItems.value.find(anchor => anchor.url === hash?.slice(1))?.url;
+          return;
+        }
+      }
+      // 未找到或在顶部
+      activeAnchor.value = menuItems.value[0]?.url;
+    }, 50);
   } catch { /* empty */ }
+};
+
+// 处理导航点击
+const handleAnchorClick = (url: string) => {
+  activeAnchor.value = url;
 };
 
 onMounted(() => {
@@ -66,6 +83,9 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   rmScrollListener(onScroll);
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
 });
 
 const root = ref<HTMLElement>();
@@ -78,28 +98,50 @@ initViewer(root);
     class="container mx-auto px-4 py-8 max-md:px-1 max-md:py-2"
   >
     <div class="flex w-full justify-center gap-6">
-      <!-- <aside
+      <aside
         v-if="menuItems.length > 2"
-        class="shrink-0 max-xl:hidden lg:w-52"
+        class="shrink-0 max-xl:hidden lg:w-64"
       >
-        <div class="sticky top-20 max-h-[calc(100vh-120px)] overflow-y-auto p-4">
-          <nav class="space-y-1 text-sm">
-            <a
-              v-for="(anchor, idx) in menuItems"
-              :key="idx"
-              :href="`#${anchor.url}`"
-              :class="twMerge(
-                $style.menuItem,
-                anchor.size === 'small' && $style.menuItemSmall,
-                activeAnchor === anchor.url && $style.menuItemActive
-              )"
-              :title="anchor.text"
-            >
-              <span v-html="anchor.text" />
-            </a>
-          </nav>
+        <div class="sticky top-20 max-h-[calc(100vh-120px)] overflow-y-auto">
+          <div class="rounded-lg border border-dark-200 bg-white p-4 shadow-sm dark:border-dark-700 dark:bg-dark-800">
+            <h3 class="mb-3 flex items-center text-sm font-semibold text-dark-700 dark:text-dark-200">
+              <svg
+                class="mr-2 size-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h7"
+                />
+              </svg>
+              {{ $t('tableOfContents') || '目录' }}
+            </h3>
+            <nav class="space-y-0.5 text-sm">
+              <a
+                v-for="(anchor, idx) in menuItems"
+                :key="idx"
+                :href="`#${anchor.url}`"
+                :class="twMerge(
+                  $style.menuItem,
+                  anchor.size === 'small' && $style.menuItemSmall,
+                  activeAnchor === anchor.url && $style.menuItemActive
+                )"
+                :title="anchor.text"
+                @click="handleAnchorClick(anchor.url)"
+              >
+                <span
+                  :class="$style.menuItemText"
+                  v-html="anchor.text"
+                />
+              </a>
+            </nav>
+          </div>
         </div>
-      </aside> -->
+      </aside>
 
       <main class="max-w-6xl flex-1 overflow-hidden rounded-lg bg-white p-6 shadow dark:bg-dark-800 max-md:px-2">
         <h1 class="mb-4 text-2xl font-medium text-dark-900 dark:text-white">
@@ -222,14 +264,30 @@ initViewer(root);
 
 <style module>
 .menuItem {
-  @apply block py-2 px-3 text-sm text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-700 hover:text-primary-600 dark:hover:text-primary-400 rounded-md font-medium;
+  @apply block py-2 px-3 text-sm text-dark-600 dark:text-dark-400 hover:bg-primary-50 hover:text-primary-600 dark:hover:text-primary-400 rounded-md transition-all duration-200 relative border-l-2 border-transparent;
+}
+
+.menuItem:hover {
+  background-color: rgba(var(--color-primary-50), 0.5);
+}
+
+:global(.dark) .menuItem:hover {
+  background-color: rgba(var(--color-primary-900), 0.2);
 }
 
 .menuItemActive {
-  @apply text-primary-600 dark:text-primary-400;
+  @apply text-primary-600 dark:text-primary-400 bg-primary-50 border-l-2 border-primary-500 dark:border-primary-400 font-medium;
+}
+
+:global(.dark) .menuItemActive {
+  background-color: rgba(var(--color-primary-900), 0.2);
 }
 
 .menuItemSmall {
   @apply py-1.5 px-3 pl-6 text-xs;
+}
+
+.menuItemText {
+  @apply block truncate;
 }
 </style>
