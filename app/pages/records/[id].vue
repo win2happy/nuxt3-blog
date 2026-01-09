@@ -15,6 +15,7 @@ initViewer(root);
 </script>
 
 <template>
+  <ReadingProgress />
   <main
     ref="root"
     class="container mx-auto grow px-4 py-8 max-md:px-1 max-md:py-4"

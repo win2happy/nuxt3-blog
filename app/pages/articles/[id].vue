@@ -93,6 +93,7 @@ initViewer(root);
 </script>
 
 <template>
+  <ReadingProgress />
   <div
     ref="root"
     class="container mx-auto px-4 py-8 max-md:px-1 max-md:py-2"
