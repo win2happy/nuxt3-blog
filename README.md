@@ -118,3 +118,5 @@
   "prepare": "husky" // 安装husky
 }
 ```
+
+# 基于[nuxt3-blog](https://github.com/yunyuyuan/nuxt3-blog)的二次开发
