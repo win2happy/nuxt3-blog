@@ -13,14 +13,14 @@ export default {
   SEO_keywords: "IM,imuer's blog,Imuer视界,Imuer视界的博客", // keywords meta header
   MSClarityId: "uqyzrv8y66", // Microsoft的Clarity统计，https://clarity.microsoft.com/
   CloudflareAnalyze: "1c42957b8103aa01e99ea05293952604", // cloudflare的统计，https://developers.cloudflare.com/analytics/web-analytics
-  CommentRepoId: "R_kgDOQuotxw", // 评论系统，参考 https://github.com/yunyuyuan/nuxt3-blog/wiki/2.3-%E8%AF%84%E8%AE%BA%E7%B3%BB%E7%BB%9F
+  CommentRepoId: "R_kgDOQuotxw", // 评论系统，参考 https://github.com/win2happy/nuxt3-blog/wiki/2.3-%E8%AF%84%E8%AE%BA%E7%B3%BB%E7%BB%9F
   CommentDiscussionCategoryId: "DIC_kwDOQuotx84C0Oko", // 评论系统
 
-  database: { // 参考 https://github.com/yunyuyuan/nuxt3-blog/wiki/2.4-%E6%B5%8F%E8%A7%88%E9%87%8F%E7%BB%9F%E8%AE%A1
+  database: { // 参考 https://github.com/win2happy/nuxt3-blog/wiki/2.4-%E6%B5%8F%E8%A7%88%E9%87%8F%E7%BB%9F%E8%AE%A1
     initialVisitors: 1, // 如果设置成10000，那么发一篇文章立马就有10000个浏览量！
     visitFromOwner: false // 网站拥有者访问时，是否增加浏览量
   },
-  algoliaSearch: { // 参考 https://github.com/yunyuyuan/nuxt3-blog/wiki/2.5-%E5%85%A8%E7%AB%99%E6%90%9C%E7%B4%A2
+  algoliaSearch: { // 参考 https://github.com/win2happy/nuxt3-blog/wiki/2.5-%E5%85%A8%E7%AB%99%E6%90%9C%E7%B4%A2
     appId: "ZO74SFHXCN",
     searchKey: "917aba08becc2f02c1d11216f436ddb9",
     indexName: "nuxt3-blog"
@@ -30,11 +30,11 @@ export default {
   defaultLang: "zh", // default language, "zh" and "en" are supported currently
   mobileNavMode: "content-tabs", // 移动端导航栏模式："function-buttons" (主导航显示：语言/主题/密码/火箭，下拉菜单显示：Articles/Records/Knowledges/timeline/搜索) 或 "content-tabs" (主导航显示：Articles/Records/Knowledges/搜索/主题，下拉菜单显示：时间轴/语言/密码/火箭)
   about: [
-    "幽深宇宙已岁逾百亿，惟闪烁星光点缀生机",
-    "我常仰望浩瀚天际，思念在同一颗星球的你",
-    "想，那转瞬的迷人流星，也许就是你的回眸",
-    "光坠之地，吾之忧祈",
-    "——2021.12.4"
+    "星海浮沉百亿秋，微光一缕系离愁",
+    "我倚晚风望遥穹，相思尽付此间柔",
+    "流火掠空惊夜寂，疑是你含笑凝眸",
+    "碎光落处轻声祷，岁岁平安与君候",
+    "——2025.9.15"
   ],
 
   /** -------------------------------------------------注意----------------------------------------------------- */
