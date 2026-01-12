@@ -20,13 +20,33 @@ const props = withDefaults(defineProps<{
   position?: "top" | "bottom";
   enabled?: boolean;
 }>(), {
-  color: config.readingProgress?.color || "cyan",
+  color: config.readingProgress?.color || "",
   height: config.readingProgress?.height || 3,
   position: config.readingProgress?.position || "top",
   enabled: config.readingProgress?.enabled !== false
 });
 
 const progress = ref(0);
+
+// 获取当前系统主题颜色
+const getCurrentThemeColor = (): string => {
+  if (import.meta.client) {
+    const classList = document.documentElement.classList;
+    const themeColors = config.themeColor || ["cyan"];
+
+    for (const color of themeColors) {
+      if (classList.contains(`theme-${color}`)) {
+        return color;
+      }
+    }
+
+    // 如果没有找到，返回第一个主题颜色
+    return themeColors[0];
+  }
+
+  // 服务端渲染时返回默认颜色
+  return config.themeColor?.[0] || "cyan";
+};
 
 const containerStyle = computed(() => ({
   position: "fixed",
@@ -43,8 +63,11 @@ const progressStyle = computed(() => {
   // 支持 Tailwind 主题色或自定义颜色
   let colorValue = "";
 
-  if (props.color.startsWith("#")) {
-    colorValue = props.color;
+  // 如果 color 为空，使用系统当前主题颜色
+  const actualColor = props.color || getCurrentThemeColor();
+
+  if (actualColor.startsWith("#")) {
+    colorValue = actualColor;
   } else {
     // Tailwind 颜色映射
     const colorMap: Record<string, string> = {
@@ -59,7 +82,7 @@ const progressStyle = computed(() => {
       amber: "#f59e0b",
       primary: "#3b82f6"
     };
-    colorValue = colorMap[props.color] || colorMap["cyan"];
+    colorValue = colorMap[actualColor] || colorMap["cyan"];
   }
 
   return {

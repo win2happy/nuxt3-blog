@@ -24,6 +24,7 @@ export type ArticleItem = ItemBase<{
   tags: string[];
   excerpt?: string; // 文章摘要（分割线前的内容）
   coverImage?: string; // 封面图片（第一张图片的URL）
+  isPinned?: boolean; // 是否置顶
 }>;
 
 export type RecordItem = ItemBase<{

@@ -2,12 +2,15 @@
 import { AlertCircle, Home, RefreshCw } from "lucide-vue-next";
 import type { NuxtError } from "#app";
 import { OfficialRepo } from "~/utils/common/constants";
+import { translate } from "~/utils/nuxt/i18n";
 
 defineProps<{
   error: NuxtError;
 }>();
 
 const reload = () => window.location.reload();
+
+const t = (key: string) => translate(key);
 </script>
 
 <template>
@@ -20,10 +23,10 @@ const reload = () => window.location.reload();
           </div>
           <div>
             <h1 class="text-lg font-semibold text-red-700 dark:text-red-400">
-              {{ $t('error-title') }}
+              {{ t('error-title') }}
             </h1>
             <p class="text-sm text-red-600 dark:text-red-300">
-              {{ $t('error-subtitle') }}
+              {{ t('error-subtitle') }}
             </p>
           </div>
         </div>
@@ -33,7 +36,7 @@ const reload = () => window.location.reload();
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div class="rounded-lg bg-dark-50 p-4 dark:bg-dark-700/50">
             <div class="text-sm font-medium text-dark-500 dark:text-dark-400">
-              {{ $t('error-status-code') }}
+              {{ t('error-status-code') }}
             </div>
             <div class="mt-1 text-2xl font-semibold">
               {{ error.statusCode }}
@@ -42,7 +45,7 @@ const reload = () => window.location.reload();
 
           <div class="rounded-lg bg-dark-50 p-4 dark:bg-dark-700/50">
             <div class="text-sm font-medium text-dark-500 dark:text-dark-400">
-              {{ $t('error-type') }}
+              {{ t('error-type') }}
             </div>
             <div class="mt-1 flex space-x-2">
               <span
@@ -56,7 +59,7 @@ const reload = () => window.location.reload();
 
         <div class="rounded-lg bg-dark-50 p-4 dark:bg-dark-700/50">
           <div class="mb-2 text-sm font-medium text-dark-500 dark:text-dark-400">
-            {{ $t('error-data') }}
+            {{ t('error-data') }}
           </div>
           <div class="max-h-60 overflow-auto rounded-md bg-dark-100 p-3 dark:bg-dark-800">
             <pre class="whitespace-pre-wrap text-xs text-dark-800 dark:text-dark-200">
@@ -67,7 +70,7 @@ const reload = () => window.location.reload();
 
         <div class="rounded-lg bg-dark-50 p-4 dark:bg-dark-700/50">
           <div class="mb-2 text-sm font-medium text-dark-500 dark:text-dark-400">
-            {{ $t('error-reason') }}
+            {{ t('error-reason') }}
           </div>
           <div class="max-h-60 overflow-auto rounded-md bg-dark-100 p-3 dark:bg-dark-800">
             <pre class="whitespace-pre-wrap text-xs text-dark-800 dark:text-dark-200">
@@ -84,14 +87,14 @@ const reload = () => window.location.reload();
           :icon="RefreshCw"
           @click="reload"
         >
-          {{ $t('error-refresh') }}
+          {{ t('error-refresh') }}
         </CommonButton>
         <NuxtLink to="/">
           <CommonButton
             theme="primary"
             :icon="Home"
           >
-            {{ $t('error-home') }}
+            {{ t('error-home') }}
           </CommonButton>
 
         </NuxtLink>
@@ -100,14 +103,14 @@ const reload = () => window.location.reload();
 
     <div class="mt-auto py-2 text-center text-xs text-dark-500 dark:text-dark-400">
       <p>
-        {{ $t('error-contact') }}
+        {{ t('error-contact') }}
         |
         <a
           target="_blank"
           :href="`https://github.com/${OfficialRepo}/issues/new`"
           class="text-primary-600 hover:underline dark:text-primary-400"
         >
-          {{ $t('error-feedback') }}
+          {{ t('error-feedback') }}
         </a>
       </p>
     </div>

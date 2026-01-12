@@ -39,7 +39,7 @@ export default {
 
   readingProgress: { // 阅读进度条配置
     enabled: true, // 是否启用阅读进度条
-    color: "orange", // 进度条颜色，支持主题色名称（cyan/sky/teal/emerald/purple/indigo/fuchsia/orange/amber）或自定义颜色（如 "#3b82f6"）
+    color: "", // 进度条颜色，支持主题色名称（cyan/sky/teal/emerald/purple/indigo/fuchsia/orange/amber）或自定义颜色（如 "#3b82f6"）如果为空时则使用主题色
     height: 5, // 进度条高度（像素）
     position: "bottom" // 进度条位置：top（顶部）或 bottom（底部）
   },

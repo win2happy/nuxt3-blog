@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T extends CommonItem">
 import { createCommit, deleteList } from "ls:~/utils/nuxt/manage/github";
-import { FolderOpen, Hash, Lock, MessageCircleMore, Save, Trash2, Upload } from "lucide-vue-next";
+import { FolderOpen, Hash, Lock, MessageCircleMore, Pin, Save, Trash2, Upload } from "lucide-vue-next";
 import MdEditor from "~/pages/manage/comps/md-editor.vue";
 import type { CommonItem } from "~/utils/common/types";
 import { translate } from "~/utils/nuxt/i18n";
@@ -556,6 +556,22 @@ onMounted(() => {
             :title="$t('show-comments')"
             test-id="item-show-comment-checkbox"
             @change="editingItem.showComments = $event"
+          />
+        </div>
+        <div
+          v-if="targetTab === '/articles'"
+          class="!flex-row items-center !gap-3"
+        >
+          <span>
+            <Pin class="inline-block size-5" />
+            {{ $t('is-pinned') }}
+          </span>
+          <common-checkbox
+            :checked="editingItem.isPinned"
+            :disabled="!decrypted"
+            :title="$t('is-pinned')"
+            test-id="item-pinned-checkbox"
+            @change="editingItem.isPinned = $event"
           />
         </div>
       </div>
