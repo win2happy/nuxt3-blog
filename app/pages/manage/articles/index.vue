@@ -9,13 +9,18 @@ const searchFn = (item: ArticleItem, s: string) => {
 
 <template>
   <manage-list-table :filter-fn="searchFn">
-    <template #title="{ item: { title }, dataUrl }">
+    <template #title="{ item: { title, isPinned }, dataUrl }">
       <td>
         <NuxtLink
           no-prefetch
           :to="dataUrl"
           class="block break-all p-2 text-base text-dark-950 hover:text-primary-700 dark:text-dark-200 dark:hover:text-primary-400"
         >
+          <span
+            v-if="isPinned"
+            class="mr-1 text-red-500 dark:text-red-400"
+            :title="$t('pinned')"
+          >📌</span>
           {{ title }}
         </NuxtLink>
       </td>

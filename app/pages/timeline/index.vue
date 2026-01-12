@@ -985,6 +985,11 @@ const scrollToYearMonth = (year: number, month: number) => {
                 >
                   <h4 class="break-words text-[17px] font-semibold leading-snug text-white transition hover:text-white/90 max-md:text-[15px]">
                     <span
+                      v-if="article.isPinned"
+                      class="mr-1.5 text-red-300"
+                      :title="$t('pinned')"
+                    >📌</span>
+                    <span
                       v-if="article.encrypt || article.encryptBlocks"
                       class="mr-1.5 text-yellow-300"
                       :title="$t('encrypted')"
@@ -1041,6 +1046,16 @@ const scrollToYearMonth = (year: number, month: number) => {
 
                       <!-- 文章标题 -->
                       <h5 class="text-base font-semibold text-dark-900 dark:text-dark-50">
+                        <span
+                          v-if="article.isPinned"
+                          class="mr-1.5 text-red-500 dark:text-red-400"
+                          :title="$t('pinned')"
+                        >📌</span>
+                        <span
+                          v-if="article.encrypt || article.encryptBlocks"
+                          class="mr-1.5 text-yellow-500"
+                          :title="$t('encrypted')"
+                        >🔒</span>
                         {{ article.title }}
                       </h5>
 
@@ -1198,6 +1213,11 @@ const scrollToYearMonth = (year: number, month: number) => {
                       <div class="min-w-0 flex-1">
                         <h4 class="truncate text-sm font-medium text-dark-800 group-hover:text-primary-600 dark:text-dark-200 dark:group-hover:text-primary-400">
                           <span
+                            v-if="article.isPinned"
+                            class="mr-1 text-red-500 dark:text-red-400"
+                            :title="$t('pinned')"
+                          >📌</span>
+                          <span
                             v-if="article.encrypt || article.encryptBlocks"
                             class="mr-1 text-yellow-500"
                             :title="$t('encrypted')"
@@ -1275,6 +1295,11 @@ const scrollToYearMonth = (year: number, month: number) => {
           <div class="flex flex-1 flex-col p-4">
             <!-- 标题 -->
             <h3 class="mb-2 line-clamp-2 text-base font-semibold leading-snug text-dark-900 group-hover:text-primary-600 dark:text-dark-50 dark:group-hover:text-primary-400">
+              <span
+                v-if="article.isPinned"
+                class="mr-1 text-red-500 dark:text-red-400"
+                :title="$t('pinned')"
+              >📌</span>
               <span
                 v-if="article.encrypt || article.encryptBlocks"
                 class="mr-1 text-yellow-500"
@@ -1584,6 +1609,16 @@ const scrollToYearMonth = (year: number, month: number) => {
                 </div>
                 <div class="min-w-0 flex-1">
                   <h4 class="line-clamp-2 text-xs font-medium leading-snug text-dark-800 group-hover:text-primary-600 dark:text-dark-200 dark:group-hover:text-primary-400">
+                    <span
+                      v-if="article.isPinned"
+                      class="mr-1 text-red-500 dark:text-red-400"
+                      :title="$t('pinned')"
+                    >📌</span>
+                    <span
+                      v-if="article.encrypt || article.encryptBlocks"
+                      class="mr-1 text-yellow-500"
+                      :title="$t('encrypted')"
+                    >🔒</span>
                     {{ article.title }}
                   </h4>
                 </div>

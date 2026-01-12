@@ -55,6 +55,16 @@ const filteredList = computed(() => {
     items = items.filter(i => i.encrypt || i.encryptBlocks);
   }
 
+  // 置顶排序：置顶文章排在前面，然后按时间倒序
+  items.sort((a, b) => {
+    // 如果都置顶或都不置顶，按时间排序
+    if (a.isPinned === b.isPinned) {
+      return b.time - a.time;
+    }
+    // 置顶文章排在前面
+    return a.isPinned ? -1 : 1;
+  });
+
   return items;
 });
 
@@ -482,6 +492,11 @@ const getMonthColorClass = (month: number) => {
           >
             <div class="flex flex-wrap items-start justify-between gap-4">
               <h3 class="title-text max-w-xl transition group-hover:text-primary-600 dark:group-hover:text-primary-400">
+                <span
+                  v-if="item.isPinned"
+                  class="mr-2 text-red-500 dark:text-red-400"
+                  :title="$t('pinned')"
+                >📌</span>
                 <span
                   v-if="item.encrypt || item.encryptBlocks"
                   class="mr-2 text-yellow-600 dark:text-yellow-500"

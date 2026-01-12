@@ -14,12 +14,18 @@ export default defineNuxtPlugin(async (app) => {
       })
     });
   });
+
+  const i18nMessages = ref({
+    [config.defaultLang as I18nCode]: await getI18nJson(config.defaultLang as I18nCode)
+  });
+
+  // 翻译函数
+  const t = (...args: Parameters<typeof translate>) => translate(...args);
+
   return {
     provide: {
-      i18nMessages: ref({
-        [config.defaultLang as I18nCode]: await getI18nJson(config.defaultLang as I18nCode)
-      }),
-      t: (...args: Parameters<typeof translate>) => translate(...args)
+      i18nMessages,
+      t
     }
   };
 });

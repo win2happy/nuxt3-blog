@@ -42,6 +42,8 @@
   "input-passwd": "Please enter password",
   "input-tags": "Enter tags, separated by commas (',')",
   "input-text-to-search": "Enter text to search",
+  "is-pinned": "Pin Article",
+  "pinned": "Pinned",
   "/knowledges": "Knowledges",
   "language": "Language",
   "link": "Link",
