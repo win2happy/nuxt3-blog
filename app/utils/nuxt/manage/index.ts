@@ -52,9 +52,13 @@ export function useStatusText(modifiedRef?: Readonly<Ref<boolean>>, decryptedRef
 }
 
 export function compareItem<T extends CommonItem>(item1: T, item2: T) {
-  const keys = Object.keys(item1) as (keyof T)[];
+  // 合并两个对象的所有键，确保新增字段也能被比较
+  const keys1 = Object.keys(item1) as (keyof T)[];
+  const keys2 = Object.keys(item2) as (keyof T)[];
+  const allKeys = Array.from(new Set([...keys1, ...keys2]));
+
   let diff = false;
-  for (const k of keys) {
+  for (const k of allKeys) {
     if (k === "time" || k === "modifyTime") {
       continue;
     }
