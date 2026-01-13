@@ -58,10 +58,10 @@
                 </div>
                 <div class="ml-5 flex-1">
                   <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-400">
-                    60秒读懂世界（红色卡片）
+                    60秒读懂世界
                   </h4>
                   <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    生成经典红色背景的新闻卡片
+                    保存新闻卡片
                   </p>
                 </div>
                 <svg
