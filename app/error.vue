@@ -10,7 +10,13 @@ defineProps<{
 
 const reload = () => window.location.reload();
 
-const t = (key: string) => translate(key);
+// 安全的翻译函数，在服务端返回 key，在客户端返回翻译
+const t = (key: string) => {
+  if (import.meta.server) {
+    return key;
+  }
+  return translate(key);
+};
 </script>
 
 <template>

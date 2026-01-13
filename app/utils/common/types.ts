@@ -64,7 +64,8 @@ export type CommonItem = ArticleItem | RecordItem | KnowledgeItem;
 export const HeaderTabs = [
   "/articles",
   "/records",
-  "/knowledges"
+  "/knowledges",
+  "/news"
 ] as const;
 
 export type HeaderTabUrl = typeof HeaderTabs[number];
