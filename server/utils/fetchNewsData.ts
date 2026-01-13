@@ -92,7 +92,7 @@ export async function fetchQuickNews() {
     const news: any[] = [];
 
     // 查找 "60秒读懂世界" 部分的内容
-    $("h1:contains('60秒读懂世界')").first().parent().find("a").each((index, element) => {
+    $("h1:contains('60秒读懂世界')").first().parent().find("li").each((index, element) => {
       const text = $(element).text().trim();
       const link = $(element).attr("href") || "#";
 
@@ -262,47 +262,140 @@ export async function fetchCalendar() {
 
     // 查找 "今日黄历" 部分
     const calendarSection = $("h1:contains('今日黄历')").first().parent();
-    const fullText = calendarSection.text();
 
-    // 提取各项信息
-    const lunar = fullText.match(/农历[\s\S]*?[年月日]/)?.[0] || "农历冬月廿五";
-    const animal = fullText.match(/乙巳蛇年|[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]蛇年/)?.[0] || "乙巳蛇年";
-    const month = fullText.match(/己丑月|[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]月/)?.[0] || "己丑月";
-    const day = fullText.match(/丁亥日|[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]日/)?.[0] || "丁亥日";
+    // 提取各项信息 - 直接从 HTML 元素中获取
+    let lunar = "";
+    let animal = "";
+    let month = "";
+    let day = "";
+    let element = "";
+    let conflict = "";
+    const suitable: string[] = [];
+    const avoid: string[] = [];
+    let luckyGod = "";
+    let badGod = "";
+    let luckyDirection = "";
+    let wealthDirection = "";
+    let blessDirection = "";
 
-    const element = fullText.match(/五行[\s\S]*?土|五行[\s\S]*?金|五行[\s\S]*?水|五行[\s\S]*?木|五行[\s\S]*?火/)?.[0]?.replace("五行", "").trim() || "屋上土";
-    const conflict = fullText.match(/冲[\s\S]*?煞西|冲[\s\S]*?煞东|冲[\s\S]*?煞南|冲[\s\S]*?煞北/)?.[0] || "冲(辛巳)蛇 煞西";
+    // 遍历黄历部分的所有文本节点和元素
+    calendarSection.find("*").each((_, elem) => {
+      const text = $(elem).text().trim();
 
-    // 提取宜和忌
-    const suitableMatch = fullText.match(/宜[\s\S]*?(?=忌)/);
-    const avoidMatch = fullText.match(/忌[\s\S]*?(?=吉神|凶神|$)/);
+      // 农历
+      if (text.includes("农历") && text.match(/[年月日]/)) {
+        lunar = text.match(/农历[\s\S]*?[年月日]/)?.[0] || lunar;
+      }
 
-    const suitable = suitableMatch
-      ? suitableMatch[0].replace("宜", "").trim().split(/[\s,，、]/).filter(Boolean)
-      : ["开市", "交易", "纳财"];
-    const avoid = avoidMatch
-      ? avoidMatch[0].replace("忌", "").trim().split(/[\s,，、]/).filter(Boolean)
-      : ["嫁娶", "安葬"];
+      // 干支纪年
+      if (text.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥][鼠牛虎兔龙蛇马羊猴鸡狗猪]年/)) {
+        animal = text.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥][鼠牛虎兔龙蛇马羊猴鸡狗猪]年/)?.[0] || animal;
+      }
 
-    const luckyGod = fullText.match(/吉神[\s\S]*?(?=凶神|$)/)?.[0]?.replace("吉神", "").trim() || "月德合 王日";
-    const badGod = fullText.match(/凶神[\s\S]*?$/)?.[0]?.replace("凶神", "").trim() || "游祸 血支 重日 朱雀";
+      // 干支纪月
+      if (text.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]月/) && !text.includes("年")) {
+        month = text.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]月/)?.[0] || month;
+      }
 
-    const luckyDirection = fullText.match(/喜神[\s\S]*?(东南|东北|西南|西北|正东|正西|正南|正北)/)?.[1] || "正南";
-    const wealthDirection = fullText.match(/财神[\s\S]*?(东南|东北|西南|西北|正东|正西|正南|正北)/)?.[1] || "西南";
+      // 干支纪日
+      if (text.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]日/)) {
+        day = text.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]日/)?.[0] || day;
+      }
 
+      // 五行
+      if (text.includes("五行")) {
+        element = text.replace(/五行[：:]*/, "").trim() || element;
+      }
+
+      // 冲煞
+      if (text.includes("冲") && text.match(/煞[东西南北]/)) {
+        conflict = text || conflict;
+      }
+
+      // 喜神方位
+      if (text.includes("喜神")) {
+        const dirMatch = text.match(/[东西南北]+|正[东西南北]/);
+        if (dirMatch) luckyDirection = dirMatch[0];
+      }
+
+      // 财神方位
+      if (text.includes("财神")) {
+        const dirMatch = text.match(/[东西南北]+|正[东西南北]/);
+        if (dirMatch) wealthDirection = dirMatch[0];
+      }
+
+      // 福神方位
+      if (text.includes("福神")) {
+        const dirMatch = text.match(/[东西南北]+|正[东西南北]/);
+        if (dirMatch) blessDirection = dirMatch[0];
+      }
+    });
+
+    // 提取宜和忌 - 直接从 HTML 的 <i> 标签中获取
+    const yiDiv = calendarSection.find("#yi, .yiji:has(b:contains('宜'))").first();
+    if (yiDiv.length > 0) {
+      yiDiv.find("i").each((_, elem) => {
+        const text = $(elem).text().trim();
+        if (text) {
+          suitable.push(text);
+        }
+      });
+    }
+
+    const jiDiv = calendarSection.find("#ji, .yiji:has(b:contains('忌'))").first();
+    if (jiDiv.length > 0) {
+      jiDiv.find("i").each((_, elem) => {
+        const text = $(elem).text().trim();
+        if (text) {
+          avoid.push(text);
+        }
+      });
+    }
+
+    // 提取吉神和凶神 - 直接从 HTML 的 <i> 标签中获取
+    const jshenDiv = calendarSection.find("#jshen, .shen:has(b:contains('吉神'))").first();
+    if (jshenDiv.length > 0) {
+      const gods: string[] = [];
+      jshenDiv.find("i").each((_, elem) => {
+        const text = $(elem).text().trim();
+        if (text) {
+          gods.push(text);
+        }
+      });
+      if (gods.length > 0) {
+        luckyGod = gods.join(" ");
+      }
+    }
+
+    const xshenDiv = calendarSection.find("#xshen, .shen:has(b:contains('凶神'))").first();
+    if (xshenDiv.length > 0) {
+      const gods: string[] = [];
+      xshenDiv.find("i").each((_, elem) => {
+        const text = $(elem).text().trim();
+        if (text) {
+          gods.push(text);
+        }
+      });
+      if (gods.length > 0) {
+        badGod = gods.join(" ");
+      }
+    }
+
+    // 设置默认值
     const result = {
-      lunar,
-      animal,
-      month,
-      day,
-      element,
-      conflict,
-      suitable,
-      avoid,
-      luckyGod,
-      badGod,
-      luckyDirection,
-      wealthDirection
+      lunar: lunar || "农历冬月廿五",
+      animal: animal || "乙巳蛇年",
+      month: month || "己丑月",
+      day: day || "丁亥日",
+      element: element || "屋上土",
+      conflict: conflict || "冲(辛巳)蛇 煞西",
+      suitable: suitable.length > 0 ? suitable : ["开市", "交易", "纳财"],
+      avoid: avoid.length > 0 ? avoid : ["嫁娶", "安葬"],
+      luckyGod: luckyGod || "月德合 王日",
+      badGod: badGod || "游祸 血支 重日 朱雀",
+      luckyDirection: luckyDirection || "正南",
+      wealthDirection: wealthDirection || "西南",
+      blessDirection: blessDirection || "东南"
     };
 
     setCache(cacheKey, result);

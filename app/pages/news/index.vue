@@ -239,7 +239,8 @@ const { data: newsData, pending: isLoading } = await useAsyncData("newsData", as
         luckyGod: "",
         badGod: "",
         luckyDirection: "",
-        wealthDirection: ""
+        wealthDirection: "",
+        blessDirection: ""
       },
       dailyQuote: {
         text: "",
@@ -362,11 +363,11 @@ const handleSaveImage = async (type: string) => {
           { id: 4, content: `冲煞：${calendarInfo.value.conflict}` },
           { id: 5, content: "" }, // 空行
           { id: 6, content: `喜神：${calendarInfo.value.luckyDirection}` },
-          { id: 7, content: "福神：东南" },
+          { id: 7, content: `福神：${calendarInfo.value.blessDirection}` },
           { id: 8, content: `财神：${calendarInfo.value.wealthDirection}` },
           { id: 9, content: "" }, // 空行
-          { id: 10, content: `宜：${calendarInfo.value.suitable.join("、")}` },
-          { id: 11, content: `忌：${calendarInfo.value.avoid.join("、")}` },
+          { id: 10, content: `宜：${calendarInfo.value.suitable.join("  ")}` },
+          { id: 11, content: `忌：${calendarInfo.value.avoid.join("  ")}` },
           { id: 12, content: "" }, // 空行
           { id: 13, content: `吉神：${calendarInfo.value.luckyGod}` },
           { id: 14, content: `凶神：${calendarInfo.value.badGod}` }

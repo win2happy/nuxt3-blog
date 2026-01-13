@@ -68,7 +68,7 @@
           福神
         </div>
         <div class="text-sm font-bold text-green-600 dark:text-green-400">
-          东南
+          {{ calendar.blessDirection }}
         </div>
       </div>
       <div class="rounded-xl bg-white p-3 text-center dark:bg-gray-800">
@@ -156,6 +156,7 @@ interface CalendarInfo {
   badGod: string;
   luckyDirection: string;
   wealthDirection: string;
+  blessDirection: string;
 }
 
 interface Props {
