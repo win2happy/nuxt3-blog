@@ -330,6 +330,10 @@ export async function generateListCard(
     weekDay?: string;
     lunarDate?: string;
     hideNumbers?: boolean; // 是否隐藏所有序号
+    gradientStart?: string;
+    gradientEnd?: string;
+    contentBackgroundColor?: string;
+    headerTextColor?: string;
   }
 ): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -375,8 +379,8 @@ export async function generateListCard(
       ctx.scale(config.scale, config.scale);
 
       // 绘制背景渐变
-      const gradientStart = globalConfig.newsCard?.gradientStart || "#ff6b6b";
-      const gradientEnd = globalConfig.newsCard?.gradientEnd || "#ee5a6f";
+      const gradientStart = options?.gradientStart || globalConfig.newsCard?.gradientStart || "#ff6b6b";
+      const gradientEnd = options?.gradientEnd || globalConfig.newsCard?.gradientEnd || "#ee5a6f";
       const gradient = ctx.createLinearGradient(0, 0, config.width, totalHeight);
       gradient.addColorStop(0, gradientStart);
       gradient.addColorStop(1, gradientEnd);
@@ -385,7 +389,7 @@ export async function generateListCard(
 
       // 绘制头部
       ctx.textAlign = "center";
-      ctx.fillStyle = globalConfig.newsCard?.headerTextColor || "white";
+      ctx.fillStyle = options?.headerTextColor || globalConfig.newsCard?.headerTextColor || "white";
 
       ctx.font = "bold 24px \"Microsoft YaHei\", sans-serif";
       ctx.letterSpacing = "6px";
@@ -403,7 +407,7 @@ export async function generateListCard(
       ctx.fillText(`${options?.weekDay || "星期一"} ${options?.lunarDate || "农历冬月廿五"}`, config.width / 2, config.headerPaddingTop + 116);
 
       // 绘制内容区域
-      const contentBgColor = globalConfig.newsCard?.contentBackgroundColor || "white";
+      const contentBgColor = options?.contentBackgroundColor || globalConfig.newsCard?.contentBackgroundColor || "white";
       ctx.fillStyle = contentBgColor;
       ctx.fillRect(config.contentMargin, config.headerHeight, config.width - config.contentMargin * 2, contentHeight);
 
