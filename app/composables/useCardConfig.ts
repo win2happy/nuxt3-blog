@@ -1,0 +1,104 @@
+import { useState } from "#app";
+import config from "~~/config";
+
+export interface CardConfig {
+  gradientStart: string;
+  gradientEnd: string;
+  contentBackgroundColor: string;
+  headerTextColor: string;
+}
+
+const STORAGE_KEY = "nuxt3-blog-card-config";
+
+// 从 localStorage 加载配置
+function loadConfigFromStorage(): CardConfig | null {
+  if (import.meta.client) {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error("Failed to load card config from storage:", error);
+    }
+  }
+  return null;
+}
+
+// 保存配置到 localStorage
+function saveConfigToStorage(cardConfig: CardConfig): void {
+  if (import.meta.client) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cardConfig));
+    } catch (error) {
+      console.error("Failed to save card config to storage:", error);
+    }
+  }
+}
+
+// 获取默认配置（从 config.ts）
+function getDefaultConfig(): CardConfig {
+  return {
+    gradientStart: config.newsCard.gradientStart,
+    gradientEnd: config.newsCard.gradientEnd,
+    contentBackgroundColor: config.newsCard.contentBackgroundColor,
+    headerTextColor: config.newsCard.headerTextColor
+  };
+}
+
+// 全局状态
+export const useCardConfig = () => {
+  const cardConfig = useState<CardConfig>("card-config", () => {
+    // 优先使用 localStorage 的配置，否则使用默认配置
+    return loadConfigFromStorage() || getDefaultConfig();
+  });
+
+  // 更新配置
+  const updateConfig = (newConfig: Partial<CardConfig>) => {
+    cardConfig.value = { ...cardConfig.value, ...newConfig };
+    saveConfigToStorage(cardConfig.value);
+  };
+
+  // 重置为默认配置
+  const resetConfig = () => {
+    cardConfig.value = getDefaultConfig();
+    saveConfigToStorage(cardConfig.value);
+  };
+
+  // 检查是否使用了自定义配置
+  const isCustomized = computed(() => {
+    const defaultConfig = getDefaultConfig();
+    return JSON.stringify(cardConfig.value) !== JSON.stringify(defaultConfig);
+  });
+
+  // 获取渐变背景样式
+  const getGradientStyle = () => {
+    return {
+      background: `linear-gradient(135deg, ${cardConfig.value.gradientStart} 0%, ${cardConfig.value.gradientEnd} 100%)`
+    };
+  };
+
+  // 获取内容背景色样式
+  const getContentBackgroundStyle = () => {
+    return {
+      backgroundColor: cardConfig.value.contentBackgroundColor
+    };
+  };
+
+  // 获取头部文字颜色样式
+  const getHeaderTextColorStyle = () => {
+    return {
+      color: cardConfig.value.headerTextColor
+    };
+  };
+
+  return {
+    cardConfig,
+    updateConfig,
+    resetConfig,
+    isCustomized,
+    getGradientStyle,
+    getContentBackgroundStyle,
+    getHeaderTextColorStyle
+  };
+};

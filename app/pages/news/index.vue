@@ -73,7 +73,7 @@
         </div>
 
         <!-- 保存图片按钮 -->
-        <div class="mt-6">
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
           <button
             class="group inline-flex items-center space-x-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
             @click="showSaveModal = true"
@@ -93,6 +93,15 @@
                 d="M9 5l7 7-7 7"
               />
             </svg>
+          </button>
+
+          <!-- 卡片样式配置按钮 -->
+          <button
+            class="group inline-flex items-center space-x-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-purple-600 hover:to-pink-700 hover:shadow-xl"
+            @click="showConfigModal = true"
+          >
+            <span class="text-xl">🎨</span>
+            <span>样式配置</span>
           </button>
         </div>
       </div>
@@ -145,6 +154,12 @@
       @save="handleSaveImage"
     />
 
+    <!-- 卡片样式配置模态框 -->
+    <CardConfigModal
+      :show="showConfigModal"
+      @close="showConfigModal = false"
+    />
+
     <!-- Loading -->
     <Transition name="fade">
       <div
@@ -175,6 +190,7 @@ const calendarRef = ref();
 const quoteRef = ref();
 
 const showSaveModal = ref(false);
+const showConfigModal = ref(false);
 const isGenerating = ref(false);
 const generatingText = ref("正在生成图片");
 
@@ -259,8 +275,11 @@ const historyEvents = computed(() => newsData.value?.historyEvents || []);
 const calendarInfo = computed(() => newsData.value?.calendarInfo || null);
 const dailyQuote = computed(() => newsData.value?.dailyQuote || null);
 
+// 使用统一的前端配置
+const { cardConfig } = useCardConfig();
+
 // 处理保存图片
-const handleSaveImage = async (type: string) => {
+const handleSaveImage = async (type: string, customConfig?: any) => {
   // 检查数据是否已加载
   if (isLoading.value) {
     alert("数据正在加载中，请稍候再试");
@@ -271,7 +290,6 @@ const handleSaveImage = async (type: string) => {
     alert("数据未加载完成，请稍候再试");
     return;
   }
-
   isGenerating.value = true;
 
   try {
@@ -289,10 +307,9 @@ const handleSaveImage = async (type: string) => {
           {
             date: `${newsCardDate.getFullYear()}年${newsCardDate.getMonth() + 1}月${newsCardDate.getDate()}日`,
             weekDay: weekDays[newsCardDate.getDay()],
-            lunarDate: lunarDate.value
-            // 可选：自定义背景色
-            // gradientStart: '#ff6b6b',
-            // gradientEnd: '#ee5a6f',
+            lunarDate: lunarDate.value,
+            // 使用前端配置（customConfig 如果有则使用，否则使用全局前端配置）
+            ...(customConfig || cardConfig.value)
           }
         );
         break;
@@ -319,7 +336,12 @@ const handleSaveImage = async (type: string) => {
             title: "实时热搜",
             date: `${trendsDate.getFullYear()}年${trendsDate.getMonth() + 1}月${trendsDate.getDate()}日`,
             weekDay: trendsWeekDays[trendsDate.getDay()],
-            lunarDate: lunarDate.value
+            lunarDate: lunarDate.value,
+            // 使用前端配置
+            gradientStart: cardConfig.value.gradientStart,
+            gradientEnd: cardConfig.value.gradientEnd,
+            contentBackgroundColor: cardConfig.value.contentBackgroundColor,
+            headerTextColor: cardConfig.value.headerTextColor
           }
         );
         break;
@@ -343,7 +365,12 @@ const handleSaveImage = async (type: string) => {
             date: `${historyDate.getFullYear()}年${historyDate.getMonth() + 1}月${historyDate.getDate()}日`,
             weekDay: historyWeekDays[historyDate.getDay()],
             lunarDate: lunarDate.value,
-            hideNumbers: true // 全局控制不显示序号
+            hideNumbers: true, // 全局控制不显示序号
+            // 使用前端配置
+            gradientStart: cardConfig.value.gradientStart,
+            gradientEnd: cardConfig.value.gradientEnd,
+            contentBackgroundColor: cardConfig.value.contentBackgroundColor,
+            headerTextColor: cardConfig.value.headerTextColor
           }
         );
         break;
@@ -379,7 +406,12 @@ const handleSaveImage = async (type: string) => {
             date: `${calendarDate.getFullYear()}年${calendarDate.getMonth() + 1}月${calendarDate.getDate()}日`,
             weekDay: calendarWeekDays[calendarDate.getDay()],
             lunarDate: lunarDate.value,
-            hideNumbers: true // 不显示序号
+            hideNumbers: true, // 不显示序号
+            // 使用前端配置
+            gradientStart: cardConfig.value.gradientStart,
+            gradientEnd: cardConfig.value.gradientEnd,
+            contentBackgroundColor: cardConfig.value.contentBackgroundColor,
+            headerTextColor: cardConfig.value.headerTextColor
           }
         );
         break;
@@ -402,7 +434,12 @@ const handleSaveImage = async (type: string) => {
             date: `${quoteDate.getFullYear()}年${quoteDate.getMonth() + 1}月${quoteDate.getDate()}日`,
             weekDay: quoteWeekDays[quoteDate.getDay()],
             lunarDate: lunarDate.value,
-            hideNumbers: true // 不显示序号
+            hideNumbers: true, // 不显示序号
+            // 使用前端配置
+            gradientStart: cardConfig.value.gradientStart,
+            gradientEnd: cardConfig.value.gradientEnd,
+            contentBackgroundColor: cardConfig.value.contentBackgroundColor,
+            headerTextColor: cardConfig.value.headerTextColor
           }
         );
         break;

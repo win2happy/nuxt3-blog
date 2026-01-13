@@ -46,6 +46,16 @@
 
           <!-- 内容 -->
           <div class="max-h-[calc(90vh-180px)] overflow-y-auto p-8">
+            <!-- 提示信息 -->
+            <div class="mb-6 rounded-2xl border-2 border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+              <div class="flex items-center space-x-2">
+                <span class="text-xl">💡</span>
+                <p class="text-sm text-gray-700 dark:text-gray-300">
+                  所有卡片统一使用前端配置的样式。需要修改样式请点击页面上的"样式配置"按钮。
+                </p>
+              </div>
+            </div>
+
             <!-- 选项列表 -->
             <div class="space-y-4">
               <!-- 60秒读懂世界（红色卡片） -->
@@ -232,18 +242,22 @@ interface Props {
 
 interface Emits {
   (e: "update:modelValue", value: boolean): void;
-  (e: "save", type: string): void;
+  (e: "save", type: string, config?: any): void;
 }
 
 defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+// 使用统一的前端配置
+const { cardConfig } = useCardConfig();
 
 const close = () => {
   emit("update:modelValue", false);
 };
 
 const handleSave = (type: string) => {
-  emit("save", type);
+  // 所有类型统一使用前端配置
+  emit("save", type, cardConfig.value);
   close();
 };
 </script>
