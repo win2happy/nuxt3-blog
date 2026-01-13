@@ -20,7 +20,22 @@ export default withNuxt(
       "vue/multi-word-component-names": "off",
       "vue/no-multiple-template-root": "off",
       "vue/no-v-model-argument": "off",
-      "vue/no-v-html": "off"
+      "vue/no-v-html": "off",
+      "tailwindcss/no-custom-classname": ["warn", {
+        "whitelist": [
+          "daily-calendar",
+          "daily-quote",
+          "history-today",
+          "history-item",
+          "hot-trends",
+          "platform-card",
+          "trend-item",
+          "news-quick-read",
+          "news-item",
+          "animate-modal-in",
+          "news-aggregator"
+        ]
+      }]
     }
   }
 );

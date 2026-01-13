@@ -44,6 +44,13 @@ export default {
     position: "bottom" // 进度条位置：top（顶部）或 bottom（底部）
   },
 
+  newsCard: { // 60秒读懂世界图片卡片配置
+    gradientStart: "#0000ff", // 背景渐变起始色
+    gradientEnd: "#66ee5a", // 背景渐变结束色
+    contentBackgroundColor: "white", // 内容区域背景色
+    headerTextColor: "white" // 头部文字颜色
+  },
+
   /** -------------------------------------------------注意----------------------------------------------------- */
 
   githubRepo: "nuxt3-blog" // 需要与仓库名一致，如果fork时更改了仓库名，则这里也要改
