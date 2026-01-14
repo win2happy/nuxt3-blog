@@ -341,7 +341,8 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
             gradientStart: cardConfig.value.gradientStart,
             gradientEnd: cardConfig.value.gradientEnd,
             contentBackgroundColor: cardConfig.value.contentBackgroundColor,
-            headerTextColor: cardConfig.value.headerTextColor
+            headerTextColor: cardConfig.value.headerTextColor,
+            contentTextColor: cardConfig.value.contentTextColor
           }
         );
         break;
@@ -370,7 +371,8 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
             gradientStart: cardConfig.value.gradientStart,
             gradientEnd: cardConfig.value.gradientEnd,
             contentBackgroundColor: cardConfig.value.contentBackgroundColor,
-            headerTextColor: cardConfig.value.headerTextColor
+            headerTextColor: cardConfig.value.headerTextColor,
+            contentTextColor: cardConfig.value.contentTextColor
           }
         );
         break;
@@ -411,7 +413,8 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
             gradientStart: cardConfig.value.gradientStart,
             gradientEnd: cardConfig.value.gradientEnd,
             contentBackgroundColor: cardConfig.value.contentBackgroundColor,
-            headerTextColor: cardConfig.value.headerTextColor
+            headerTextColor: cardConfig.value.headerTextColor,
+            contentTextColor: cardConfig.value.contentTextColor
           }
         );
         break;
@@ -439,7 +442,8 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
             gradientStart: cardConfig.value.gradientStart,
             gradientEnd: cardConfig.value.gradientEnd,
             contentBackgroundColor: cardConfig.value.contentBackgroundColor,
-            headerTextColor: cardConfig.value.headerTextColor
+            headerTextColor: cardConfig.value.headerTextColor,
+            contentTextColor: cardConfig.value.contentTextColor
           }
         );
         break;

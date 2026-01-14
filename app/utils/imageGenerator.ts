@@ -12,6 +12,7 @@ interface NewsCardOptions {
   gradientEnd?: string; // 背景渐变结束色
   contentBackgroundColor?: string; // 内容区域背景色
   headerTextColor?: string; // 头部文字颜色
+  contentTextColor?: string; // 内容文字颜色
 }
 
 /**
@@ -135,7 +136,7 @@ export async function generateNewsCard(
       ctx.fillRect(config.contentMargin, config.headerHeight, config.width - config.contentMargin * 2, contentHeight);
 
       // 绘制新闻列表
-      drawNewsList(ctx, newsWithLines, gradient, config);
+      drawNewsList(ctx, newsWithLines, gradient, config, options);
 
       // 返回 base64
       resolve(canvas.toDataURL("image/png"));
@@ -227,7 +228,8 @@ function drawNewsList(
   ctx: CanvasRenderingContext2D,
   newsWithLines: Array<{ id: number; content: string; lines: string[] }>,
   gradient: CanvasGradient,
-  config: any
+  config: any,
+  options?: NewsCardOptions
 ) {
   ctx.textAlign = "left";
   let currentY = config.headerHeight + config.contentPadding;
@@ -245,13 +247,13 @@ function drawNewsList(
     ctx.fill();
 
     // 绘制序号文字
-    ctx.fillStyle = "white";
+    ctx.fillStyle = options?.headerTextColor || globalConfig.newsCard?.headerTextColor || "white";
     ctx.font = "bold 8px \"Microsoft YaHei\", sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(item.id.toString(), numberX + config.numberSize / 2, numberY + 3);
 
     // 绘制新闻内容
-    ctx.fillStyle = "#333333";
+    ctx.fillStyle = options?.contentTextColor || globalConfig.newsCard?.contentTextColor || "#333333";
     ctx.font = "400 10px \"Microsoft YaHei\", sans-serif";
     ctx.textAlign = "left";
     ctx.letterSpacing = "0px";
@@ -334,6 +336,7 @@ export async function generateListCard(
     gradientEnd?: string;
     contentBackgroundColor?: string;
     headerTextColor?: string;
+    contentTextColor?: string;
   }
 ): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -430,14 +433,15 @@ export async function generateListCard(
           ctx.fill();
 
           // 绘制序号文字
-          ctx.fillStyle = "white";
+          ctx.fillStyle = options?.headerTextColor || globalConfig.newsCard?.headerTextColor || "white";
           ctx.font = "bold 8px \"Microsoft YaHei\", sans-serif";
           ctx.textAlign = "center";
           ctx.fillText((item.id || "").toString(), numberX + config.numberSize / 2, numberY + 3);
         }
 
         // 绘制内容
-        ctx.fillStyle = "#333333";
+        const contentTextColor = options?.contentTextColor || globalConfig.newsCard?.contentTextColor || "#333333";
+        ctx.fillStyle = contentTextColor;
         ctx.font = "400 10px \"Microsoft YaHei\", sans-serif";
         ctx.textAlign = "left";
         ctx.letterSpacing = "0px";
@@ -473,12 +477,16 @@ export async function generateListCard(
             ctx.roundRect(textX, lineY - 12, labelWidth + padding * 2, labelHeight, 4);
             ctx.fill();
 
-            // 绘制标签文字
-            ctx.fillStyle = "white";
+            // 绘制标签文字（宜、忌、吉神、凶神保持白色，其他使用头部文字颜色）
+            if (label === "宜" || label === "忌" || label === "吉神" || label === "凶神") {
+              ctx.fillStyle = "white";
+            } else {
+              ctx.fillStyle = options?.headerTextColor || globalConfig.newsCard?.headerTextColor || "white";
+            }
             ctx.fillText(label, textX + padding, lineY);
 
             // 绘制内容文字
-            ctx.fillStyle = "#333333";
+            ctx.fillStyle = contentTextColor;
             ctx.font = "400 10px \"Microsoft YaHei\", sans-serif";
             ctx.fillText(content, textX + labelWidth + padding * 2 + 6, lineY);
           } else {

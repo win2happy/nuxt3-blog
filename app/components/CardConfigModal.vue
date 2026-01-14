@@ -148,6 +148,27 @@
               >
             </div>
           </div>
+
+          <!-- 内容文字颜色 -->
+          <div class="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+            <label class="mb-3 flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span class="mr-2">🖊️</span>
+              内容文字色
+            </label>
+            <div class="flex items-center space-x-3">
+              <input
+                v-model="localConfig.contentTextColor"
+                type="color"
+                class="size-12 cursor-pointer rounded-lg border-2 border-gray-300 transition-all hover:scale-105 dark:border-gray-600"
+              >
+              <input
+                v-model="localConfig.contentTextColor"
+                type="text"
+                class="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="#374151"
+              >
+            </div>
+          </div>
         </div>
       </div>
 
@@ -193,7 +214,10 @@
                   <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-xs font-bold text-white shadow">
                     1
                   </span>
-                  <p class="flex-1 text-gray-700 dark:text-gray-800">
+                  <p
+                    class="flex-1 transition-all duration-300"
+                    :style="{ color: localConfig.contentTextColor }"
+                  >
                     这是一条示例新闻内容
                   </p>
                 </div>
@@ -201,7 +225,10 @@
                   <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-xs font-bold text-white shadow">
                     2
                   </span>
-                  <p class="flex-1 text-gray-700 dark:text-gray-800">
+                  <p
+                    class="flex-1 transition-all duration-300"
+                    :style="{ color: localConfig.contentTextColor }"
+                  >
                     用于预览卡片效果
                   </p>
                 </div>
@@ -276,56 +303,64 @@ const presets = [
     gradientStart: "#0000ff",
     gradientEnd: "#66ee5a",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "热情红橙",
     gradientStart: "#ff6b6b",
     gradientEnd: "#feca57",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "紫罗兰",
     gradientStart: "#667eea",
     gradientEnd: "#764ba2",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "海洋蓝",
     gradientStart: "#2193b0",
     gradientEnd: "#6dd5ed",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "日落橙",
     gradientStart: "#ff512f",
     gradientEnd: "#f09819",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "薄荷绿",
     gradientStart: "#00b09b",
     gradientEnd: "#96c93d",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "樱花粉",
     gradientStart: "#f857a6",
     gradientEnd: "#ff5858",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "深邃紫",
     gradientStart: "#4e54c8",
     gradientEnd: "#8f94fb",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   }
 ];
 
