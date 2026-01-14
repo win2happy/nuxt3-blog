@@ -158,38 +158,51 @@
         </h4>
         <div class="overflow-hidden rounded-2xl border-2 border-gray-200 shadow-xl dark:border-gray-700">
           <div
-            class="p-8 transition-all duration-300"
+            class="p-6 transition-all duration-300"
             :style="{ background: `linear-gradient(135deg, ${localConfig.gradientStart} 0%, ${localConfig.gradientEnd} 100%)` }"
           >
+            <!-- 顶部日期信息 -->
+            <div class="mb-6 text-center">
+              <h2
+                class="mb-2 text-xl font-bold transition-all duration-300 md:text-2xl"
+                :style="{ color: localConfig.headerTextColor }"
+              >
+                2026年1月14日
+              </h2>
+              <h1
+                class="mb-2 text-2xl font-black tracking-wide transition-all duration-300 md:text-3xl"
+                :style="{ color: localConfig.headerTextColor }"
+              >
+                60秒读懂世界
+              </h1>
+              <p
+                class="text-sm tracking-wider transition-all duration-300 md:text-base"
+                :style="{ color: localConfig.headerTextColor, opacity: 0.9 }"
+              >
+                星期三 农历冬月廿五
+              </p>
+            </div>
+
+            <!-- 新闻内容区域 -->
             <div
-              class="rounded-xl p-6 shadow-2xl transition-all duration-300"
+              class="rounded-xl p-4 shadow-2xl transition-all duration-300 md:p-6"
               :style="{ backgroundColor: localConfig.contentBackgroundColor }"
             >
-              <div class="mb-4 flex items-center space-x-3">
-                <div class="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-2xl shadow-lg">
-                  📰
-                </div>
-                <div>
-                  <h3
-                    class="text-xl font-bold transition-all duration-300"
-                    :style="{ color: localConfig.headerTextColor }"
-                  >
-                    60秒读懂世界
-                  </h3>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Today's News Brief
+              <div class="space-y-2 text-sm md:space-y-3 md:text-base">
+                <div class="flex items-start space-x-2">
+                  <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-xs font-bold text-white shadow">
+                    1
+                  </span>
+                  <p class="flex-1 text-gray-700 dark:text-gray-800">
+                    这是一条示例新闻内容
                   </p>
                 </div>
-              </div>
-              <div class="space-y-2">
-                <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
-                  <p class="text-sm text-gray-700 dark:text-gray-300">
-                    1. 这是一条示例新闻内容
-                  </p>
-                </div>
-                <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
-                  <p class="text-sm text-gray-700 dark:text-gray-300">
-                    2. 用于预览卡片效果
+                <div class="flex items-start space-x-2">
+                  <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-xs font-bold text-white shadow">
+                    2
+                  </span>
+                  <p class="flex-1 text-gray-700 dark:text-gray-800">
+                    用于预览卡片效果
                   </p>
                 </div>
               </div>
