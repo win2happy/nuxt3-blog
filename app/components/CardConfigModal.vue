@@ -115,7 +115,7 @@
             </label>
             <div class="flex items-center space-x-3">
               <input
-                v-model="localConfig.contentBackgroundColor"
+                v-model="contentBackgroundColorHex"
                 type="color"
                 class="size-12 cursor-pointer rounded-lg border-2 border-gray-300 transition-all hover:scale-105 dark:border-gray-600"
               >
@@ -136,7 +136,7 @@
             </label>
             <div class="flex items-center space-x-3">
               <input
-                v-model="localConfig.headerTextColor"
+                v-model="headerTextColorHex"
                 type="color"
                 class="size-12 cursor-pointer rounded-lg border-2 border-gray-300 transition-all hover:scale-105 dark:border-gray-600"
               >
@@ -145,6 +145,27 @@
                 type="text"
                 class="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 placeholder="white"
+              >
+            </div>
+          </div>
+
+          <!-- 内容文字颜色 -->
+          <div class="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+            <label class="mb-3 flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span class="mr-2">🖊️</span>
+              内容文字色
+            </label>
+            <div class="flex items-center space-x-3">
+              <input
+                v-model="contentTextColorHex"
+                type="color"
+                class="size-12 cursor-pointer rounded-lg border-2 border-gray-300 transition-all hover:scale-105 dark:border-gray-600"
+              >
+              <input
+                v-model="localConfig.contentTextColor"
+                type="text"
+                class="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="#374151"
               >
             </div>
           </div>
@@ -158,38 +179,69 @@
         </h4>
         <div class="overflow-hidden rounded-2xl border-2 border-gray-200 shadow-xl dark:border-gray-700">
           <div
-            class="p-8 transition-all duration-300"
+            class="p-6 transition-all duration-300"
             :style="{ background: `linear-gradient(135deg, ${localConfig.gradientStart} 0%, ${localConfig.gradientEnd} 100%)` }"
           >
+            <!-- 顶部日期信息 -->
+            <div class="mb-6 text-center">
+              <h2
+                class="mb-2 text-xl font-bold transition-all duration-300 md:text-2xl"
+                :style="{ color: localConfig.headerTextColor }"
+              >
+                2026年1月14日
+              </h2>
+              <h1
+                class="mb-2 text-2xl font-black tracking-wide transition-all duration-300 md:text-3xl"
+                :style="{ color: localConfig.headerTextColor }"
+              >
+                60秒读懂世界
+              </h1>
+              <p
+                class="text-sm tracking-wider transition-all duration-300 md:text-base"
+                :style="{ color: localConfig.headerTextColor, opacity: 0.9 }"
+              >
+                星期三 农历冬月廿五
+              </p>
+            </div>
+
+            <!-- 新闻内容区域 -->
             <div
-              class="rounded-xl p-6 shadow-2xl transition-all duration-300"
+              class="rounded-xl p-4 shadow-2xl transition-all duration-300 md:p-6"
               :style="{ backgroundColor: localConfig.contentBackgroundColor }"
             >
-              <div class="mb-4 flex items-center space-x-3">
-                <div class="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-2xl shadow-lg">
-                  📰
-                </div>
-                <div>
-                  <h3
-                    class="text-xl font-bold transition-all duration-300"
-                    :style="{ color: localConfig.headerTextColor }"
+              <div class="space-y-2 text-sm md:space-y-3 md:text-base">
+                <div class="flex items-start space-x-2">
+                  <span
+                    class="flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold shadow transition-all duration-300"
+                    :style="{
+                      background: `linear-gradient(135deg, ${localConfig.gradientStart} 0%, ${localConfig.gradientEnd} 100%)`,
+                      color: localConfig.headerTextColor
+                    }"
                   >
-                    60秒读懂世界
-                  </h3>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Today's News Brief
+                    1
+                  </span>
+                  <p
+                    class="flex-1 transition-all duration-300"
+                    :style="{ color: localConfig.contentTextColor }"
+                  >
+                    这是一条示例新闻内容
                   </p>
                 </div>
-              </div>
-              <div class="space-y-2">
-                <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
-                  <p class="text-sm text-gray-700 dark:text-gray-300">
-                    1. 这是一条示例新闻内容
-                  </p>
-                </div>
-                <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
-                  <p class="text-sm text-gray-700 dark:text-gray-300">
-                    2. 用于预览卡片效果
+                <div class="flex items-start space-x-2">
+                  <span
+                    class="flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold shadow transition-all duration-300"
+                    :style="{
+                      background: `linear-gradient(135deg, ${localConfig.gradientStart} 0%, ${localConfig.gradientEnd} 100%)`,
+                      color: localConfig.headerTextColor
+                    }"
+                  >
+                    2
+                  </span>
+                  <p
+                    class="flex-1 transition-all duration-300"
+                    :style="{ color: localConfig.contentTextColor }"
+                  >
+                    用于预览卡片效果
                   </p>
                 </div>
               </div>
@@ -263,56 +315,64 @@ const presets = [
     gradientStart: "#0000ff",
     gradientEnd: "#66ee5a",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "热情红橙",
     gradientStart: "#ff6b6b",
     gradientEnd: "#feca57",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "紫罗兰",
     gradientStart: "#667eea",
     gradientEnd: "#764ba2",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "海洋蓝",
     gradientStart: "#2193b0",
     gradientEnd: "#6dd5ed",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "日落橙",
     gradientStart: "#ff512f",
     gradientEnd: "#f09819",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "薄荷绿",
     gradientStart: "#00b09b",
     gradientEnd: "#96c93d",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "樱花粉",
     gradientStart: "#f857a6",
     gradientEnd: "#ff5858",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   },
   {
     name: "深邃紫",
     gradientStart: "#4e54c8",
     gradientEnd: "#8f94fb",
     contentBackgroundColor: "white",
-    headerTextColor: "white"
+    headerTextColor: "white",
+    contentTextColor: "#374151"
   }
 ];
 
@@ -353,6 +413,47 @@ const handleReset = () => {
 const applyPreset = (preset: any) => {
   localConfig.value = { ...preset };
 };
+
+// 颜色名称转换为十六进制
+const colorNameToHex = (color: string): string => {
+  const colorMap: Record<string, string> = {
+    white: "#ffffff",
+    black: "#000000",
+    red: "#ff0000",
+    green: "#00ff00",
+    blue: "#0000ff",
+    yellow: "#ffff00",
+    cyan: "#00ffff",
+    magenta: "#ff00ff",
+    gray: "#808080",
+    grey: "#808080"
+  };
+
+  const normalizedColor = color.toLowerCase().trim();
+  return colorMap[normalizedColor] || color;
+};
+
+// 计算属性用于 color input
+const contentBackgroundColorHex = computed({
+  get: () => colorNameToHex(localConfig.value.contentBackgroundColor),
+  set: (value: string) => {
+    localConfig.value.contentBackgroundColor = value;
+  }
+});
+
+const headerTextColorHex = computed({
+  get: () => colorNameToHex(localConfig.value.headerTextColor),
+  set: (value: string) => {
+    localConfig.value.headerTextColor = value;
+  }
+});
+
+const contentTextColorHex = computed({
+  get: () => colorNameToHex(localConfig.value.contentTextColor),
+  set: (value: string) => {
+    localConfig.value.contentTextColor = value;
+  }
+});
 </script>
 
 <style scoped>

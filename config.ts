@@ -48,7 +48,8 @@ export default {
     gradientStart: "#0000ff", // 背景渐变起始色
     gradientEnd: "#66ee5a", // 背景渐变结束色
     contentBackgroundColor: "white", // 内容区域背景色
-    headerTextColor: "white" // 头部文字颜色
+    headerTextColor: "white", // 头部文字颜色
+    contentTextColor: "#374151" // 内容文字颜色
   },
 
   /** -------------------------------------------------注意----------------------------------------------------- */

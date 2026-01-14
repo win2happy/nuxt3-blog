@@ -6,6 +6,7 @@ export interface CardConfig {
   gradientEnd: string;
   contentBackgroundColor: string;
   headerTextColor: string;
+  contentTextColor: string;
 }
 
 const STORAGE_KEY = "nuxt3-blog-card-config";
@@ -42,7 +43,8 @@ function getDefaultConfig(): CardConfig {
     gradientStart: config.newsCard.gradientStart,
     gradientEnd: config.newsCard.gradientEnd,
     contentBackgroundColor: config.newsCard.contentBackgroundColor,
-    headerTextColor: config.newsCard.headerTextColor
+    headerTextColor: config.newsCard.headerTextColor,
+    contentTextColor: config.newsCard.contentTextColor
   };
 }
 
