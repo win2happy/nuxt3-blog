@@ -115,7 +115,7 @@
             </label>
             <div class="flex items-center space-x-3">
               <input
-                v-model="localConfig.contentBackgroundColor"
+                v-model="contentBackgroundColorHex"
                 type="color"
                 class="size-12 cursor-pointer rounded-lg border-2 border-gray-300 transition-all hover:scale-105 dark:border-gray-600"
               >
@@ -136,7 +136,7 @@
             </label>
             <div class="flex items-center space-x-3">
               <input
-                v-model="localConfig.headerTextColor"
+                v-model="headerTextColorHex"
                 type="color"
                 class="size-12 cursor-pointer rounded-lg border-2 border-gray-300 transition-all hover:scale-105 dark:border-gray-600"
               >
@@ -157,7 +157,7 @@
             </label>
             <div class="flex items-center space-x-3">
               <input
-                v-model="localConfig.contentTextColor"
+                v-model="contentTextColorHex"
                 type="color"
                 class="size-12 cursor-pointer rounded-lg border-2 border-gray-300 transition-all hover:scale-105 dark:border-gray-600"
               >
@@ -211,7 +211,13 @@
             >
               <div class="space-y-2 text-sm md:space-y-3 md:text-base">
                 <div class="flex items-start space-x-2">
-                  <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-xs font-bold text-white shadow">
+                  <span
+                    class="flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold shadow transition-all duration-300"
+                    :style="{
+                      background: `linear-gradient(135deg, ${localConfig.gradientStart} 0%, ${localConfig.gradientEnd} 100%)`,
+                      color: localConfig.headerTextColor
+                    }"
+                  >
                     1
                   </span>
                   <p
@@ -222,7 +228,13 @@
                   </p>
                 </div>
                 <div class="flex items-start space-x-2">
-                  <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-xs font-bold text-white shadow">
+                  <span
+                    class="flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold shadow transition-all duration-300"
+                    :style="{
+                      background: `linear-gradient(135deg, ${localConfig.gradientStart} 0%, ${localConfig.gradientEnd} 100%)`,
+                      color: localConfig.headerTextColor
+                    }"
+                  >
                     2
                   </span>
                   <p
@@ -401,6 +413,47 @@ const handleReset = () => {
 const applyPreset = (preset: any) => {
   localConfig.value = { ...preset };
 };
+
+// 颜色名称转换为十六进制
+const colorNameToHex = (color: string): string => {
+  const colorMap: Record<string, string> = {
+    white: "#ffffff",
+    black: "#000000",
+    red: "#ff0000",
+    green: "#00ff00",
+    blue: "#0000ff",
+    yellow: "#ffff00",
+    cyan: "#00ffff",
+    magenta: "#ff00ff",
+    gray: "#808080",
+    grey: "#808080"
+  };
+
+  const normalizedColor = color.toLowerCase().trim();
+  return colorMap[normalizedColor] || color;
+};
+
+// 计算属性用于 color input
+const contentBackgroundColorHex = computed({
+  get: () => colorNameToHex(localConfig.value.contentBackgroundColor),
+  set: (value: string) => {
+    localConfig.value.contentBackgroundColor = value;
+  }
+});
+
+const headerTextColorHex = computed({
+  get: () => colorNameToHex(localConfig.value.headerTextColor),
+  set: (value: string) => {
+    localConfig.value.headerTextColor = value;
+  }
+});
+
+const contentTextColorHex = computed({
+  get: () => colorNameToHex(localConfig.value.contentTextColor),
+  set: (value: string) => {
+    localConfig.value.contentTextColor = value;
+  }
+});
 </script>
 
 <style scoped>
