@@ -58,175 +58,438 @@
 
             <!-- 选项列表 -->
             <div class="space-y-4">
-              <!-- 60秒读懂世界（红色卡片） -->
-              <div
-                class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-red-500 hover:from-red-50 hover:to-pink-50 dark:border-gray-700 dark:hover:border-red-500 dark:hover:from-red-900/20 dark:hover:to-pink-900/20"
-                @click="handleSave('news-card')"
-              >
-                <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-pink-600 shadow-lg transition-transform group-hover:scale-110">
-                  <span class="text-3xl">📰</span>
-                </div>
-                <div class="ml-5 flex-1">
-                  <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-400">
-                    60秒读懂世界
-                  </h4>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    保存新闻卡片
-                  </p>
-                </div>
-                <svg
-                  class="size-6 text-gray-400 transition-colors group-hover:text-red-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <!-- 新闻页面选项 -->
+              <template v-if="props.configKey === 'news'">
+                <!-- 60秒读懂世界 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-blue-500 hover:from-blue-50 hover:to-purple-50 dark:border-gray-700 dark:hover:border-blue-500 dark:hover:from-blue-900/20 dark:hover:to-purple-900/20"
+                  @click="handleSave('news-card')"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </div>
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">📰</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                      60秒读懂世界
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存每日新闻摘要
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-blue-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
 
-              <!-- 实时热搜 -->
-              <div
-                class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-orange-500 hover:from-orange-50 hover:to-red-50 dark:border-gray-700 dark:hover:border-orange-500 dark:hover:from-orange-900/20 dark:hover:to-red-900/20"
-                @click="handleSave('trends')"
-              >
-                <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg transition-transform group-hover:scale-110">
-                  <span class="text-3xl">🔥</span>
-                </div>
-                <div class="ml-5 flex-1">
-                  <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-orange-600 dark:text-white dark:group-hover:text-orange-400">
-                    实时热搜
-                  </h4>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    保存所有平台的热搜榜单
-                  </p>
-                </div>
-                <svg
-                  class="size-6 text-gray-400 transition-colors group-hover:text-orange-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <!-- 实时热搜 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-red-500 hover:from-red-50 hover:to-orange-50 dark:border-gray-700 dark:hover:border-red-500 dark:hover:from-red-900/20 dark:hover:to-orange-900/20"
+                  @click="handleSave('trends')"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </div>
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-orange-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">🔥</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-400">
+                      实时热搜
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存热搜榜单
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-red-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
 
-              <!-- 历史上的今天 -->
-              <div
-                class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-green-500 hover:from-green-50 hover:to-teal-50 dark:border-gray-700 dark:hover:border-green-500 dark:hover:from-green-900/20 dark:hover:to-teal-900/20"
-                @click="handleSave('history')"
-              >
-                <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-teal-600 shadow-lg transition-transform group-hover:scale-110">
-                  <span class="text-3xl">📅</span>
-                </div>
-                <div class="ml-5 flex-1">
-                  <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-green-600 dark:text-white dark:group-hover:text-green-400">
-                    历史上的今天
-                  </h4>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    保存历史事件时间轴
-                  </p>
-                </div>
-                <svg
-                  class="size-6 text-gray-400 transition-colors group-hover:text-green-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <!-- 历史上的今天 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-amber-500 hover:from-amber-50 hover:to-yellow-50 dark:border-gray-700 dark:hover:border-amber-500 dark:hover:from-amber-900/20 dark:hover:to-yellow-900/20"
+                  @click="handleSave('history')"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </div>
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">📜</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-amber-600 dark:text-white dark:group-hover:text-amber-400">
+                      历史上的今天
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存历史事件记录
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-amber-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
 
-              <!-- 今日黄历 -->
-              <div
-                class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-orange-500 hover:from-orange-50 hover:to-red-50 dark:border-gray-700 dark:hover:border-orange-500 dark:hover:from-orange-900/20 dark:hover:to-red-900/20"
-                @click="handleSave('calendar')"
-              >
-                <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg transition-transform group-hover:scale-110">
-                  <span class="text-3xl">📖</span>
-                </div>
-                <div class="ml-5 flex-1">
-                  <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-orange-600 dark:text-white dark:group-hover:text-orange-400">
-                    今日黄历
-                  </h4>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    保存黄历宜忌信息
-                  </p>
-                </div>
-                <svg
-                  class="size-6 text-gray-400 transition-colors group-hover:text-orange-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <!-- 今日黄历 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-green-500 hover:from-green-50 hover:to-emerald-50 dark:border-gray-700 dark:hover:border-green-500 dark:hover:from-green-900/20 dark:hover:to-emerald-900/20"
+                  @click="handleSave('calendar')"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </div>
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">📅</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-green-600 dark:text-white dark:group-hover:text-green-400">
+                      今日黄历
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存黄历宜忌信息
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-green-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
 
-              <!-- 每日一语 -->
-              <div
-                class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-purple-500 hover:from-purple-50 hover:to-pink-50 dark:border-gray-700 dark:hover:border-purple-500 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20"
-                @click="handleSave('quote')"
-              >
-                <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg transition-transform group-hover:scale-110">
-                  <span class="text-3xl">💬</span>
-                </div>
-                <div class="ml-5 flex-1">
-                  <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-purple-600 dark:text-white dark:group-hover:text-purple-400">
-                    每日一语
-                  </h4>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    保存励志语录卡片
-                  </p>
-                </div>
-                <svg
-                  class="size-6 text-gray-400 transition-colors group-hover:text-purple-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <!-- 每日一语 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-indigo-500 hover:from-indigo-50 hover:to-blue-50 dark:border-gray-700 dark:hover:border-indigo-500 dark:hover:from-indigo-900/20 dark:hover:to-blue-900/20"
+                  @click="handleSave('quote')"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </div>
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">💭</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                      每日一语
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存每日哲理语录
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </template>
+
+              <!-- 新闻聚合页面选项 -->
+              <template v-else>
+                <!-- 每天 60 秒读懂世界 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-blue-500 hover:from-blue-50 hover:to-purple-50 dark:border-gray-700 dark:hover:border-blue-500 dark:hover:from-blue-900/20 dark:hover:to-purple-900/20"
+                  @click="handleSave('sixty-seconds')"
+                >
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">📰</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                      每天 60 秒读懂世界
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存每日新闻摘要
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-blue-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+
+                <!-- AI资讯快报 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-purple-500 hover:from-purple-50 hover:to-pink-50 dark:border-gray-700 dark:hover:border-purple-500 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20"
+                  @click="handleSave('ai-news')"
+                >
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">🤖</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-purple-600 dark:text-white dark:group-hover:text-purple-400">
+                      AI资讯快报
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存AI领域最新动态
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-purple-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+
+                <!-- 实时热搜 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-red-500 hover:from-red-50 hover:to-orange-50 dark:border-gray-700 dark:hover:border-red-500 dark:hover:from-red-900/20 dark:hover:to-orange-900/20"
+                  @click="handleSave('hot-search')"
+                >
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-orange-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">🔥</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-red-600 dark:text-white dark:group-hover:text-red-400">
+                      实时热搜
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存8大平台热搜榜单
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-red-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+
+                <!-- 历史上的今天 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-amber-500 hover:from-amber-50 hover:to-yellow-50 dark:border-gray-700 dark:hover:border-amber-500 dark:hover:from-amber-900/20 dark:hover:to-yellow-900/20"
+                  @click="handleSave('history-today')"
+                >
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">📜</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-amber-600 dark:text-white dark:group-hover:text-amber-400">
+                      历史上的今天
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存历史事件记录
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-amber-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+
+                <!-- 农历信息 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-green-500 hover:from-green-50 hover:to-emerald-50 dark:border-gray-700 dark:hover:border-green-500 dark:hover:from-green-900/20 dark:hover:to-emerald-900/20"
+                  @click="handleSave('lunar-info')"
+                >
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">🌙</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-green-600 dark:text-white dark:group-hover:text-green-400">
+                      农历信息
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存农历日历宜忌信息
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-green-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+
+                <!-- 随机一言 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-indigo-500 hover:from-indigo-50 hover:to-blue-50 dark:border-gray-700 dark:hover:border-indigo-500 dark:hover:from-indigo-900/20 dark:hover:to-blue-900/20"
+                  @click="handleSave('random-quote')"
+                >
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">💭</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                      随机一言
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存哲理语录卡片
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+
+                <!-- 随机搞笑段子 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-amber-500 hover:from-amber-50 hover:to-orange-50 dark:border-gray-700 dark:hover:border-amber-500 dark:hover:from-amber-900/20 dark:hover:to-orange-900/20"
+                  @click="handleSave('funny-joke')"
+                >
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">😂</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-amber-600 dark:text-white dark:group-hover:text-amber-400">
+                      随机搞笑段子
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存幽默搞笑内容
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-amber-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+
+                <!-- 随机冷笑话 -->
+                <div
+                  class="group flex cursor-pointer items-center rounded-2xl border-2 border-gray-200 bg-gradient-to-r p-5 transition-all hover:border-teal-500 hover:from-teal-50 hover:to-cyan-50 dark:border-gray-700 dark:hover:border-teal-500 dark:hover:from-teal-900/20 dark:hover:to-cyan-900/20"
+                  @click="handleSave('dad-joke')"
+                >
+                  <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg transition-transform group-hover:scale-110">
+                    <span class="text-3xl">🤨</span>
+                  </div>
+                  <div class="ml-5 flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-teal-600 dark:text-white dark:group-hover:text-teal-400">
+                      随机冷笑话
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      保存轻松有趣的冷笑话
+                    </p>
+                  </div>
+                  <svg
+                    class="size-6 text-gray-400 transition-colors group-hover:text-teal-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </template>
             </div>
           </div>
 
           <!-- 底部 -->
           <div class="border-t border-gray-200 bg-gray-50 px-8 py-5 dark:border-gray-700 dark:bg-gray-900/50">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-wrap items-center justify-between gap-4">
               <p class="text-sm text-gray-500 dark:text-gray-400">
                 💡 点击任意模块即可生成并保存图片
               </p>
-              <button
-                class="rounded-xl bg-gray-200 px-6 py-2.5 font-semibold text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                @click="close"
-              >
-                取消
-              </button>
+              <div class="flex items-center space-x-3">
+                <button
+                  class="group flex items-center space-x-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-2.5 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+                  @click="handleDownloadAll"
+                >
+                  <span class="text-xl transition-transform group-hover:rotate-12">📦</span>
+                  <span>一键下载所有</span>
+                </button>
+                <button
+                  class="rounded-xl bg-gray-200 px-6 py-2.5 font-semibold text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  @click="close"
+                >
+                  取消
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -238,18 +501,20 @@
 <script setup lang="ts">
 interface Props {
   modelValue: boolean;
+  configKey?: string;
 }
 
 interface Emits {
   (e: "update:modelValue", value: boolean): void;
   (e: "save", type: string, config?: any): void;
+  (e: "download-all"): void;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 // 使用统一的前端配置
-const { cardConfig } = useCardConfig();
+const { cardConfig } = useCardConfig(props.configKey);
 
 const close = () => {
   emit("update:modelValue", false);
@@ -258,6 +523,11 @@ const close = () => {
 const handleSave = (type: string) => {
   // 所有类型统一使用前端配置
   emit("save", type, cardConfig.value);
+  close();
+};
+
+const handleDownloadAll = () => {
+  emit("download-all");
   close();
 };
 </script>

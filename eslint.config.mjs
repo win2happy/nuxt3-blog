@@ -22,7 +22,7 @@ export default withNuxt(
       "vue/no-v-model-argument": "off",
       "vue/no-v-html": "off",
       "tailwindcss/no-custom-classname": ["warn", {
-        "whitelist": [
+        whitelist: [
           "daily-calendar",
           "daily-quote",
           "history-today",
