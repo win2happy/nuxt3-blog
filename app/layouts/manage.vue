@@ -165,7 +165,7 @@ onMounted(() => {
             :key="item"
             :to="isAuthor === true ? `/manage${item}` : '#'"
             :class="twMerge(
-              $style.menuItem, 
+              $style.menuItem,
               activeRoute.startsWith(item) && $style.menuItemActive,
               isAuthor !== true && 'opacity-50 cursor-not-allowed pointer-events-none'
             )"
@@ -176,7 +176,7 @@ onMounted(() => {
           <NuxtLink
             :to="isAuthor === true ? '/manage/config' : '#'"
             :class="twMerge(
-              $style.menuItem, 
+              $style.menuItem,
               activeRoute.startsWith('/config') && $style.menuItemActive,
               isAuthor !== true && 'opacity-50 cursor-not-allowed pointer-events-none'
             )"
