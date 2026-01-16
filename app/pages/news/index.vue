@@ -153,6 +153,7 @@
       v-model="showSaveModal"
       config-key="news"
       @save="handleSaveImage"
+      @download-all="handleDownloadAll"
     />
 
     <!-- 卡片样式配置模态框 -->
@@ -460,6 +461,177 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
     console.error("生成图片失败:", error);
     alert("生成图片失败，请重试");
   } finally {
+    isGenerating.value = false;
+  }
+};
+
+// 处理一键下载所有图片
+const handleDownloadAll = async () => {
+  if (isLoading.value) {
+    alert("数据正在加载中，请稍候再试");
+    return;
+  }
+
+  if (!newsData.value?.calendarInfo || !newsData.value?.dailyQuote) {
+    alert("数据未加载完成，请稍候再试");
+    return;
+  }
+
+  isGenerating.value = true;
+  generatingText.value = "正在批量生成所有图片";
+
+  try {
+    const date = new Date();
+    const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    const weekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+    const weekDay = weekDays[date.getDay()];
+
+    // 定义所有需要下载的类型
+    const types = ["news-card", "trends", "history", "calendar", "quote"];
+
+    // 逐个生成并下载图片
+    for (let i = 0; i < types.length; i++) {
+      const type = types[i];
+      try {
+        let dataUrl = "";
+        let filename = "";
+
+        switch (type) {
+          case "news-card": {
+            generatingText.value = `正在生成60秒读懂世界图片 (${i + 1}/${types.length})`;
+            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-60秒读懂世界.png`;
+            dataUrl = await ImageGenerator.generateNewsCard(
+              quickNews.value,
+              {
+                date: dateStr,
+                weekDay,
+                lunarDate: lunarDate.value,
+                ...cardConfig.value
+              }
+            );
+            break;
+          }
+
+          case "trends": {
+            generatingText.value = `正在生成实时热搜图片 (${i + 1}/${types.length})`;
+            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-实时热搜.png`;
+            const allTrends: any[] = [];
+            hotTrends.value.forEach((platform) => {
+              platform.items.forEach((item: any) => {
+                allTrends.push({
+                  id: allTrends.length + 1,
+                  content: `【${platform.platform}】${item.title}`
+                });
+              });
+            });
+            dataUrl = await ImageGenerator.generateListCard(
+              allTrends.slice(0, 15),
+              {
+                title: "实时热搜",
+                date: dateStr,
+                weekDay,
+                lunarDate: lunarDate.value,
+                ...cardConfig.value
+              }
+            );
+            break;
+          }
+
+          case "history": {
+            generatingText.value = `正在生成历史上的今天图片 (${i + 1}/${types.length})`;
+            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-历史上的今天.png`;
+            const formattedHistory = historyEvents.value.map((item, index) => ({
+              id: index + 1,
+              content: `${item.year}年 ${item.event}`,
+              hideNumber: true
+            }));
+            dataUrl = await ImageGenerator.generateListCard(
+              formattedHistory,
+              {
+                title: "历史上的今天",
+                date: dateStr,
+                weekDay,
+                lunarDate: lunarDate.value,
+                hideNumbers: true,
+                ...cardConfig.value
+              }
+            );
+            break;
+          }
+
+          case "calendar": {
+            generatingText.value = `正在生成今日黄历图片 (${i + 1}/${types.length})`;
+            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-今日黄历.png`;
+            const calendarItems = [
+              { id: 1, content: `${calendarInfo.value.lunar}  ${calendarInfo.value.animal}  ${calendarInfo.value.month}  ${calendarInfo.value.day}` },
+              { id: 2, content: "" },
+              { id: 3, content: `五行：${calendarInfo.value.element}` },
+              { id: 4, content: `冲煞：${calendarInfo.value.conflict}` },
+              { id: 5, content: "" },
+              { id: 6, content: `喜神：${calendarInfo.value.luckyDirection}` },
+              { id: 7, content: `福神：${calendarInfo.value.blessDirection}` },
+              { id: 8, content: `财神：${calendarInfo.value.wealthDirection}` },
+              { id: 9, content: "" },
+              { id: 10, content: `宜：${calendarInfo.value.suitable.join("  ")}` },
+              { id: 11, content: `忌：${calendarInfo.value.avoid.join("  ")}` },
+              { id: 12, content: "" },
+              { id: 13, content: `吉神：${calendarInfo.value.luckyGod}` },
+              { id: 14, content: `凶神：${calendarInfo.value.badGod}` }
+            ];
+            dataUrl = await ImageGenerator.generateListCard(
+              calendarItems,
+              {
+                title: "今日黄历",
+                date: dateStr,
+                weekDay,
+                lunarDate: lunarDate.value,
+                hideNumbers: true,
+                ...cardConfig.value
+              }
+            );
+            break;
+          }
+
+          case "quote": {
+            generatingText.value = `正在生成每日一语图片 (${i + 1}/${types.length})`;
+            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-每日一语.png`;
+            const quoteItems = [
+              { id: 1, content: dailyQuote.value.content }
+            ];
+            dataUrl = await ImageGenerator.generateListCard(
+              quoteItems,
+              {
+                title: "每日一语",
+                date: dateStr,
+                weekDay,
+                lunarDate: lunarDate.value,
+                hideNumbers: true,
+                ...cardConfig.value
+              }
+            );
+            break;
+          }
+        }
+
+        if (dataUrl) {
+          ImageGenerator.downloadImage(dataUrl, filename);
+          // 短暂延迟，避免下载请求过于密集
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } catch (error) {
+        console.error(`生成${type}图片失败:`, error);
+        // 继续处理其他类型，不中断整个过程
+      }
+    }
+
+    // 所有图片生成完成
+    generatingText.value = "所有图片已生成完成";
+    setTimeout(() => {
+      isGenerating.value = false;
+    }, 1000);
+  } catch (error) {
+    console.error("批量生成图片失败:", error);
+    alert("批量生成图片失败，请重试");
     isGenerating.value = false;
   }
 };
