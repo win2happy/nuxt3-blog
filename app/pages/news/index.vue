@@ -151,12 +151,15 @@
     <!-- 保存图片模态框 -->
     <SaveImageModal
       v-model="showSaveModal"
+      config-key="news"
       @save="handleSaveImage"
     />
 
     <!-- 卡片样式配置模态框 -->
     <CardConfigModal
       :show="showConfigModal"
+      config-key="news"
+      message="配置会应用到：60秒读懂世界、实时热搜、历史上的今天、今日黄历、每日一语"
       @close="showConfigModal = false"
     />
 
@@ -276,7 +279,7 @@ const calendarInfo = computed(() => newsData.value?.calendarInfo || null);
 const dailyQuote = computed(() => newsData.value?.dailyQuote || null);
 
 // 使用统一的前端配置
-const { cardConfig } = useCardConfig();
+const { cardConfig } = useCardConfig("news");
 
 // 处理保存图片
 const handleSaveImage = async (type: string, customConfig?: any) => {

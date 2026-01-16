@@ -17,7 +17,7 @@
               统一样式配置
             </p>
             <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">
-              配置会应用到：每天60秒读懂世界、AI资讯快报、实时热搜、历史上的今天、农历信息、随机一言、随机搞笑段子、随机冷笑话
+              {{ message }}
             </p>
           </div>
         </div>
@@ -284,13 +284,17 @@ import type { CardConfig } from "~/composables/useCardConfig";
 
 interface Props {
   show: boolean;
+  configKey?: string;
+  message?: string;
 }
 
 interface Emits {
   (e: "close"): void;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  message: "配置会应用到所有卡片"
+});
 const emit = defineEmits<Emits>();
 
 // 使用 v-model 绑定
@@ -303,7 +307,7 @@ const showModal = computed({
   }
 });
 
-const { cardConfig, updateConfig, resetConfig } = useCardConfig();
+const { cardConfig, updateConfig, resetConfig } = useCardConfig(props.configKey);
 
 // 本地副本，用于编辑
 const localConfig = ref<CardConfig>({ ...cardConfig.value });

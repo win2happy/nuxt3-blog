@@ -9,13 +9,14 @@ export interface CardConfig {
   contentTextColor: string;
 }
 
-const STORAGE_KEY = "nuxt3-blog-card-config";
+// 默认存储键
+const DEFAULT_STORAGE_KEY = "nuxt3-blog-card-config";
 
 // 从 localStorage 加载配置
-function loadConfigFromStorage(): CardConfig | null {
+function loadConfigFromStorage(key: string = DEFAULT_STORAGE_KEY): CardConfig | null {
   if (import.meta.client) {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(key);
       if (stored) {
         return JSON.parse(stored);
       }
@@ -27,10 +28,10 @@ function loadConfigFromStorage(): CardConfig | null {
 }
 
 // 保存配置到 localStorage
-function saveConfigToStorage(cardConfig: CardConfig): void {
+function saveConfigToStorage(cardConfig: CardConfig, key: string = DEFAULT_STORAGE_KEY): void {
   if (import.meta.client) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cardConfig));
+      localStorage.setItem(key, JSON.stringify(cardConfig));
     } catch (error) {
       console.error("Failed to save card config to storage:", error);
     }
@@ -49,22 +50,22 @@ function getDefaultConfig(): CardConfig {
 }
 
 // 全局状态
-export const useCardConfig = () => {
-  const cardConfig = useState<CardConfig>("card-config", () => {
+export const useCardConfig = (configKey: string = DEFAULT_STORAGE_KEY) => {
+  const cardConfig = useState<CardConfig>(`card-config-${configKey}`, () => {
     // 优先使用 localStorage 的配置，否则使用默认配置
-    return loadConfigFromStorage() || getDefaultConfig();
+    return loadConfigFromStorage(configKey) || getDefaultConfig();
   });
 
   // 更新配置
   const updateConfig = (newConfig: Partial<CardConfig>) => {
     cardConfig.value = { ...cardConfig.value, ...newConfig };
-    saveConfigToStorage(cardConfig.value);
+    saveConfigToStorage(cardConfig.value, configKey);
   };
 
   // 重置为默认配置
   const resetConfig = () => {
     cardConfig.value = getDefaultConfig();
-    saveConfigToStorage(cardConfig.value);
+    saveConfigToStorage(cardConfig.value, configKey);
   };
 
   // 检查是否使用了自定义配置

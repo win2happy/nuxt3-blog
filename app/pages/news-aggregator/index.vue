@@ -561,6 +561,7 @@
     <!-- 保存图片模态框 -->
     <SaveImageModal
       v-model="showSaveModal"
+      config-key="news-aggregator"
       @save="handleSaveImage"
       @download-all="handleDownloadAll"
     />
@@ -568,6 +569,8 @@
     <!-- 卡片样式配置模态框 -->
     <CardConfigModal
       :show="showConfigModal"
+      config-key="news-aggregator"
+      message="配置会应用到：每天60秒读懂世界、AI资讯快报、实时热搜、历史上的今天、农历信息、随机一言、随机搞笑段子、随机冷笑话"
       @close="showConfigModal = false"
     />
 
@@ -606,7 +609,7 @@ const isGenerating = ref(false);
 const generatingText = ref("正在生成图片");
 
 // 使用卡片配置
-const { cardConfig } = useCardConfig();
+const { cardConfig } = useCardConfig("news-aggregator");
 
 // 日期计算
 const currentDate = computed(() => {
