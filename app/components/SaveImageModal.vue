@@ -310,16 +310,25 @@
 
           <!-- 底部 -->
           <div class="border-t border-gray-200 bg-gray-50 px-8 py-5 dark:border-gray-700 dark:bg-gray-900/50">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-wrap items-center justify-between gap-4">
               <p class="text-sm text-gray-500 dark:text-gray-400">
                 💡 点击任意模块即可生成并保存图片
               </p>
-              <button
-                class="rounded-xl bg-gray-200 px-6 py-2.5 font-semibold text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                @click="close"
-              >
-                取消
-              </button>
+              <div class="flex items-center space-x-3">
+                <button
+                  class="group flex items-center space-x-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-2.5 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+                  @click="handleDownloadAll"
+                >
+                  <span class="text-xl transition-transform group-hover:rotate-12">📦</span>
+                  <span>一键下载所有</span>
+                </button>
+                <button
+                  class="rounded-xl bg-gray-200 px-6 py-2.5 font-semibold text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  @click="close"
+                >
+                  取消
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -336,6 +345,7 @@ interface Props {
 interface Emits {
   (e: "update:modelValue", value: boolean): void;
   (e: "save", type: string, config?: any): void;
+  (e: "download-all"): void;
 }
 
 defineProps<Props>();
@@ -351,6 +361,11 @@ const close = () => {
 const handleSave = (type: string) => {
   // 所有类型统一使用前端配置
   emit("save", type, cardConfig.value);
+  close();
+};
+
+const handleDownloadAll = () => {
+  emit("download-all");
   close();
 };
 </script>
