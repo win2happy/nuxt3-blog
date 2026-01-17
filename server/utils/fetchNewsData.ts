@@ -4,52 +4,10 @@ import { Solar } from "lunar-javascript";
 
 const NEWS_URL = "https://www.soso365.com/news/index.php";
 
-// 缓存数据
-interface CacheData {
-  data: any;
-  timestamp: number;
-}
-
-const cache: Record<string, CacheData> = {};
-const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
-
-/**
- * 检查缓存是否有效
- */
-function isCacheValid(key: string): boolean {
-  const cached = cache[key];
-  if (!cached) return false;
-  return Date.now() - cached.timestamp < CACHE_DURATION;
-}
-
-/**
- * 获取缓存数据
- */
-function getCache(key: string): any {
-  if (isCacheValid(key)) {
-    return cache[key].data;
-  }
-  return null;
-}
-
-/**
- * 设置缓存数据
- */
-function setCache(key: string, data: any): void {
-  cache[key] = {
-    data,
-    timestamp: Date.now()
-  };
-}
-
 /**
  * 获取网页HTML
  */
 async function fetchHTML(): Promise<string> {
-  const cacheKey = "html";
-  const cached = getCache(cacheKey);
-  if (cached) return cached;
-
   try {
     // 使用 Node.js 原生 https 模块来避免 SSL 证书问题
     const html = await new Promise<string>((resolve, reject) => {
@@ -71,7 +29,6 @@ async function fetchHTML(): Promise<string> {
       });
     });
 
-    setCache(cacheKey, html);
     return html;
   } catch (error) {
     console.error("获取网页失败:", error);
@@ -83,10 +40,6 @@ async function fetchHTML(): Promise<string> {
  * 解析60秒读懂世界新闻
  */
 export async function fetchQuickNews() {
-  const cacheKey = "quickNews";
-  const cached = getCache(cacheKey);
-  if (cached) return cached;
-
   try {
     const html = await fetchHTML();
     const $ = cheerio.load(html);
@@ -116,7 +69,6 @@ export async function fetchQuickNews() {
     });
 
     const result = news.slice(0, 15); // 只取前15条
-    setCache(cacheKey, result);
     return result;
   } catch (error) {
     console.error("解析60秒新闻失败:", error);
@@ -128,10 +80,6 @@ export async function fetchQuickNews() {
  * 解析实时热搜
  */
 export async function fetchHotTrends() {
-  const cacheKey = "hotTrends";
-  const cached = getCache(cacheKey);
-  if (cached) return cached;
-
   try {
     const html = await fetchHTML();
     const $ = cheerio.load(html);
@@ -204,7 +152,6 @@ export async function fetchHotTrends() {
       }
     }
 
-    setCache(cacheKey, trends);
     return trends;
   } catch (error) {
     console.error("解析热搜失败:", error);
@@ -216,10 +163,6 @@ export async function fetchHotTrends() {
  * 解析历史上的今天
  */
 export async function fetchHistoryToday() {
-  const cacheKey = "historyToday";
-  const cached = getCache(cacheKey);
-  if (cached) return cached;
-
   try {
     const html = await fetchHTML();
     const $ = cheerio.load(html);
@@ -241,7 +184,6 @@ export async function fetchHistoryToday() {
       }
     });
 
-    setCache(cacheKey, history);
     return history;
   } catch (error) {
     console.error("解析历史事件失败:", error);
@@ -253,10 +195,6 @@ export async function fetchHistoryToday() {
  * 解析今日黄历
  */
 export async function fetchCalendar() {
-  const cacheKey = "calendar";
-  const cached = getCache(cacheKey);
-  if (cached) return cached;
-
   try {
     const html = await fetchHTML();
     const $ = cheerio.load(html);
@@ -399,7 +337,6 @@ export async function fetchCalendar() {
       blessDirection: blessDirection || ""
     };
 
-    setCache(cacheKey, result);
     return result;
   } catch (error) {
     console.error("解析黄历失败:", error);
@@ -411,10 +348,6 @@ export async function fetchCalendar() {
  * 解析每日一语
  */
 export async function fetchDailyQuote() {
-  const cacheKey = "dailyQuote";
-  const cached = getCache(cacheKey);
-  if (cached) return cached;
-
   try {
     const html = await fetchHTML();
     const $ = cheerio.load(html);
@@ -430,7 +363,6 @@ export async function fetchDailyQuote() {
       author: "佚名"
     };
 
-    setCache(cacheKey, result);
     return result;
   } catch (error) {
     console.error("解析每日一语失败:", error);
@@ -484,10 +416,6 @@ function calculateLunarDate(date: Date = new Date()): string {
  * 解析农历日期
  */
 export async function fetchLunarDate() {
-  const cacheKey = "lunarDate";
-  const cached = getCache(cacheKey);
-  if (cached) return cached;
-
   try {
     const html = await fetchHTML();
     const $ = cheerio.load(html);
@@ -497,7 +425,6 @@ export async function fetchLunarDate() {
     const lunarMatch = dateText.match(/农历[\s\S]*?[年月日]/);
     const lunarDate = lunarMatch ? lunarMatch[0] : calculateLunarDate();
 
-    setCache(cacheKey, lunarDate);
     return lunarDate;
   } catch (error) {
     console.error("解析农历日期失败:", error);
