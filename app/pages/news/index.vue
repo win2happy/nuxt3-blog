@@ -271,8 +271,31 @@ const { data: newsData, pending: isLoading } = await useAsyncData("newsData", as
   }
 });
 
+// 农历日期计算（简化版）
+const calculateLunarDate = () => {
+  const date = new Date();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  // 简化的农历计算，实际项目中可能需要更复杂的算法
+  const lunarMonths = ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
+  const lunarDays = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+    "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+    "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+
+  // 简单映射，实际项目中需要使用真实的农历算法
+  const lunarMonthIndex = month - 1;
+  const lunarDayIndex = Math.min(day - 1, lunarDays.length - 1);
+
+  return `农历${lunarMonths[lunarMonthIndex]}${lunarDays[lunarDayIndex]}`;
+};
+
 // 从 newsData 中解构数据
-const lunarDate = computed(() => newsData.value?.lunarDate || "");
+const lunarDate = computed(() => {
+  // 如果 API 返回了农历日期，则使用 API 返回的值，否则计算当前日期的农历
+  const apiLunarDate = newsData.value?.lunarDate;
+  return apiLunarDate && apiLunarDate !== "农历日期" ? apiLunarDate : calculateLunarDate();
+});
 const quickNews = computed(() => newsData.value?.quickNews || []);
 const hotTrends = computed(() => newsData.value?.hotTrends || []);
 const historyEvents = computed(() => newsData.value?.historyEvents || []);

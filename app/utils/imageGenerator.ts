@@ -1,5 +1,48 @@
 import html2canvas from "html2canvas";
+import { Solar } from "lunar-javascript";
 import globalConfig from "~~/config";
+
+/**
+ * 计算公历日期对应的农历日期
+ * @param date 可选，要计算的日期，默认为当前日期
+ * @returns 农历日期字符串，如 "农历冬月廿九"
+ */
+function calculateLunarDate(date: Date = new Date()): string {
+  try {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    // 使用 lunar-javascript 库计算农历日期
+    const solar = Solar.fromYmd(year, month, day);
+    const lunar = solar.getLunar();
+
+    // 获取农历月份和日期
+    const lunarMonth = lunar.getMonth();
+    const lunarDay = lunar.getDay();
+
+    // 农历月份名称
+    const lunarMonths = ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
+    // 农历日期名称
+    const lunarDays = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+      "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+      "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+
+    // 计算索引（注意：lunar-javascript 返回的月份和日期从1开始）
+    const monthIndex = lunarMonth - 1;
+    const dayIndex = lunarDay - 1;
+
+    // 确保索引在有效范围内
+    const validMonthIndex = Math.max(0, Math.min(monthIndex, lunarMonths.length - 1));
+    const validDayIndex = Math.max(0, Math.min(dayIndex, lunarDays.length - 1));
+
+    return `农历${lunarMonths[validMonthIndex]}${lunarDays[validDayIndex]}`;
+  } catch (error) {
+    console.error("计算农历日期失败:", error);
+    // 出错时返回一个合理的默认值
+    return "";
+  }
+}
 
 /**
  * 新闻卡片配置选项
@@ -112,7 +155,7 @@ export async function generateNewsCard(
 
       // 计算内容高度和预先计算所有文本行（在 scale 之前计算，避免坐标系变换影响）
       const maxTextWidth = config.width - config.contentMargin * 2 - config.contentPadding * 2 - 20;
-      const newsWithLines = calculateNewsLines(ctx, news, maxTextWidth, config);
+      const newsWithLines = calculateNewsLines(ctx, news, maxTextWidth);
       const contentHeight = calculateContentHeight(newsWithLines, config);
 
       const totalHeight = config.headerHeight + contentHeight + config.contentMargin;
@@ -180,7 +223,12 @@ function drawHeader(
   // 第一行：日期
   ctx.font = "bold 24px \"Microsoft YaHei\", sans-serif";
   ctx.letterSpacing = "6px";
-  ctx.fillText(options?.date || "2026年1月13日", config.width / 2, config.headerPaddingTop + 32);
+  const currentDate = options?.date || new Date().toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+  ctx.fillText(currentDate, config.width / 2, config.headerPaddingTop + 32);
 
   // 第二行：标题
   ctx.font = "bold 36px \"Microsoft YaHei\", sans-serif";
@@ -190,7 +238,9 @@ function drawHeader(
   // 第三行：星期和农历
   ctx.font = "500 18px \"Microsoft YaHei\", sans-serif";
   ctx.letterSpacing = "4px";
-  ctx.fillText(`${options?.weekDay || "星期一"} ${options?.lunarDate || "农历冬月廿五"}`, config.width / 2, config.headerPaddingTop + 116);
+  const weekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+  const currentWeekDay = options?.weekDay || weekDays[new Date().getDay()];
+  ctx.fillText(`${currentWeekDay} ${options?.lunarDate || calculateLunarDate()}`, config.width / 2, config.headerPaddingTop + 116);
 }
 
 /**
@@ -277,7 +327,7 @@ function calculateTextLines(ctx: CanvasRenderingContext2D, text: string, maxWidt
   ctx.font = `400 ${fontSize}px "Microsoft YaHei", sans-serif`;
 
   for (let i = 0; i < text.length; i++) {
-    const char = text[i];
+    const char = text[i] || "";
     const testLine = currentLine + char;
     const metrics = ctx.measureText(testLine);
 
@@ -396,7 +446,12 @@ export async function generateListCard(
 
       ctx.font = "bold 24px \"Microsoft YaHei\", sans-serif";
       ctx.letterSpacing = "6px";
-      ctx.fillText(options?.date || "2026年1月13日", config.width / 2, config.headerPaddingTop + 32);
+      const currentDate = options?.date || new Date().toLocaleDateString("zh-CN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+      ctx.fillText(currentDate, config.width / 2, config.headerPaddingTop + 32);
 
       // 只有当 title 不是空字符串时才显示标题
       if (options?.title !== "") {
@@ -407,7 +462,9 @@ export async function generateListCard(
 
       ctx.font = "500 18px \"Microsoft YaHei\", sans-serif";
       ctx.letterSpacing = "4px";
-      ctx.fillText(`${options?.weekDay || "星期一"} ${options?.lunarDate || "农历冬月廿五"}`, config.width / 2, config.headerPaddingTop + 116);
+      const weekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+      const currentWeekDay = options?.weekDay || weekDays[new Date().getDay()];
+      ctx.fillText(`${currentWeekDay} ${options?.lunarDate || calculateLunarDate()}`, config.width / 2, config.headerPaddingTop + 116);
 
       // 绘制内容区域
       const contentBgColor = options?.contentBackgroundColor || globalConfig.newsCard?.contentBackgroundColor || "white";
@@ -452,7 +509,7 @@ export async function generateListCard(
           // 检查是否包含标签（冒号分隔）
           if (line.includes("：")) {
             const parts = line.split("：");
-            const label = parts[0];
+            const label = parts[0] || "";
             const content = parts.slice(1).join("："); // 处理内容中可能包含冒号的情况
 
             // 测量标签宽度

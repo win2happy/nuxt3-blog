@@ -595,6 +595,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from "vue";
+import { Solar } from "lunar-javascript";
 import SaveImageModal from "~/components/SaveImageModal.vue";
 import CardConfigModal from "~/components/CardConfigModal.vue";
 import * as ImageGenerator from "~/utils/imageGenerator";
@@ -629,93 +631,98 @@ const newsDate = computed(() => {
 
 // 计算详细农历信息
 const calculateLunarInfo = () => {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
+  try {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
 
-  // 农历年计算 (简化版)
-  const lunarYear = year;
-  const lunarMonth = month;
-  const lunarDay = day;
+    // 使用 lunar-javascript 库计算农历信息
+    const solar = Solar.fromYmd(year, month, day);
+    const lunar = solar.getLunar();
 
-  // 天干地支
-  const tianGan = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
-  const diZhi = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
-  const zodiacs = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"];
+    // 农历日期
+    const lunarMonth = lunar.getMonth();
+    const lunarDay = lunar.getDay();
 
-  // 计算天干地支年
-  const yearIndex = (year - 4) % 60;
-  const ganZhiYear = tianGan[yearIndex % 10] + diZhi[yearIndex % 12];
-  const zodiac = zodiacs[yearIndex % 12];
+    // 农历月份名称
+    const lunarMonths = ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
+    // 农历日期名称
+    const lunarDays = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+      "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+      "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
 
-  // 计算天干地支月
-  const monthIndex = (year * 12 + month + 3) % 60;
-  const ganZhiMonth = tianGan[monthIndex % 10] + diZhi[monthIndex % 12];
+    // 计算索引（注意：lunar-javascript 返回的月份和日期从1开始）
+    const monthIndex = lunarMonth - 1;
+    const dayIndex = lunarDay - 1;
 
-  // 计算天干地支日 (简化版)
-  const dayIndex = (year * 365 + month * 30 + day) % 60;
-  const ganZhiDay = tianGan[dayIndex % 10] + diZhi[dayIndex % 12];
+    // 确保索引在有效范围内
+    const validMonthIndex = Math.max(0, Math.min(monthIndex, lunarMonths.length - 1));
+    const validDayIndex = Math.max(0, Math.min(dayIndex, lunarDays.length - 1));
 
-  // 节气计算 (简化版)
-  const solarTerms = [
-    "小寒", "大寒", "立春", "雨水", "惊蛰", "春分",
-    "清明", "谷雨", "立夏", "小满", "芒种", "夏至",
-    "小暑", "大暑", "立秋", "处暑", "白露", "秋分",
-    "寒露", "霜降", "立冬", "小雪", "大雪", "冬至"
-  ];
-  const termIndex = Math.floor((month * 2 + day / 15) % 24);
-  const solarTerm = solarTerms[termIndex];
+    // 组装农历日期
+    const lunarDateStr = `农历${lunarMonths[validMonthIndex]}${lunarDays[validDayIndex]}`;
 
-  // 月相计算 (简化版)
-  const lunarPhaseNames = ["新月", "娥眉月", "上弦月", "盈凸月", "满月", "亏凸月", "下弦月", "残月"];
-  const moonAge = (year * 365 + month * 30 + day) % 29.53;
-  const phaseIndex = Math.floor((moonAge / 29.53) * 8);
-  const lunarPhase = lunarPhaseNames[phaseIndex];
+    // 天干地支信息
+    const ganZhiYear = lunar.getYearInGanZhi();
+    const ganZhiMonth = lunar.getMonthInGanZhi();
+    const ganZhiDay = lunar.getDayInGanZhi();
 
-  // 节日信息 (简化版)
-  let festival = "";
-  if (month === 1 && day === 1) festival = "元旦";
-  if (month === 2 && day === 14) festival = "情人节";
-  if (month === 5 && day === 1) festival = "劳动节";
-  if (month === 10 && day === 1) festival = "国庆节";
+    // 生肖
+    const zodiac = lunar.getYearShengXiao();
 
-  // 宜/忌事项计算 (基于传统农历原则简化版)
-  const auspicious = [
-    "祭祀", "祈福", "求嗣", "嫁娶", "纳采",
-    "出行", "开市", "交易", "立券", "安床",
-    "安葬", "破土", "启钻", "修造", "动土"
-  ];
+    // 节气
+    const solarTerm = lunar.getCurrentJieQi() || "";
 
-  const inauspicious = [
-    "开市", "安葬", "嫁娶", "移徙", "入宅",
-    "安床", "修造", "动土", "破土", "开光"
-  ];
+    // 月相
+    const lunarPhase = lunar.getYueXiang() || "";
 
-  // 根据日期计算宜/忌事项 (简化版)
-  const dayHash = (year * 1000 + month * 100 + day) % 12;
-  const auspiciousActivities = auspicious.filter((_, index) => index % 3 === dayHash);
-  const inauspiciousActivities = inauspicious.filter((_, index) => index % 2 === dayHash % 2);
+    // 节日
+    const festival = lunar.getFestivals().join("、") || "";
 
-  // 组装农历日期
-  const lunarDateStr = `农历${lunarMonth}月${lunarDay}日`;
+    // 宜事项
+    const auspicious = lunar.getDayYi();
 
-  return {
-    date: `${year}年${month}月${day}日`,
-    year: lunarYear.toString(),
-    month: lunarMonth.toString(),
-    day: lunarDay.toString(),
-    ganZhiYear,
-    ganZhiMonth,
-    ganZhiDay,
-    solarTerm,
-    lunarPhase,
-    zodiac,
-    festival,
-    lunarDate: lunarDateStr,
-    auspicious: auspiciousActivities,
-    inauspicious: inauspiciousActivities
-  };
+    // 忌事项
+    const inauspicious = lunar.getDayJi();
+
+    return {
+      date: `${year}年${month}月${day}日`,
+      year: lunar.getYear().toString(),
+      month: lunarMonth.toString(),
+      day: lunarDay.toString(),
+      ganZhiYear,
+      ganZhiMonth,
+      ganZhiDay,
+      solarTerm,
+      lunarPhase,
+      zodiac,
+      festival,
+      lunarDate: lunarDateStr,
+      auspicious: auspicious.length > 0 ? auspicious : [],
+      inauspicious: inauspicious.length > 0 ? inauspicious : []
+    };
+  } catch (error) {
+    console.error("计算农历信息失败:", error);
+    // 出错时返回默认值
+    const date = new Date();
+    return {
+      date: `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`,
+      year: date.getFullYear().toString(),
+      month: (date.getMonth() + 1).toString(),
+      day: date.getDate().toString(),
+      ganZhiYear: "",
+      ganZhiMonth: "",
+      ganZhiDay: "",
+      solarTerm: "",
+      lunarPhase: "",
+      zodiac: "",
+      festival: "",
+      lunarDate: "计算失败",
+      auspicious: [],
+      inauspicious: []
+    };
+  }
 };
 
 // 热搜平台 - 按指定顺序排列

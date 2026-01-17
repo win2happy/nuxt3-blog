@@ -188,7 +188,7 @@
                 class="mb-2 text-xl font-bold transition-all duration-300 md:text-2xl"
                 :style="{ color: localConfig.headerTextColor }"
               >
-                2026年1月14日
+                {{ currentDate }}
               </h2>
               <h1
                 class="mb-2 text-2xl font-black tracking-wide transition-all duration-300 md:text-3xl"
@@ -200,7 +200,7 @@
                 class="text-sm tracking-wider transition-all duration-300 md:text-base"
                 :style="{ color: localConfig.headerTextColor, opacity: 0.9 }"
               >
-                星期三 农历冬月廿五
+                {{ weekDay }} {{ lunarDate }}
               </p>
             </div>
 
@@ -280,6 +280,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { Solar } from "lunar-javascript";
 import type { CardConfig } from "~/composables/useCardConfig";
 
 interface Props {
@@ -304,6 +306,66 @@ const showModal = computed({
     if (!value) {
       emit("close");
     }
+  }
+});
+
+// 响应式时间变量，用于实时更新
+const now = ref(new Date());
+
+// 每秒钟更新一次时间
+onMounted(() => {
+  const timer = setInterval(() => {
+    now.value = new Date();
+  }, 1000);
+
+  // 组件卸载时清除定时器
+  onUnmounted(() => {
+    clearInterval(timer);
+  });
+});
+
+// 当前日期计算
+const currentDate = computed(() => {
+  const date = now.value;
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+});
+
+// 星期计算
+const weekDay = computed(() => {
+  const date = now.value;
+  const weekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+  return weekDays[date.getDay()];
+});
+
+// 农历日期计算（使用 lunar-javascript 库）
+const lunarDate = computed(() => {
+  try {
+    const date = now.value;
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    const solar = Solar.fromYmd(year, month, day);
+    const lunar = solar.getLunar();
+
+    const lunarMonth = lunar.getMonth();
+    const lunarDay = lunar.getDay();
+
+    const lunarMonths = ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
+    const lunarDays = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+      "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+      "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+
+    const monthIndex = lunarMonth - 1;
+    const dayIndex = lunarDay - 1;
+
+    const validMonthIndex = Math.max(0, Math.min(monthIndex, lunarMonths.length - 1));
+    const validDayIndex = Math.max(0, Math.min(dayIndex, lunarDays.length - 1));
+
+    return `农历${lunarMonths[validMonthIndex]}${lunarDays[validDayIndex]}`;
+  } catch (error) {
+    console.error("计算农历日期失败:", error);
+    return "农历冬月廿九";
   }
 });
 

@@ -1,5 +1,6 @@
 import https from "node:https";
 import * as cheerio from "cheerio";
+import { Solar } from "lunar-javascript";
 
 const NEWS_URL = "https://www.soso365.com/news/index.php";
 
@@ -383,19 +384,19 @@ export async function fetchCalendar() {
 
     // 设置默认值
     const result = {
-      lunar: lunar || "农历冬月廿五",
-      animal: animal || "乙巳蛇年",
-      month: month || "己丑月",
-      day: day || "丁亥日",
-      element: element || "屋上土",
-      conflict: conflict || "冲(辛巳)蛇 煞西",
-      suitable: suitable.length > 0 ? suitable : ["开市", "交易", "纳财"],
-      avoid: avoid.length > 0 ? avoid : ["嫁娶", "安葬"],
-      luckyGod: luckyGod || "月德合 王日",
-      badGod: badGod || "游祸 血支 重日 朱雀",
-      luckyDirection: luckyDirection || "正南",
-      wealthDirection: wealthDirection || "西南",
-      blessDirection: blessDirection || "东南"
+      lunar: lunar || calculateLunarDate(),
+      animal: animal || "",
+      month: month || "",
+      day: day || "",
+      element: element || "",
+      conflict: conflict || "",
+      suitable: suitable.length > 0 ? suitable : [],
+      avoid: avoid.length > 0 ? avoid : [],
+      luckyGod: luckyGod || "",
+      badGod: badGod || "",
+      luckyDirection: luckyDirection || "",
+      wealthDirection: wealthDirection || "",
+      blessDirection: blessDirection || ""
     };
 
     setCache(cacheKey, result);
@@ -438,6 +439,48 @@ export async function fetchDailyQuote() {
 }
 
 /**
+ * 计算公历日期对应的农历日期
+ * @param date 可选，要计算的日期，默认为当前日期
+ * @returns 农历日期字符串，如 "农历冬月廿九"
+ */
+function calculateLunarDate(date: Date = new Date()): string {
+  try {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    // 使用 lunar-javascript 库计算农历日期
+    const solar = Solar.fromYmd(year, month, day);
+    const lunar = solar.getLunar();
+
+    // 获取农历月份和日期
+    const lunarMonth = lunar.getMonth();
+    const lunarDay = lunar.getDay();
+
+    // 农历月份名称
+    const lunarMonths = ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
+    // 农历日期名称
+    const lunarDays = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+      "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+      "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+
+    // 计算索引（注意：lunar-javascript 返回的月份和日期从1开始）
+    const monthIndex = lunarMonth - 1;
+    const dayIndex = lunarDay - 1;
+
+    // 确保索引在有效范围内
+    const validMonthIndex = Math.max(0, Math.min(monthIndex, lunarMonths.length - 1));
+    const validDayIndex = Math.max(0, Math.min(dayIndex, lunarDays.length - 1));
+
+    return `农历${lunarMonths[validMonthIndex]}${lunarDays[validDayIndex]}`;
+  } catch (error) {
+    console.error("计算农历日期失败:", error);
+    // 出错时返回一个合理的默认值
+    return "";
+  }
+}
+
+/**
  * 解析农历日期
  */
 export async function fetchLunarDate() {
@@ -452,12 +495,12 @@ export async function fetchLunarDate() {
     // 从页面顶部提取农历日期
     const dateText = $("h2").first().text();
     const lunarMatch = dateText.match(/农历[\s\S]*?[年月日]/);
-    const lunarDate = lunarMatch ? lunarMatch[0] : "农历冬月廿五";
+    const lunarDate = lunarMatch ? lunarMatch[0] : calculateLunarDate();
 
     setCache(cacheKey, lunarDate);
     return lunarDate;
   } catch (error) {
     console.error("解析农历日期失败:", error);
-    return "农历冬月廿五";
+    return calculateLunarDate();
   }
 }
