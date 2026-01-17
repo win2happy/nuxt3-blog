@@ -385,18 +385,18 @@ export async function fetchCalendar() {
     // 设置默认值
     const result = {
       lunar: lunar || calculateLunarDate(),
-      animal: animal || "乙巳蛇年",
-      month: month || "己丑月",
-      day: day || "丁亥日",
-      element: element || "屋上土",
-      conflict: conflict || "冲(辛巳)蛇 煞西",
-      suitable: suitable.length > 0 ? suitable : ["开市", "交易", "纳财"],
-      avoid: avoid.length > 0 ? avoid : ["嫁娶", "安葬"],
-      luckyGod: luckyGod || "月德合 王日",
-      badGod: badGod || "游祸 血支 重日 朱雀",
-      luckyDirection: luckyDirection || "正南",
-      wealthDirection: wealthDirection || "西南",
-      blessDirection: blessDirection || "东南"
+      animal: animal || "",
+      month: month || "",
+      day: day || "",
+      element: element || "",
+      conflict: conflict || "",
+      suitable: suitable.length > 0 ? suitable : [],
+      avoid: avoid.length > 0 ? avoid : [],
+      luckyGod: luckyGod || "",
+      badGod: badGod || "",
+      luckyDirection: luckyDirection || "",
+      wealthDirection: wealthDirection || "",
+      blessDirection: blessDirection || ""
     };
 
     setCache(cacheKey, result);
