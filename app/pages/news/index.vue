@@ -269,6 +269,9 @@ const { data: newsData, pending: isLoading } = await useAsyncData("newsData", as
       }
     };
   }
+}, {
+  // 设置重新验证时间为1小时
+  revalidate: 3600
 });
 
 // 农历日期计算（简化版）
