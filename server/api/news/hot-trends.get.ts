@@ -1,6 +1,11 @@
 import { fetchHotTrends } from "../../utils/fetchNewsData";
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  // Set cache control headers to prevent excessive caching
+  setResponseHeaders(event, {
+    "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600"
+  });
+
   try {
     const data = await fetchHotTrends();
     return { data };
