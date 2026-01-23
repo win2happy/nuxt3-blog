@@ -6,6 +6,9 @@
         "silent": true,
         "autoJobCancelation": true
     },
+    "env": {
+        "TZ": "Asia/Shanghai"
+    },
     "headers": [
         {
             "source": "/(.*)",
