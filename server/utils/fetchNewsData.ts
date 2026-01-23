@@ -43,6 +43,32 @@ function setCache(key: string, data: any): void {
 }
 
 /**
+ * 清除指定缓存
+ */
+export function clearCache(key: string): void {
+  // 使用 Object.fromEntries 避免使用 delete 操作符
+  const filteredEntries = Object.entries(cache).filter(([k]) => k !== key);
+  const newCache = Object.fromEntries(filteredEntries);
+  // 清空当前缓存并合并新缓存
+  Object.keys(cache).forEach((k) => {
+    // @ts-expect-error Clear cache value for key, ignoring type checking for undefined assignment
+    cache[k] = undefined;
+  });
+  Object.assign(cache, newCache);
+}
+
+/**
+ * 清除所有缓存
+ */
+export function clearAllCache(): void {
+  // 清空所有缓存键
+  Object.keys(cache).forEach((key) => {
+    // @ts-expect-error Clear cache value for key, ignoring type checking for undefined assignment
+    cache[key] = undefined;
+  });
+}
+
+/**
  * 获取网页HTML
  */
 async function fetchHTML(): Promise<string> {

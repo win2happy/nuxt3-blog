@@ -219,6 +219,8 @@ const currentDate = computed(() => {
 
 // 数据加载状态
 const loadError = ref("");
+// 刷新计数器，用于触发农历日期重新计算
+const refreshCount = ref(0);
 
 // 使用 useAsyncData 在服务端和客户端都获取数据
 const { data: newsData, pending: isLoading, refresh: refreshNewsData } = await useAsyncData("newsData", async () => {
@@ -232,12 +234,12 @@ const { data: newsData, pending: isLoading, refresh: refreshNewsData } = await u
       calendarRes,
       quoteRes
     ] = await Promise.all([
-      $fetch("/api/news/lunar-date"),
-      $fetch("/api/news/quick-news"),
-      $fetch("/api/news/hot-trends"),
-      $fetch("/api/news/history-today"),
-      $fetch("/api/news/calendar"),
-      $fetch("/api/news/daily-quote")
+      $fetch("/api/news/lunar-date", { params: { noCache: refreshCount.value > 0 } }),
+      $fetch("/api/news/quick-news", { params: { noCache: refreshCount.value > 0 } }),
+      $fetch("/api/news/hot-trends", { params: { noCache: refreshCount.value > 0 } }),
+      $fetch("/api/news/history-today", { params: { noCache: refreshCount.value > 0 } }),
+      $fetch("/api/news/calendar", { params: { noCache: refreshCount.value > 0 } }),
+      $fetch("/api/news/daily-quote", { params: { noCache: refreshCount.value > 0 } })
     ]);
 
     return {
@@ -305,6 +307,10 @@ const calculateLunarDate = () => {
 
 // 从 newsData 中解构数据
 const lunarDate = computed(() => {
+  // 使用 refreshCount 作为依赖项，确保每次刷新都会重新计算
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  refreshCount.value;
+
   // 如果 API 返回了农历日期，则使用 API 返回的值，否则计算当前日期的农历
   const apiLunarDate = newsData.value?.lunarDate;
   return apiLunarDate && apiLunarDate !== "农历日期" ? apiLunarDate : calculateLunarDate();
@@ -322,6 +328,8 @@ const { cardConfig } = useCardConfig("news");
 const handleRefreshData = async () => {
   try {
     loadError.value = "";
+    // 增加刷新计数器，触发农历日期重新计算
+    refreshCount.value++;
     // 调用 refresh 方法重新获取数据
     await refreshNewsData();
   } catch (error) {
