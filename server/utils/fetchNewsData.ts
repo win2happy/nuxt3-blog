@@ -507,7 +507,7 @@ function calculateLunarDate(date: Date = new Date()): string {
 }
 
 /**
- * 解析农历日期
+ * 获取农历日期
  */
 export async function fetchLunarDate() {
   const cacheKey = "lunarDate";
@@ -515,18 +515,14 @@ export async function fetchLunarDate() {
   if (cached) return cached;
 
   try {
-    const html = await fetchHTML();
-    const $ = cheerio.load(html);
-
-    // 从页面顶部提取农历日期
-    const dateText = $("h2").first().text();
-    const lunarMatch = dateText.match(/农历[\s\S]*?[年月日]/);
-    const lunarDate = lunarMatch ? lunarMatch[0] : calculateLunarDate();
+    // 直接使用 calculateLunarDate 函数计算准确的农历日期
+    // 不再从第三方网站抓取，避免数据不准确
+    const lunarDate = calculateLunarDate();
 
     setCache(cacheKey, lunarDate);
     return lunarDate;
   } catch (error) {
-    console.error("解析农历日期失败:", error);
+    console.error("计算农历日期失败:", error);
     return calculateLunarDate();
   }
 }

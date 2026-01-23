@@ -195,7 +195,10 @@
 </template>
 
 <script setup lang="ts">
+import { Solar } from "lunar-javascript";
 import * as ImageGenerator from "~/utils/imageGenerator";
+
+// 引入 lunar-javascript 库
 
 const newsRef = ref();
 const trendsRef = ref();
@@ -286,23 +289,52 @@ const { data: newsData, pending: isLoading, refresh: refreshNewsData } = await u
   revalidate: 0
 });
 
-// 农历日期计算（简化版）
+// 农历日期计算（使用 lunar-javascript 库，准确计算）
 const calculateLunarDate = () => {
-  const date = new Date();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
+  try {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
 
-  // 简化的农历计算，实际项目中可能需要更复杂的算法
-  const lunarMonths = ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
-  const lunarDays = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
-    "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
-    "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+    // 使用 lunar-javascript 库计算准确的农历日期
+    const solar = Solar.fromYmd(year, month, day);
+    const lunar = solar.getLunar();
 
-  // 简单映射，实际项目中需要使用真实的农历算法
-  const lunarMonthIndex = month - 1;
-  const lunarDayIndex = Math.min(day - 1, lunarDays.length - 1);
+    // 获取农历月份和日期
+    const lunarMonth = lunar.getMonth();
+    const lunarDay = lunar.getDay();
 
-  return `农历${lunarMonths[lunarMonthIndex]}${lunarDays[lunarDayIndex]}`;
+    // 农历月份名称
+    const lunarMonths = ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
+    // 农历日期名称
+    const lunarDays = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+      "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+      "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+
+    // 计算索引（注意：lunar-javascript 返回的月份和日期从1开始）
+    const monthIndex = lunarMonth - 1;
+    const dayIndex = lunarDay - 1;
+
+    // 确保索引在有效范围内
+    const validMonthIndex = Math.max(0, Math.min(monthIndex, lunarMonths.length - 1));
+    const validDayIndex = Math.max(0, Math.min(dayIndex, lunarDays.length - 1));
+
+    return `农历${lunarMonths[validMonthIndex]}${lunarDays[validDayIndex]}`;
+  } catch (error) {
+    console.error("计算农历日期失败:", error);
+    // 出错时返回简化计算结果作为后备
+    const date = new Date();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const lunarMonths = ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
+    const lunarDays = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+      "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+      "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+    const lunarMonthIndex = month - 1;
+    const lunarDayIndex = Math.min(day - 1, lunarDays.length - 1);
+    return `农历${lunarMonths[lunarMonthIndex]}${lunarDays[lunarDayIndex]}`;
+  }
 };
 
 // 从 newsData 中解构数据
