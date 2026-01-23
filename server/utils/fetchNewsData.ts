@@ -475,6 +475,8 @@ function calculateLunarDate(date: Date = new Date()): string {
     const month = date.getMonth() + 1;
     const day = date.getDate();
 
+    console.log(year, month, day);
+
     // 使用 lunar-javascript 库计算农历日期
     const solar = Solar.fromYmd(year, month, day);
     const lunar = solar.getLunar();
