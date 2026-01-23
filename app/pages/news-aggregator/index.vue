@@ -866,21 +866,39 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
 
       case "ai-news": {
         generatingText.value = "正在生成AI资讯快报图片";
-        filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-AI资讯快报.png`;
-        const formattedAiNews = aiNews.value.map((item: any, index: number) => ({
-          id: index + 1,
-          content: `${item.title}: ${item.detail}`
-        }));
-        dataUrl = await ImageGenerator.generateListCard(
-          formattedAiNews,
-          {
-            title: "AI资讯快报",
-            date: dateStr,
-            weekDay,
-            lunarDate: lunarDate.value,
-            ...(customConfig || cardConfig.value)
-          }
-        );
+        const aiNewsChunk = aiNews.value.slice(0, 15); // 最多使用15条数据
+        const chunks = [];
+        for (let i = 0; i < aiNewsChunk.length; i += 5) {
+          chunks.push(aiNewsChunk.slice(i, i + 5));
+        }
+        const chunksToUse = chunks.slice(0, 3); // 最多生成3张图片
+
+        for (let i = 0; i < chunksToUse.length; i++) {
+          generatingText.value = `正在生成AI资讯快报图片 ${i + 1}/${chunksToUse.length}`;
+          const filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-AI资讯快报-${i + 1}.png`;
+          const formattedAiNews = chunksToUse[i].map((item: any, index: number) => ({
+            id: i * 5 + index + 1,
+            content: `${item.title}: ${item.detail}`
+          }));
+          const dataUrl = await ImageGenerator.generateListCard(
+            formattedAiNews,
+            {
+              title: "AI资讯快报",
+              date: dateStr,
+              weekDay,
+              lunarDate: lunarDate.value,
+              ...(customConfig || cardConfig.value)
+            }
+          );
+
+          // 下载图片
+          const link = document.createElement("a");
+          link.href = dataUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
         break;
       }
 
@@ -1065,22 +1083,39 @@ const handleDownloadAll = async () => {
           }
 
           case "ai-news": {
-            generatingText.value = "正在生成AI资讯快报图片 (2/8)";
-            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-AI资讯快报.png`;
-            const formattedAiNews = aiNews.value.map((item: any, index: number) => ({
-              id: index + 1,
-              content: `${item.title}: ${item.detail}`
-            }));
-            dataUrl = await ImageGenerator.generateListCard(
-              formattedAiNews,
-              {
-                title: "AI资讯快报",
-                date: dateStr,
-                weekDay,
-                lunarDate: lunarDate.value,
-                ...cardConfig.value
-              }
-            );
+            const aiNewsChunk = aiNews.value.slice(0, 15); // 最多使用15条数据
+            const chunks = [];
+            for (let i = 0; i < aiNewsChunk.length; i += 5) {
+              chunks.push(aiNewsChunk.slice(i, i + 5));
+            }
+            const chunksToUse = chunks.slice(0, 3); // 最多生成3张图片
+
+            for (let i = 0; i < chunksToUse.length; i++) {
+              generatingText.value = `正在生成AI资讯快报图片 ${i + 1}/${chunksToUse.length} (2/8)`;
+              const filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-AI资讯快报-${i + 1}.png`;
+              const formattedAiNews = chunksToUse[i].map((item: any, index: number) => ({
+                id: i * 5 + index + 1,
+                content: `${item.title}: ${item.detail}`
+              }));
+              const dataUrl = await ImageGenerator.generateListCard(
+                formattedAiNews,
+                {
+                  title: "AI资讯快报",
+                  date: dateStr,
+                  weekDay,
+                  lunarDate: lunarDate.value,
+                  ...cardConfig.value
+                }
+              );
+
+              // 下载图片
+              const link = document.createElement("a");
+              link.href = dataUrl;
+              link.download = filename;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }
             break;
           }
 

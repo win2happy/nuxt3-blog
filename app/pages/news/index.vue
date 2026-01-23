@@ -72,7 +72,7 @@
           </div>
         </div>
 
-        <!-- 保存图片按钮 -->
+        <!-- 操作按钮 -->
         <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
           <button
             class="group inline-flex items-center space-x-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
@@ -93,6 +93,16 @@
                 d="M9 5l7 7-7 7"
               />
             </svg>
+          </button>
+
+          <!-- 刷新数据按钮 -->
+          <button
+            class="group inline-flex items-center space-x-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-green-600 hover:to-emerald-700 hover:shadow-xl"
+            :disabled="isLoading"
+            @click="handleRefreshData"
+          >
+            <span class="text-xl">🔄</span>
+            <span>刷新数据</span>
           </button>
 
           <!-- 卡片样式配置按钮 -->
@@ -211,7 +221,7 @@ const currentDate = computed(() => {
 const loadError = ref("");
 
 // 使用 useAsyncData 在服务端和客户端都获取数据
-const { data: newsData, pending: isLoading } = await useAsyncData("newsData", async () => {
+const { data: newsData, pending: isLoading, refresh: refreshNewsData } = await useAsyncData("newsData", async () => {
   try {
     // 并行请求所有数据
     const [
@@ -270,8 +280,8 @@ const { data: newsData, pending: isLoading } = await useAsyncData("newsData", as
     };
   }
 }, {
-  // 设置重新验证时间为1小时
-  revalidate: 3600
+  // 禁用前端缓存，每次刷新都请求API
+  revalidate: 0
 });
 
 // 农历日期计算（简化版）
@@ -307,6 +317,18 @@ const dailyQuote = computed(() => newsData.value?.dailyQuote || null);
 
 // 使用统一的前端配置
 const { cardConfig } = useCardConfig("news");
+
+// 处理刷新数据
+const handleRefreshData = async () => {
+  try {
+    loadError.value = "";
+    // 调用 refresh 方法重新获取数据
+    await refreshNewsData();
+  } catch (error) {
+    console.error("刷新数据失败:", error);
+    loadError.value = "刷新数据失败，请重试";
+  }
+};
 
 // 处理保存图片
 const handleSaveImage = async (type: string, customConfig?: any) => {

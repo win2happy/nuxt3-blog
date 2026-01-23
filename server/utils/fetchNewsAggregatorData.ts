@@ -134,7 +134,7 @@ export async function getHistoryToday(): Promise<any[]> {
     // 转换数据结构以匹配模板期望的格式
     const result = items.map(item => ({
       year: item.year,
-      event: item.description || item.title
+      event: item.title
     }));
     setCache(cacheKey, result);
     return result;

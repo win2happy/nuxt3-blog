@@ -145,7 +145,7 @@ export async function generateNewsCard(
         contentMargin: 5,
         lineHeight: 12,
         itemSpacing: 10,
-        numberSize: 12,
+        numberSize: 14,
         numberTextGap: 8,
         headerHeight: 180
       };
@@ -405,7 +405,7 @@ export async function generateListCard(
         contentMargin: 5,
         lineHeight: 12,
         itemSpacing: 10,
-        numberSize: 12,
+        numberSize: 14,
         numberTextGap: 8,
         headerHeight: 180
       };
@@ -491,9 +491,12 @@ export async function generateListCard(
 
           // 绘制序号文字
           ctx.fillStyle = options?.headerTextColor || globalConfig.newsCard?.headerTextColor || "white";
-          ctx.font = "bold 8px \"Microsoft YaHei\", sans-serif";
+          const idStr = (item.id || "").toString();
+          // 根据数字长度调整字体大小
+          const fontSize = idStr.length > 1 ? 5 : 8;
+          ctx.font = `bold ${fontSize}px "Microsoft YaHei", sans-serif`;
           ctx.textAlign = "center";
-          ctx.fillText((item.id || "").toString(), numberX + config.numberSize / 2, numberY + 3);
+          ctx.fillText(idStr, numberX + config.numberSize / 2, numberY + fontSize / 2 - 0.5);
         }
 
         // 绘制内容
