@@ -197,6 +197,7 @@
 <script setup lang="ts">
 import { Solar } from "lunar-javascript";
 import * as ImageGenerator from "~/utils/imageGenerator";
+import { getNowDayjs } from "~/utils/common/dayjs";
 
 // 引入 lunar-javascript 库
 
@@ -212,11 +213,12 @@ const isGenerating = ref(false);
 const generatingText = ref("正在生成图片");
 
 const currentDate = computed(() => {
-  const date = new Date();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
+  // 使用北京时间计算当前日期
+  const date = getNowDayjs().tz("Asia/Shanghai");
+  const month = date.month() + 1;
+  const day = date.date();
   const weekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-  const weekDay = weekDays[date.getDay()];
+  const weekDay = weekDays[date.day()];
   return `${month}月${day}日 ${weekDay}`;
 });
 
@@ -289,13 +291,14 @@ const { data: newsData, pending: isLoading, refresh: refreshNewsData } = await u
   revalidate: 0
 });
 
-// 农历日期计算（使用 lunar-javascript 库，准确计算）
+// 农历日期计算（使用 lunar-javascript 库，准确计算，使用北京时间）
 const calculateLunarDate = () => {
   try {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
+    // 使用北京时间计算农历日期
+    const bjDate = getNowDayjs().tz("Asia/Shanghai");
+    const year = bjDate.year();
+    const month = bjDate.month() + 1;
+    const day = bjDate.date();
 
     // 使用 lunar-javascript 库计算准确的农历日期
     const solar = Solar.fromYmd(year, month, day);
@@ -323,10 +326,10 @@ const calculateLunarDate = () => {
     return `农历${lunarMonths[validMonthIndex]}${lunarDays[validDayIndex]}`;
   } catch (error) {
     console.error("计算农历日期失败:", error);
-    // 出错时返回简化计算结果作为后备
-    const date = new Date();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
+    // 出错时返回后备计算结果，使用北京时间
+    const bjDate = getNowDayjs().tz("Asia/Shanghai");
+    const month = bjDate.month() + 1;
+    const day = bjDate.date();
     const lunarMonths = ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
     const lunarDays = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
       "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
@@ -391,14 +394,15 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
     switch (type) {
       case "news-card": {
         generatingText.value = "正在生成60秒读懂世界红色卡片";
-        const newsCardDate = new Date();
-        filename = `${newsCardDate.getFullYear()}年${newsCardDate.getMonth() + 1}月${newsCardDate.getDate()}日-60秒读懂世界.png`;
+        // 使用北京时间
+        const newsCardDate = getNowDayjs().tz("Asia/Shanghai");
+        filename = `${newsCardDate.year()}年${newsCardDate.month() + 1}月${newsCardDate.date()}日-60秒读懂世界.png`;
         const weekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         dataUrl = await ImageGenerator.generateNewsCard(
           quickNews.value,
           {
-            date: `${newsCardDate.getFullYear()}年${newsCardDate.getMonth() + 1}月${newsCardDate.getDate()}日`,
-            weekDay: weekDays[newsCardDate.getDay()],
+            date: `${newsCardDate.year()}年${newsCardDate.month() + 1}月${newsCardDate.date()}日`,
+            weekDay: weekDays[newsCardDate.day()],
             lunarDate: lunarDate.value,
             // 使用前端配置（customConfig 如果有则使用，否则使用全局前端配置）
             ...(customConfig || cardConfig.value)
@@ -409,8 +413,9 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
 
       case "trends": {
         generatingText.value = "正在生成实时热搜";
-        const trendsDate = new Date();
-        filename = `${trendsDate.getFullYear()}年${trendsDate.getMonth() + 1}月${trendsDate.getDate()}日-实时热搜.png`;
+        // 使用北京时间
+        const trendsDate = getNowDayjs().tz("Asia/Shanghai");
+        filename = `${trendsDate.year()}年${trendsDate.month() + 1}月${trendsDate.date()}日-实时热搜.png`;
         // 使用Canvas生成卡片 - 合并所有平台的热搜
         const trendsWeekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         const allTrends: any[] = [];
@@ -426,8 +431,8 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
           allTrends.slice(0, 15), // 只取前15条
           {
             title: "实时热搜",
-            date: `${trendsDate.getFullYear()}年${trendsDate.getMonth() + 1}月${trendsDate.getDate()}日`,
-            weekDay: trendsWeekDays[trendsDate.getDay()],
+            date: `${trendsDate.year()}年${trendsDate.month() + 1}月${trendsDate.date()}日`,
+            weekDay: trendsWeekDays[trendsDate.day()],
             lunarDate: lunarDate.value,
             // 使用前端配置
             gradientStart: cardConfig.value.gradientStart,
@@ -442,8 +447,9 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
 
       case "history": {
         generatingText.value = "正在生成历史上的今天";
-        const historyDate = new Date();
-        filename = `${historyDate.getFullYear()}年${historyDate.getMonth() + 1}月${historyDate.getDate()}日-历史上的今天.png`;
+        // 使用北京时间
+        const historyDate = getNowDayjs().tz("Asia/Shanghai");
+        filename = `${historyDate.year()}年${historyDate.month() + 1}月${historyDate.date()}日-历史上的今天.png`;
         // 使用Canvas生成卡片，格式化历史事件（年份 + 事件）
         const historyWeekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         const formattedHistory = historyEvents.value.map((item, index) => ({
@@ -455,8 +461,8 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
           formattedHistory,
           {
             title: "历史上的今天",
-            date: `${historyDate.getFullYear()}年${historyDate.getMonth() + 1}月${historyDate.getDate()}日`,
-            weekDay: historyWeekDays[historyDate.getDay()],
+            date: `${historyDate.year()}年${historyDate.month() + 1}月${historyDate.date()}日`,
+            weekDay: historyWeekDays[historyDate.day()],
             lunarDate: lunarDate.value,
             hideNumbers: true, // 全局控制不显示序号
             // 使用前端配置
@@ -472,10 +478,11 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
 
       case "calendar": {
         generatingText.value = "正在生成今日黄历";
-        const calendarFileDate = new Date();
-        filename = `${calendarFileDate.getFullYear()}年${calendarFileDate.getMonth() + 1}月${calendarFileDate.getDate()}日-今日黄历.png`;
+        // 使用北京时间
+        const calendarFileDate = getNowDayjs().tz("Asia/Shanghai");
+        filename = `${calendarFileDate.year()}年${calendarFileDate.month() + 1}月${calendarFileDate.date()}日-今日黄历.png`;
         // 使用Canvas生成卡片，按页面展示格式排版
-        const calendarDate = new Date();
+        const calendarDate = getNowDayjs().tz("Asia/Shanghai");
         const calendarWeekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         const calendarItems = [
           { id: 1, content: `${calendarInfo.value.lunar}  ${calendarInfo.value.animal}  ${calendarInfo.value.month}  ${calendarInfo.value.day}` },
@@ -497,8 +504,8 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
           calendarItems,
           {
             title: "今日黄历",
-            date: `${calendarDate.getFullYear()}年${calendarDate.getMonth() + 1}月${calendarDate.getDate()}日`,
-            weekDay: calendarWeekDays[calendarDate.getDay()],
+            date: `${calendarDate.year()}年${calendarDate.month() + 1}月${calendarDate.date()}日`,
+            weekDay: calendarWeekDays[calendarDate.day()],
             lunarDate: lunarDate.value,
             hideNumbers: true, // 不显示序号
             // 使用前端配置
@@ -514,10 +521,11 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
 
       case "quote": {
         generatingText.value = "正在生成每日一语";
-        const quoteFileDate = new Date();
-        filename = `${quoteFileDate.getFullYear()}年${quoteFileDate.getMonth() + 1}月${quoteFileDate.getDate()}日-每日一语.png`;
+        // 使用北京时间
+        const quoteFileDate = getNowDayjs().tz("Asia/Shanghai");
+        filename = `${quoteFileDate.year()}年${quoteFileDate.month() + 1}月${quoteFileDate.date()}日-每日一语.png`;
         // 使用Canvas生成卡片
-        const quoteDate = new Date();
+        const quoteDate = getNowDayjs().tz("Asia/Shanghai");
         const quoteWeekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         const quoteItems = [
           { id: 1, content: dailyQuote.value.content }
@@ -526,8 +534,8 @@ const handleSaveImage = async (type: string, customConfig?: any) => {
           quoteItems,
           {
             title: "每日一语",
-            date: `${quoteDate.getFullYear()}年${quoteDate.getMonth() + 1}月${quoteDate.getDate()}日`,
-            weekDay: quoteWeekDays[quoteDate.getDay()],
+            date: `${quoteDate.year()}年${quoteDate.month() + 1}月${quoteDate.date()}日`,
+            weekDay: quoteWeekDays[quoteDate.day()],
             lunarDate: lunarDate.value,
             hideNumbers: true, // 不显示序号
             // 使用前端配置
@@ -569,10 +577,11 @@ const handleDownloadAll = async () => {
   generatingText.value = "正在批量生成所有图片";
 
   try {
-    const date = new Date();
-    const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    // 使用北京时间
+    const date = getNowDayjs().tz("Asia/Shanghai");
+    const dateStr = `${date.year()}年${date.month() + 1}月${date.date()}日`;
     const weekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-    const weekDay = weekDays[date.getDay()];
+    const weekDay = weekDays[date.day()];
 
     // 定义所有需要下载的类型
     const types = ["news-card", "trends", "history", "calendar", "quote"];
@@ -587,7 +596,7 @@ const handleDownloadAll = async () => {
         switch (type) {
           case "news-card": {
             generatingText.value = `正在生成60秒读懂世界图片 (${i + 1}/${types.length})`;
-            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-60秒读懂世界.png`;
+            filename = `${date.year()}年${date.month() + 1}月${date.date()}日-60秒读懂世界.png`;
             dataUrl = await ImageGenerator.generateNewsCard(
               quickNews.value,
               {
@@ -602,7 +611,7 @@ const handleDownloadAll = async () => {
 
           case "trends": {
             generatingText.value = `正在生成实时热搜图片 (${i + 1}/${types.length})`;
-            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-实时热搜.png`;
+            filename = `${date.year()}年${date.month() + 1}月${date.date()}日-实时热搜.png`;
             const allTrends: any[] = [];
             hotTrends.value.forEach((platform) => {
               platform.items.forEach((item: any) => {
@@ -627,7 +636,7 @@ const handleDownloadAll = async () => {
 
           case "history": {
             generatingText.value = `正在生成历史上的今天图片 (${i + 1}/${types.length})`;
-            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-历史上的今天.png`;
+            filename = `${date.year()}年${date.month() + 1}月${date.date()}日-历史上的今天.png`;
             const formattedHistory = historyEvents.value.map((item, index) => ({
               id: index + 1,
               content: `${item.year}年 ${item.event}`,
@@ -649,7 +658,7 @@ const handleDownloadAll = async () => {
 
           case "calendar": {
             generatingText.value = `正在生成今日黄历图片 (${i + 1}/${types.length})`;
-            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-今日黄历.png`;
+            filename = `${date.year()}年${date.month() + 1}月${date.date()}日-今日黄历.png`;
             const calendarItems = [
               { id: 1, content: `${calendarInfo.value.lunar}  ${calendarInfo.value.animal}  ${calendarInfo.value.month}  ${calendarInfo.value.day}` },
               { id: 2, content: "" },
@@ -682,7 +691,7 @@ const handleDownloadAll = async () => {
 
           case "quote": {
             generatingText.value = `正在生成每日一语图片 (${i + 1}/${types.length})`;
-            filename = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日-每日一语.png`;
+            filename = `${date.year()}年${date.month() + 1}月${date.date()}日-每日一语.png`;
             const quoteItems = [
               { id: 1, content: dailyQuote.value.content }
             ];
