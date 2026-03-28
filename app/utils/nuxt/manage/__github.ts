@@ -1,12 +1,57 @@
+import axios from "axios";
 import { translate } from "../i18n";
 import { getCurrentTab, devHotListen } from "../utils";
 import { createDiffModal } from ".";
 import type { CommitParams, CommitParamsAddition, CommonItem } from "~/utils/common/types";
 import { notify } from "~/utils/nuxt/notify";
 import { rebuildEvent } from "~~/vite-plugins/types";
+import { useGithubToken, useRemoteLatestSha } from "~/composables/states";
+import config from "~~/config";
 
-export function isAuthor(): never {
-  throw new Error("Can't do that");
+export async function isAuthor(token: string): Promise<boolean> {
+  const apiUrl = config.githubApiUrl || "https://api.github.com";
+  const result = await axios.post(
+    `${apiUrl}/graphql`,
+    {
+      query: `query {
+        viewer {
+          login
+        }
+        repository(name: "${__NB_GITHUB_REPO__}", owner: "${config.githubName}") {
+          ref(qualifiedName: "${useRuntimeConfig().app.githubBranch}") {
+            target {
+              ... on Commit {
+                history(first: 1) {
+                  nodes {
+                    oid
+                  }
+                }
+              }
+            }
+          }
+        }
+      }`
+    },
+    {
+      headers: {
+        Authorization: "token " + token
+      }
+    }
+  );
+
+  const err = result.data.errors;
+  if (err) {
+    throw new Error(err);
+  } else {
+    const verified = result.data.data.viewer.login === config.githubName;
+    if (verified) {
+      // token 验证成功
+      useGithubToken().value = token;
+      // 更新 commit id
+      useRemoteLatestSha().value = result.data.data.repository.ref.target.history.nodes[0].oid;
+    }
+    return verified;
+  }
 }
 
 export async function createCommit(
