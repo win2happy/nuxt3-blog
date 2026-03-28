@@ -1,8 +1,8 @@
+import { isAuthor } from "ls:~/utils/nuxt/manage/github";
 import { GithubTokenKey, IgnoredVersionKey, OfficialRepo } from "~/utils/common/constants";
 import { isDev } from "~/utils/nuxt/constants";
 import { translate } from "~/utils/nuxt/i18n";
 import { getLocalStorage, setLocalStorage } from "~/utils/nuxt/localStorage";
-import { isAuthor } from "~/utils/nuxt/manage/github";
 import { createVersionUpdateModal } from "~/utils/nuxt/manage";
 import { notify } from "~/utils/nuxt/notify";
 
