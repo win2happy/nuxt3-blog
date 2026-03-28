@@ -156,16 +156,24 @@ async function createOrUpdateFile(
   }
 
   console.log("[PasswordBackup] Creating/updating file:", { owner, repo, path, branch, hasSha: !!sha });
+  console.log("[PasswordBackup] API URL:", `${getGithubApiUrl()}/repos/${owner}/${repo}/contents/${path}`);
+  console.log("[PasswordBackup] Token available:", !!token);
 
-  await axios.put(
-    `${getGithubApiUrl()}/repos/${owner}/${repo}/contents/${path}`,
-    body,
-    {
-      headers: { Authorization: `token ${token}` }
-    }
-  );
-
-  console.log("[PasswordBackup] File created/updated successfully");
+  try {
+    await axios.put(
+      `${getGithubApiUrl()}/repos/${owner}/${repo}/contents/${path}`,
+      body,
+      {
+        headers: { Authorization: `token ${token}` }
+      }
+    );
+    console.log("[PasswordBackup] File created/updated successfully");
+  } catch (error: any) {
+    console.error("[PasswordBackup] Create/update file failed:", error);
+    console.error("[PasswordBackup] Error status:", error.response?.status);
+    console.error("[PasswordBackup] Error message:", error.response?.data?.message);
+    throw error;
+  }
 }
 
 /**
@@ -314,7 +322,8 @@ export async function sendPasswordBackup(
     contentType: payload.contentType,
     id: payload.id,
     hasTelegram: !!backupConfig.telegram,
-    hasGithub: !!backupConfig.github
+    hasGithub: !!backupConfig.github,
+    githubConfig: backupConfig.github
   });
 
   const results = {

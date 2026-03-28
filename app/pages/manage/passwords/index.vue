@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick } from "vue";
+import { nextTick, watch } from "vue";
 import { Key, Eye, EyeOff, Copy, RefreshCw, Trash2, Save, AlertTriangle, ChevronDown, ChevronUp, FileText, Image, BookOpen } from "lucide-vue-next";
 import { translate } from "~/utils/nuxt/i18n";
 import { notify } from "~/utils/nuxt/notify";
@@ -391,10 +391,27 @@ async function testDirectLoad() {
   debugInfo.value = logs.join("\n");
 }
 
+// 监控 passwords 数组变化
+watch(passwords, (newVal) => {
+  console.log("[PasswordManager] passwords changed:", newVal.length, newVal);
+}, { deep: true });
+
+// 监控 groupedPasswords 变化
+watch(groupedPasswords, (newVal) => {
+  console.log("[PasswordManager] groupedPasswords changed:", {
+    article: newVal.article.length,
+    record: newVal.record.length,
+    knowledge: newVal.knowledge.length
+  });
+}, { deep: true });
+
 // 页面加载时获取密码列表
 onMounted(async () => {
+  console.log("[PasswordManager] onMounted called");
   await nextTick();
+  console.log("[PasswordManager] after nextTick");
   await loadPasswords();
+  console.log("[PasswordManager] after loadPasswords");
 });
 </script>
 
