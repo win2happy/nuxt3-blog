@@ -251,22 +251,27 @@ async function getLatestShard(
   maxFileSizeKB: number
 ): Promise<{ shard: FileShardInfo | null; data: PasswordBackupData | null }> {
   const shards = await getContentTypeShards(owner, repo, basePath, contentType, branch);
+  console.log("[PasswordBackup] getLatestShard - shards count:", shards.length);
 
   if (shards.length === 0) {
+    console.log("[PasswordBackup] No shards found, will create new");
     return { shard: null, data: null };
   }
 
   // 获取最后一个分片
   const latestShard = shards[shards.length - 1];
+  console.log("[PasswordBackup] Latest shard:", latestShard);
   const fileContent = await getFileContent(owner, repo, latestShard.path, branch);
 
   if (!fileContent) {
+    console.log("[PasswordBackup] Could not get file content for:", latestShard.path);
     return { shard: null, data: null };
   }
 
   try {
     const data: PasswordBackupData = JSON.parse(fileContent.content);
     latestShard.entryCount = data.entries?.length || 0;
+    console.log("[PasswordBackup] Parsed data - entries:", data.entries?.length);
 
     // 检查是否需要创建新分片
     const shouldCreateNewShard = (
@@ -283,7 +288,8 @@ async function getLatestShard(
     }
 
     return { shard: latestShard, data };
-  } catch {
+  } catch (error) {
+    console.log("[PasswordBackup] Error parsing file content:", error);
     return { shard: null, data: null };
   }
 }
