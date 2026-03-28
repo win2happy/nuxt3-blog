@@ -1,6 +1,7 @@
 /**
  * 密码备份服务
  * 支持 Telegram 通知和 GitHub 加密存储
+ * 按内容类型（文章/记录/文化）分别存储，支持文件分片
  */
 
 import axios from "axios";
@@ -21,6 +22,8 @@ export interface GithubBackupConfig {
   branch: string;
   filePath: string;
   masterKey: string;
+  maxEntriesPerFile?: number;
+  maxFileSizeKB?: number;
 }
 
 export interface PasswordBackupEntry {
@@ -38,7 +41,24 @@ export interface PasswordBackupData {
   version: number;
   lastUpdated: number;
   entries: PasswordBackupEntry[];
+  fileIndex?: number;
+  totalFiles?: number;
 }
+
+export interface FileShardInfo {
+  path: string;
+  sha: string;
+  entryCount: number;
+  fileSize: number;
+  fileIndex: number;
+}
+
+// 内容类型到文件名的映射
+const CONTENT_TYPE_FILE_MAP: Record<string, string> = {
+  article: "articles",
+  record: "records",
+  knowledge: "knowledges"
+};
 
 // 简单的 XOR 加密（用于演示，生产环境建议使用更强的加密）
 function xorEncrypt(text: string, key: string): string {
@@ -73,6 +93,39 @@ function getGithubToken(): string {
 }
 
 /**
+ * 获取内容类型对应的文件名前缀
+ */
+function getContentTypeFileName(contentType: string): string {
+  return CONTENT_TYPE_FILE_MAP[contentType] || "others";
+}
+
+/**
+ * 获取目录下的所有文件列表
+ */
+async function getDirectoryContents(
+  owner: string,
+  repo: string,
+  path: string,
+  branch: string
+): Promise<any[]> {
+  try {
+    const token = getGithubToken();
+    const response = await axios.get(
+      `${getGithubApiUrl()}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`,
+      {
+        headers: { Authorization: `token ${token}` }
+      }
+    );
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+}
+
+/**
  * 获取文件内容（如果存在）
  */
 async function getFileContent(
@@ -80,11 +133,10 @@ async function getFileContent(
   repo: string,
   path: string,
   branch: string
-): Promise<{ content: string; sha: string } | null> {
+): Promise<{ content: string; sha: string; size: number } | null> {
   try {
     const token = getGithubToken();
     console.log("[PasswordBackup] Getting file content:", { owner, repo, path, branch });
-    console.log("[PasswordBackup] Token available:", !!token);
 
     const response = await axios.get(
       `${getGithubApiUrl()}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`,
@@ -96,7 +148,8 @@ async function getFileContent(
     console.log("[PasswordBackup] File content retrieved successfully");
     return {
       content: atob(response.data.content.replace(/\n/g, "")),
-      sha: response.data.sha
+      sha: response.data.sha,
+      size: response.data.size || 0
     };
   } catch (error: any) {
     console.log("[PasswordBackup] Get file error:", error.response?.status, error.response?.data?.message);
@@ -144,7 +197,132 @@ async function createOrUpdateFile(
 }
 
 /**
- * 备份密码到 GitHub（加密存储）
+ * 获取指定内容类型的所有文件分片信息
+ */
+async function getContentTypeShards(
+  owner: string,
+  repo: string,
+  basePath: string,
+  contentType: string,
+  branch: string
+): Promise<FileShardInfo[]> {
+  const filePrefix = getContentTypeFileName(contentType);
+  const dirPath = `${basePath}/${filePrefix}`;
+
+  try {
+    const files = await getDirectoryContents(owner, repo, dirPath, branch);
+    const shards: FileShardInfo[] = [];
+
+    for (const file of files) {
+      if (file.type === "file" && file.name.endsWith(".json")) {
+        const match = file.name.match(/^(\w+)-(\d+)\.json$/);
+        if (match) {
+          shards.push({
+            path: file.path,
+            sha: file.sha,
+            entryCount: 0,
+            fileSize: file.size || 0,
+            fileIndex: parseInt(match[2], 10)
+          });
+        }
+      }
+    }
+
+    // 按文件索引排序
+    shards.sort((a, b) => a.fileIndex - b.fileIndex);
+    return shards;
+  } catch {
+    console.log("[PasswordBackup] No existing shards found for:", contentType);
+    return [];
+  }
+}
+
+/**
+ * 获取最新的文件分片（用于写入新数据）
+ */
+async function getLatestShard(
+  owner: string,
+  repo: string,
+  basePath: string,
+  contentType: string,
+  branch: string,
+  maxEntriesPerFile: number,
+  maxFileSizeKB: number
+): Promise<{ shard: FileShardInfo | null; data: PasswordBackupData | null }> {
+  const shards = await getContentTypeShards(owner, repo, basePath, contentType, branch);
+
+  if (shards.length === 0) {
+    return { shard: null, data: null };
+  }
+
+  // 获取最后一个分片
+  const latestShard = shards[shards.length - 1];
+  const fileContent = await getFileContent(owner, repo, latestShard.path, branch);
+
+  if (!fileContent) {
+    return { shard: null, data: null };
+  }
+
+  try {
+    const data: PasswordBackupData = JSON.parse(fileContent.content);
+    latestShard.entryCount = data.entries?.length || 0;
+
+    // 检查是否需要创建新分片
+    const shouldCreateNewShard = (
+      (maxEntriesPerFile > 0 && latestShard.entryCount >= maxEntriesPerFile)
+      || (maxFileSizeKB > 0 && latestShard.fileSize >= maxFileSizeKB * 1024)
+    );
+
+    if (shouldCreateNewShard) {
+      console.log("[PasswordBackup] Creating new shard, current shard is full:", {
+        entries: latestShard.entryCount,
+        size: latestShard.fileSize
+      });
+      return { shard: null, data: null };
+    }
+
+    return { shard: latestShard, data };
+  } catch {
+    return { shard: null, data: null };
+  }
+}
+
+/**
+ * 创建新的文件分片
+ */
+async function createNewShard(
+  owner: string,
+  repo: string,
+  basePath: string,
+  contentType: string,
+  branch: string,
+  shards: FileShardInfo[]
+): Promise<{ shard: FileShardInfo; data: PasswordBackupData }> {
+  const filePrefix = getContentTypeFileName(contentType);
+  const newIndex = shards.length > 0 ? Math.max(...shards.map(s => s.fileIndex)) + 1 : 1;
+  const newPath = `${basePath}/${filePrefix}/${filePrefix}-${newIndex}.json`;
+
+  const newData: PasswordBackupData = {
+    version: 1,
+    lastUpdated: Date.now(),
+    entries: [],
+    fileIndex: newIndex,
+    totalFiles: newIndex
+  };
+
+  const newShard: FileShardInfo = {
+    path: newPath,
+    sha: "",
+    entryCount: 0,
+    fileSize: 0,
+    fileIndex: newIndex
+  };
+
+  return { shard: newShard, data: newData };
+}
+
+/**
+ * 备份密码到 GitHub（加密存储，按内容类型分文件存储，支持分片）
  */
 async function backupToGithub(
   payload: PasswordNotifyPayload,
@@ -154,7 +332,8 @@ async function backupToGithub(
     enabled: githubConfig.enabled,
     hasMasterKey: !!githubConfig.masterKey,
     owner: githubConfig.owner,
-    repo: githubConfig.repo
+    repo: githubConfig.repo,
+    contentType: payload.contentType
   });
 
   if (!githubConfig.enabled) {
@@ -172,37 +351,47 @@ async function backupToGithub(
     return false;
   }
 
+  const maxEntriesPerFile = githubConfig.maxEntriesPerFile || 0;
+  const maxFileSizeKB = githubConfig.maxFileSizeKB || 0;
+
   try {
-    // 获取现有备份数据
-    console.log("[PasswordBackup] Fetching existing file...");
-    const existingFile = await getFileContent(
+    const basePath = githubConfig.filePath;
+    const contentType = payload.contentType;
+
+    // 获取现有分片信息
+    console.log("[PasswordBackup] Fetching existing shards for:", contentType);
+    const shards = await getContentTypeShards(
       githubConfig.owner,
       githubConfig.repo,
-      githubConfig.filePath,
+      basePath,
+      contentType,
       githubConfig.branch
     );
 
-    let backupData: PasswordBackupData;
+    // 获取最新的可用分片
+    let { shard, data } = await getLatestShard(
+      githubConfig.owner,
+      githubConfig.repo,
+      basePath,
+      contentType,
+      githubConfig.branch,
+      maxEntriesPerFile,
+      maxFileSizeKB
+    );
 
-    if (existingFile) {
-      console.log("[PasswordBackup] Existing file found, parsing...");
-      try {
-        backupData = JSON.parse(existingFile.content);
-      } catch {
-        console.log("[PasswordBackup] Failed to parse existing file, creating new");
-        backupData = {
-          version: 1,
-          lastUpdated: Date.now(),
-          entries: []
-        };
-      }
-    } else {
-      console.log("[PasswordBackup] No existing file, creating new");
-      backupData = {
-        version: 1,
-        lastUpdated: Date.now(),
-        entries: []
-      };
+    // 如果没有可用分片，创建新的
+    if (!shard || !data) {
+      console.log("[PasswordBackup] Creating new shard for:", contentType);
+      const result = await createNewShard(
+        githubConfig.owner,
+        githubConfig.repo,
+        basePath,
+        contentType,
+        githubConfig.branch,
+        shards
+      );
+      shard = result.shard;
+      data = result.data;
     }
 
     // 创建新条目
@@ -218,38 +407,39 @@ async function backupToGithub(
       date: new Date(payload.timestamp).toISOString()
     };
 
-    // 查找是否已存在相同 ID 和类型的条目
-    const existingIndex = backupData.entries.findIndex(
-      e => e.id === payload.id && e.contentType === payload.contentType
-    );
+    // 查找是否已存在相同 ID 的条目
+    const existingIndex = data.entries.findIndex(e => e.id === payload.id);
 
     if (existingIndex >= 0) {
       console.log("[PasswordBackup] Updating existing entry at index:", existingIndex);
-      backupData.entries[existingIndex] = newEntry;
+      data.entries[existingIndex] = newEntry;
     } else {
       console.log("[PasswordBackup] Adding new entry");
-      backupData.entries.push(newEntry);
+      data.entries.push(newEntry);
     }
 
     // 按时间倒序排序
-    backupData.entries.sort((a, b) => b.timestamp - a.timestamp);
+    data.entries.sort((a, b) => b.timestamp - a.timestamp);
 
-    // 更新最后更新时间
-    backupData.lastUpdated = Date.now();
+    // 更新元数据
+    data.lastUpdated = Date.now();
+    data.totalFiles = Math.max(data.totalFiles || 1, shards.length + (shard.sha ? 0 : 1));
 
     // 保存到 GitHub
     console.log("[PasswordBackup] Saving to GitHub...");
+    const contentJson = JSON.stringify(data, null, 2);
+
     await createOrUpdateFile(
       githubConfig.owner,
       githubConfig.repo,
-      githubConfig.filePath,
-      JSON.stringify(backupData, null, 2),
+      shard.path,
+      contentJson,
       githubConfig.branch,
-      `Backup password for ${payload.contentType} #${payload.id}`,
-      existingFile?.sha
+      `Backup password for ${payload.contentType} #${payload.id}${shard.fileIndex > 1 ? ` (shard ${shard.fileIndex})` : ""}`,
+      shard.sha || undefined
     );
 
-    console.log("[PasswordBackup] GitHub backup successful!");
+    console.log("[PasswordBackup] GitHub backup successful! Shard:", shard.fileIndex);
     return true;
   } catch (error: any) {
     console.error("[PasswordBackup] GitHub backup failed:", error);
@@ -282,29 +472,25 @@ export async function sendPasswordBackup(
   };
 
   // 发送 Telegram 通知
-  if (backupConfig.telegram) {
+  if (backupConfig.telegram?.enabled) {
     console.log("[PasswordBackup] Telegram config:", {
       enabled: backupConfig.telegram.enabled,
       hasBotToken: !!backupConfig.telegram.botToken,
       hasChatId: !!backupConfig.telegram.chatId
     });
 
-    if (backupConfig.telegram.enabled) {
-      try {
-        results.telegram = await sendPasswordToTelegram(payload, backupConfig.telegram);
-        console.log("[PasswordBackup] Telegram result:", results.telegram);
-      } catch (error) {
-        console.error("[PasswordBackup] Telegram backup failed:", error);
-      }
-    } else {
-      console.log("[PasswordBackup] Telegram disabled");
+    try {
+      results.telegram = await sendPasswordToTelegram(payload, backupConfig.telegram);
+      console.log("[PasswordBackup] Telegram result:", results.telegram);
+    } catch (error) {
+      console.error("[PasswordBackup] Telegram backup failed:", error);
     }
   } else {
-    console.log("[PasswordBackup] No Telegram config");
+    console.log("[PasswordBackup] Telegram disabled or not configured");
   }
 
   // 备份到 GitHub
-  if (backupConfig.github) {
+  if (backupConfig.github?.enabled) {
     console.log("[PasswordBackup] GitHub config:", {
       enabled: backupConfig.github.enabled,
       owner: backupConfig.github.owner,
@@ -312,18 +498,14 @@ export async function sendPasswordBackup(
       hasMasterKey: !!backupConfig.github.masterKey
     });
 
-    if (backupConfig.github.enabled) {
-      try {
-        results.github = await backupToGithub(payload, backupConfig.github);
-        console.log("[PasswordBackup] GitHub result:", results.github);
-      } catch (error) {
-        console.error("[PasswordBackup] GitHub backup failed:", error);
-      }
-    } else {
-      console.log("[PasswordBackup] GitHub disabled");
+    try {
+      results.github = await backupToGithub(payload, backupConfig.github);
+      console.log("[PasswordBackup] GitHub result:", results.github);
+    } catch (error) {
+      console.error("[PasswordBackup] GitHub backup failed:", error);
     }
   } else {
-    console.log("[PasswordBackup] No GitHub config");
+    console.log("[PasswordBackup] GitHub disabled or not configured");
   }
 
   console.log("[PasswordBackup] Final results:", results);
@@ -331,7 +513,85 @@ export async function sendPasswordBackup(
 }
 
 /**
- * 从 GitHub 获取密码备份列表
+ * 从 GitHub 获取指定内容类型的所有密码备份
+ */
+export async function getPasswordBackupsByType(
+  githubConfig: GithubBackupConfig,
+  contentType: "article" | "knowledge" | "record"
+): Promise<PasswordBackupData | null> {
+  if (!githubConfig.enabled) {
+    return null;
+  }
+
+  try {
+    const basePath = githubConfig.filePath;
+    const shards = await getContentTypeShards(
+      githubConfig.owner,
+      githubConfig.repo,
+      basePath,
+      contentType,
+      githubConfig.branch
+    );
+
+    if (shards.length === 0) {
+      return null;
+    }
+
+    // 合并所有分片的数据
+    const allEntries: PasswordBackupEntry[] = [];
+    let lastUpdated = 0;
+
+    for (const shard of shards) {
+      const fileContent = await getFileContent(
+        githubConfig.owner,
+        githubConfig.repo,
+        shard.path,
+        githubConfig.branch
+      );
+
+      if (fileContent) {
+        const data: PasswordBackupData = JSON.parse(fileContent.content);
+        if (data.entries) {
+          allEntries.push(...data.entries);
+        }
+        if (data.lastUpdated > lastUpdated) {
+          lastUpdated = data.lastUpdated;
+        }
+      }
+    }
+
+    // 去重（按 ID）
+    const uniqueEntries = Array.from(
+      new Map(allEntries.map(e => [e.id, e])).values()
+    );
+
+    // 按时间倒序排序
+    uniqueEntries.sort((a, b) => b.timestamp - a.timestamp);
+
+    const result: PasswordBackupData = {
+      version: 1,
+      lastUpdated,
+      entries: uniqueEntries,
+      totalFiles: shards.length
+    };
+
+    // 解密密码
+    if (githubConfig.masterKey) {
+      result.entries = result.entries.map(entry => ({
+        ...entry,
+        password: xorDecrypt(entry.encryptedPassword, githubConfig.masterKey)
+      }));
+    }
+
+    return result;
+  } catch (error) {
+    console.error("[PasswordBackup] Get password backups failed:", error);
+    return null;
+  }
+}
+
+/**
+ * 从 GitHub 获取所有密码备份（兼容旧接口）
  */
 export async function getPasswordBackups(
   githubConfig: GithubBackupConfig
@@ -341,30 +601,35 @@ export async function getPasswordBackups(
   }
 
   try {
-    const fileContent = await getFileContent(
-      githubConfig.owner,
-      githubConfig.repo,
-      githubConfig.filePath,
-      githubConfig.branch
-    );
+    const allEntries: PasswordBackupEntry[] = [];
+    let lastUpdated = 0;
+    let totalFiles = 0;
 
-    if (!fileContent) {
-      return null;
+    // 获取所有内容类型的数据
+    const contentTypes: ("article" | "knowledge" | "record")[] = ["article", "knowledge", "record"];
+
+    for (const contentType of contentTypes) {
+      const data = await getPasswordBackupsByType(githubConfig, contentType);
+      if (data) {
+        allEntries.push(...data.entries);
+        if (data.lastUpdated > lastUpdated) {
+          lastUpdated = data.lastUpdated;
+        }
+        totalFiles += data.totalFiles || 0;
+      }
     }
 
-    const data: PasswordBackupData = JSON.parse(fileContent.content);
+    // 按时间倒序排序
+    allEntries.sort((a, b) => b.timestamp - a.timestamp);
 
-    // 解密密码
-    if (githubConfig.masterKey) {
-      data.entries = data.entries.map(entry => ({
-        ...entry,
-        password: xorDecrypt(entry.encryptedPassword, githubConfig.masterKey)
-      }));
-    }
-
-    return data;
+    return {
+      version: 1,
+      lastUpdated,
+      entries: allEntries,
+      totalFiles
+    };
   } catch (error) {
-    console.error("[PasswordBackup] Get password backups failed:", error);
+    console.error("[PasswordBackup] Get all password backups failed:", error);
     return null;
   }
 }

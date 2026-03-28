@@ -70,8 +70,10 @@ export default {
     owner: "win2happy", // 私有仓库所有者（GitHub 用户名）
     repo: "password-manager", // 私有仓库名称（如：password-backups）
     branch: "main", // 分支名称
-    filePath: "nuxt3-blog/password-backups.json", // 存储密码的文件路径
-    masterKey: "nuxt3blog" // 主密钥，用于加密/解密密码（请设置一个强密码）
+    filePath: "nuxt3-blog", // 存储密码的目录路径（文章/记录/文化会分别存储为不同文件）
+    masterKey: "nuxt3blog", // 主密钥，用于加密/解密密码（请设置一个强密码）
+    maxEntriesPerFile: 1000, // 每个文件最大条目数，超过后会自动创建新文件分片存储（0表示不限制）
+    maxFileSizeKB: 500 // 每个文件最大大小（KB），超过后会自动创建新文件分片存储（0表示不限制）
   },
 
   /** -------------------------------------------------注意----------------------------------------------------- */
