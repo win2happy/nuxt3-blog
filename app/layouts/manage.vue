@@ -161,7 +161,7 @@ onMounted(() => {
         </div>
         <div class="my-1 space-y-1 border-y border-dark-200 py-3 dark:border-dark-700">
           <NuxtLink
-            v-for="item in HeaderTabs"
+            v-for="item in HeaderTabs.filter(tab => tab !== '/news')"
             :key="item"
             :to="isAuthor === true ? `/manage${item}` : '#'"
             :class="twMerge(
