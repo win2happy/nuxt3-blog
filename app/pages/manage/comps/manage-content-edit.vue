@@ -158,8 +158,9 @@ const doUpload = async () => {
     if (success) {
       useUnsavedContent().value = false;
 
-      // 如果内容加密，发送密码备份通知
-      if (newItem.encrypt && encryptor.usePasswd.value) {
+      // 如果内容加密（整篇加密或部分加密），发送密码备份通知
+      const isEncrypted = newItem.encrypt || (newItem.encryptBlocks && newItem.encryptBlocks.length > 0);
+      if (isEncrypted && encryptor.usePasswd.value) {
         await sendPasswordBackupNotification(newItem, isNew.value);
       }
     }
@@ -454,14 +455,16 @@ const publishWithStaged = async () => {
         description: translate("publish-success-desc", [itemCount])
       });
 
-      // 如果当前内容加密，发送密码备份通知
-      if (newItem.encrypt && encryptor.usePasswd.value) {
+      // 如果当前内容加密（整篇加密或部分加密），发送密码备份通知
+      const isCurrentEncrypted = newItem.encrypt || (newItem.encryptBlocks && newItem.encryptBlocks.length > 0);
+      if (isCurrentEncrypted && encryptor.usePasswd.value) {
         await sendPasswordBackupNotification(newItem, isNew.value);
       }
 
       // 处理暂存项的密码备份
       for (const stagedItem of selectedStaged) {
-        if (stagedItem.item.encrypt && encryptor.usePasswd.value) {
+        const isStagedEncrypted = stagedItem.item.encrypt || (stagedItem.item.encryptBlocks && stagedItem.item.encryptBlocks.length > 0);
+        if (isStagedEncrypted && encryptor.usePasswd.value) {
           await sendPasswordBackupNotification(stagedItem.item as T, false);
         }
       }
