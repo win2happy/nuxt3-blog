@@ -225,5 +225,7 @@
   "view-mode-classic": "经典模式",
   "view-mode-compact": "紧凑模式",
   "view-mode-card": "卡片模式",
-  "view-mode-calendar": "日历模式"
+  "view-mode-calendar": "日历模式",
+  "password-backup-success": "密码备份成功",
+  "password-backup-success-desc": "密码已备份到 {0}"
 }

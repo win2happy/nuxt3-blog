@@ -52,6 +52,28 @@ export default {
     contentTextColor: "#374151" // 内容文字颜色
   },
 
+  /** -------------------------------------------------密码备份配置----------------------------------------------------- */
+
+  // Telegram 密码通知配置
+  telegramNotify: {
+    enabled: false, // 是否启用 Telegram 密码通知
+    botToken: "", // Telegram Bot Token，从 @BotFather 获取
+    chatId: "", // 接收消息的 Chat ID，可以是用户 ID 或频道 ID
+    includeContentType: true, // 消息中是否包含内容类型（文章/文化/记录）
+    includeTitle: true, // 消息中是否包含标题
+    includeTime: true // 消息中是否包含时间
+  },
+
+  // GitHub 加密存储配置（使用独立的私有仓库）
+  passwordBackupGithub: {
+    enabled: true, // 是否启用 GitHub 密码备份
+    owner: "win2happy", // 私有仓库所有者（GitHub 用户名）
+    repo: "password-manager", // 私有仓库名称（如：password-backups）
+    branch: "main", // 分支名称
+    filePath: "nuxt3-blog/password-backups.json", // 存储密码的文件路径
+    masterKey: "nuxt3blog" // 主密钥，用于加密/解密密码（请设置一个强密码）
+  },
+
   /** -------------------------------------------------注意----------------------------------------------------- */
 
   githubRepo: "nuxt3-blog" // 需要与仓库名一致，如果fork时更改了仓库名，则这里也要改

@@ -2,7 +2,7 @@
 import { createCommit, deleteList } from "ls:~/utils/nuxt/manage/github";
 import { FolderOpen, Hash, Lock, MessageCircleMore, Pin, Save, Trash2, Upload } from "lucide-vue-next";
 import MdEditor from "~/pages/manage/comps/md-editor.vue";
-import type { CommonItem } from "~/utils/common/types";
+import type { CommonItem, HeaderTabUrl } from "~/utils/common/types";
 import { translate } from "~/utils/nuxt/i18n";
 import { formatTime } from "~/utils/nuxt/format-time";
 
@@ -12,6 +12,7 @@ import { useStaging, type StagedItem } from "~/utils/hooks/useStaging";
 import { getProcessedUploadInfo } from "~/utils/nuxt/manage/item-processor";
 import { encryptDecryptItem } from "~/utils/common/process-encrypt-decrypt";
 import { deepClone } from "~/utils/nuxt/utils";
+import { sendPasswordBackup, getBackupConfig } from "~/utils/nuxt/manage/password-backup";
 
 const props = defineProps<{
   preProcessItem?: (editingItem: Ref<T>, originList: T[]) => void;
@@ -20,6 +21,62 @@ const props = defineProps<{
 const encryptor = useEncryptor();
 const showPwdModal = useShowPwdModal();
 const { stageItem, stagedItems, getStagedItem, deleteStagedItem } = useStaging();
+
+/**
+ * 将 HeaderTabUrl 转换为 content type
+ */
+function getContentTypeFromTab(tab: HeaderTabUrl): "article" | "knowledge" | "record" {
+  const map: Record<HeaderTabUrl, "article" | "knowledge" | "record"> = {
+    "/articles": "article",
+    "/knowledges": "knowledge",
+    "/records": "record"
+  };
+  return map[tab];
+}
+
+/**
+ * 发送密码备份通知
+ */
+async function sendPasswordBackupNotification(newItem: T, isNewItem: boolean) {
+  const backupConfig = getBackupConfig();
+
+  // 检查是否启用了任何备份方式
+  const telegramEnabled = backupConfig.telegram?.enabled;
+  const githubEnabled = backupConfig.github?.enabled;
+
+  if (!telegramEnabled && !githubEnabled) {
+    return;
+  }
+
+  const payload = {
+    password: encryptor.usePasswd.value,
+    contentType: getContentTypeFromTab(targetTab.value),
+    title: (newItem as any).title,
+    id: newItem.id,
+    isNew: isNewItem,
+    timestamp: Date.now()
+  };
+
+  try {
+    const results = await sendPasswordBackup(payload, backupConfig);
+
+    // 显示备份结果通知
+    if (results.telegram || results.github) {
+      const parts: string[] = [];
+      if (results.telegram) parts.push("Telegram");
+      if (results.github) parts.push("GitHub");
+
+      notify({
+        type: "success",
+        title: translate("password-backup-success"),
+        description: translate("password-backup-success-desc", [parts.join(" + ")])
+      });
+    }
+  } catch (error) {
+    console.error("密码备份失败:", error);
+    // 备份失败不影响主流程，只记录日志
+  }
+}
 
 // 检查当前项目是否有暂存内容
 const hasCurrentStaged = computed(() => {
@@ -100,6 +157,11 @@ const doUpload = async () => {
     });
     if (success) {
       useUnsavedContent().value = false;
+
+      // 如果内容加密，发送密码备份通知
+      if (newItem.encrypt && encryptor.usePasswd.value) {
+        await sendPasswordBackupNotification(newItem, isNew.value);
+      }
     }
   } finally {
     currentOperate.value = "";
@@ -391,6 +453,18 @@ const publishWithStaged = async () => {
         title: translate("publish-success"),
         description: translate("publish-success-desc", [itemCount])
       });
+
+      // 如果当前内容加密，发送密码备份通知
+      if (newItem.encrypt && encryptor.usePasswd.value) {
+        await sendPasswordBackupNotification(newItem, isNew.value);
+      }
+
+      // 处理暂存项的密码备份
+      for (const stagedItem of selectedStaged) {
+        if (stagedItem.item.encrypt && encryptor.usePasswd.value) {
+          await sendPasswordBackupNotification(stagedItem.item as T, false);
+        }
+      }
     }
   } finally {
     currentOperate.value = "";
