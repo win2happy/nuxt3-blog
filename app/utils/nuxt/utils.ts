@@ -37,9 +37,12 @@ export function calcRocketUrl() {
   if (paths[0] === "about") {
     return `https://github.com/${config.githubName}/${__NB_GITHUB_REPO__}`;
   }
-  // news 页面没有管理界面，点击火箭返回首页
+  // news 页面点击火箭跳转到新闻聚合界面(来回切换)
   if (paths[0] === "news") {
-    return "/";
+    return "/news-aggregator";
+  }
+  if (paths[0] === "news-aggregator") {
+    return "/news";
   }
   const item = HeaderTabs.find(tab => tab.substring(1) === paths[0]);
   if (item) {
