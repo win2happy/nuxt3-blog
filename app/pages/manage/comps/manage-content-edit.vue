@@ -26,15 +26,12 @@ const { stageItem, stagedItems, getStagedItem, deleteStagedItem } = useStaging()
  * 将 HeaderTabUrl 转换为 content type
  */
 function getContentTypeFromTab(tab: HeaderTabUrl): "article" | "knowledge" | "record" {
-  console.log("[PasswordBackup] getContentTypeFromTab called with:", tab, "type:", typeof tab);
+  console.log("[PasswordBackup] getContentTypeFromTab called with:", tab);
   const map: Record<string, "article" | "knowledge" | "record"> = {
     "/articles": "article",
     "/knowledges": "knowledge",
     "/records": "record"
   };
-  console.log("[PasswordBackup] map keys:", Object.keys(map));
-  console.log("[PasswordBackup] map['/articles']:", map["/articles"]);
-  console.log("[PasswordBackup] map[tab]:", map[tab]);
   const result = map[tab];
   if (!result) {
     console.error("[PasswordBackup] Unknown tab:", tab, "available keys:", Object.keys(map));
@@ -48,7 +45,7 @@ function getContentTypeFromTab(tab: HeaderTabUrl): "article" | "knowledge" | "re
  */
 async function sendPasswordBackupNotification(newItem: T, isNewItem: boolean) {
   console.log("[PasswordBackup] === sendPasswordBackupNotification START ===");
-  console.log("[PasswordBackup] newItem.id:", newItem.id, "targetTab:", targetTab.value);
+  console.log("[PasswordBackup] newItem.id:", newItem.id, "targetTab:", targetTab);
 
   const backupConfig = getBackupConfig();
   console.log("[PasswordBackup] backupConfig:", { telegram: backupConfig.telegram?.enabled, github: backupConfig.github?.enabled });
@@ -62,8 +59,8 @@ async function sendPasswordBackupNotification(newItem: T, isNewItem: boolean) {
     return;
   }
 
-  console.log("[PasswordBackup] targetTab.value:", targetTab.value, "type:", typeof targetTab.value);
-  const contentType = getContentTypeFromTab(targetTab.value);
+  console.log("[PasswordBackup] targetTab:", targetTab, "type:", typeof targetTab);
+  const contentType = getContentTypeFromTab(targetTab);
   console.log("[PasswordBackup] Got contentType:", contentType);
 
   const payload = {
@@ -178,7 +175,7 @@ const doUpload = async () => {
 
       // 如果内容加密（整篇加密或部分加密），发送密码备份通知
       const isEncrypted = newItem.encrypt || (newItem.encryptBlocks && newItem.encryptBlocks.length > 0);
-      console.log("[PasswordBackup] Upload success - isEncrypted:", isEncrypted, "hasPassword:", !!encryptor.usePasswd.value, "targetTab:", targetTab.value);
+      console.log("[PasswordBackup] Upload success - isEncrypted:", isEncrypted, "hasPassword:", !!encryptor.usePasswd.value, "targetTab:", targetTab);
       if (isEncrypted && encryptor.usePasswd.value) {
         console.log("[PasswordBackup] Calling sendPasswordBackupNotification...");
         await sendPasswordBackupNotification(newItem, isNew.value);
