@@ -25,13 +25,13 @@ const { stageItem, stagedItems, getStagedItem, deleteStagedItem } = useStaging()
 /**
  * 将 HeaderTabUrl 转换为 content type
  */
-function getContentTypeFromTab(tab: HeaderTabUrl): "article" | "knowledge" | "record" {
-  const map: Record<HeaderTabUrl, "article" | "knowledge" | "record"> = {
+function getContentTypeFromTab(tab: HeaderTabUrl): "article" | "knowledge" | "record" | null {
+  const map: Record<string, "article" | "knowledge" | "record"> = {
     "/articles": "article",
     "/knowledges": "knowledge",
     "/records": "record"
   };
-  return map[tab];
+  return map[tab] || null;
 }
 
 /**
@@ -48,9 +48,17 @@ async function sendPasswordBackupNotification(newItem: T, isNewItem: boolean) {
     return;
   }
 
+  console.log("[PasswordBackup] targetTab:", targetTab.value);
+  const contentType = getContentTypeFromTab(targetTab.value);
+  console.log("[PasswordBackup] contentType:", contentType);
+  if (!contentType) {
+    console.log("[PasswordBackup] Skipping backup for unsupported tab:", targetTab.value);
+    return;
+  }
+
   const payload = {
     password: encryptor.usePasswd.value,
-    contentType: getContentTypeFromTab(targetTab.value),
+    contentType,
     title: (newItem as any).title,
     id: newItem.id,
     isNew: isNewItem,

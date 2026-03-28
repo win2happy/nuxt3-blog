@@ -299,8 +299,10 @@ async function createNewShard(
   shards: FileShardInfo[]
 ): Promise<{ shard: FileShardInfo; data: PasswordBackupData }> {
   const filePrefix = getContentTypeFileName(contentType);
+  console.log("[PasswordBackup] Creating new shard:", { contentType, filePrefix, basePath });
   const newIndex = shards.length > 0 ? Math.max(...shards.map(s => s.fileIndex)) + 1 : 1;
   const newPath = `${basePath}/${filePrefix}/${filePrefix}-${newIndex}.json`;
+  console.log("[PasswordBackup] New shard path:", newPath);
 
   const newData: PasswordBackupData = {
     version: 1,
