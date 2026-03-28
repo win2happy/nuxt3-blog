@@ -207,6 +207,7 @@ async function getContentTypeShards(
   branch: string
 ): Promise<FileShardInfo[]> {
   const filePrefix = getContentTypeFileName(contentType);
+  console.log("[PasswordBackup] getContentTypeShards:", { contentType, filePrefix });
   const dirPath = `${basePath}/${filePrefix}`;
 
   try {

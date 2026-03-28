@@ -25,13 +25,22 @@ const { stageItem, stagedItems, getStagedItem, deleteStagedItem } = useStaging()
 /**
  * 将 HeaderTabUrl 转换为 content type
  */
-function getContentTypeFromTab(tab: HeaderTabUrl): "article" | "knowledge" | "record" | null {
+function getContentTypeFromTab(tab: HeaderTabUrl): "article" | "knowledge" | "record" {
+  console.log("[PasswordBackup] getContentTypeFromTab called with:", tab, "type:", typeof tab);
   const map: Record<string, "article" | "knowledge" | "record"> = {
     "/articles": "article",
     "/knowledges": "knowledge",
     "/records": "record"
   };
-  return map[tab] || null;
+  console.log("[PasswordBackup] map keys:", Object.keys(map));
+  console.log("[PasswordBackup] map['/articles']:", map["/articles"]);
+  console.log("[PasswordBackup] map[tab]:", map[tab]);
+  const result = map[tab];
+  if (!result) {
+    console.error("[PasswordBackup] Unknown tab:", tab, "available keys:", Object.keys(map));
+    throw new Error(`Unknown tab: ${tab}`);
+  }
+  return result;
 }
 
 /**
@@ -48,13 +57,9 @@ async function sendPasswordBackupNotification(newItem: T, isNewItem: boolean) {
     return;
   }
 
-  console.log("[PasswordBackup] targetTab:", targetTab.value);
+  console.log("[PasswordBackup] targetTab.value:", targetTab.value, "type:", typeof targetTab.value);
   const contentType = getContentTypeFromTab(targetTab.value);
-  console.log("[PasswordBackup] contentType:", contentType);
-  if (!contentType) {
-    console.log("[PasswordBackup] Skipping backup for unsupported tab:", targetTab.value);
-    return;
-  }
+  console.log("[PasswordBackup] Got contentType:", contentType);
 
   const payload = {
     password: encryptor.usePasswd.value,
