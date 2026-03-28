@@ -7,6 +7,7 @@ import axios from "axios";
 import { encode } from "js-base64";
 import type { TelegramConfig, PasswordNotifyPayload } from "../notify/telegram";
 import { sendPasswordToTelegram } from "../notify/telegram";
+import { GithubTokenKey } from "~/utils/common/constants";
 import config from "~~/config";
 
 export interface PasswordBackupConfig {
@@ -19,9 +20,16 @@ export interface GithubBackupConfig {
   owner: string;
   repo: string;
   branch: string;
-  filePath: string;
+  basePath: string;
   masterKey: string;
 }
+
+// 内容类型到文件名的映射
+const CONTENT_TYPE_FILES: Record<string, string> = {
+  article: "articles.json",
+  record: "records.json",
+  knowledge: "knowledges.json"
+};
 
 export interface PasswordBackupEntry {
   id: number;
@@ -67,9 +75,23 @@ function getGithubApiUrl(): string {
 
 /**
  * 获取 GitHub Token
+ * 优先从 localStorage 读取，如果不存在则尝试使用 useGithubToken
  */
 function getGithubToken(): string {
-  return useGithubToken().value;
+  // 首先尝试从 localStorage 读取
+  if (typeof localStorage !== "undefined") {
+    const token = localStorage.getItem(GithubTokenKey);
+    if (token) {
+      return token;
+    }
+  }
+
+  // 备选：尝试使用 useGithubToken（如果在 Vue 上下文中）
+  try {
+    return useGithubToken().value;
+  } catch {
+    return "";
+  }
 }
 
 /**
@@ -100,9 +122,12 @@ async function getFileContent(
     };
   } catch (error: any) {
     console.log("[PasswordBackup] Get file error:", error.response?.status, error.response?.data?.message);
+    console.log("[PasswordBackup] Error details:", error.message);
     if (error.response?.status === 404) {
+      console.log("[PasswordBackup] File not found (404)");
       return null;
     }
+    console.log("[PasswordBackup] Throwing error");
     throw error;
   }
 }
@@ -144,7 +169,18 @@ async function createOrUpdateFile(
 }
 
 /**
- * 备份密码到 GitHub（加密存储）
+ * 获取类型对应的文件路径
+ */
+function getTypeFilePath(basePath: string, contentType: string): string {
+  const filename = CONTENT_TYPE_FILES[contentType];
+  if (!filename) {
+    throw new Error(`Unknown content type: ${contentType}`);
+  }
+  return `${basePath}/${filename}`;
+}
+
+/**
+ * 备份密码到 GitHub（按类型分别存储）
  */
 async function backupToGithub(
   payload: PasswordNotifyPayload,
@@ -154,7 +190,8 @@ async function backupToGithub(
     enabled: githubConfig.enabled,
     hasMasterKey: !!githubConfig.masterKey,
     owner: githubConfig.owner,
-    repo: githubConfig.repo
+    repo: githubConfig.repo,
+    contentType: payload.contentType
   });
 
   if (!githubConfig.enabled) {
@@ -173,12 +210,16 @@ async function backupToGithub(
   }
 
   try {
+    // 获取该类型对应的文件路径
+    const filePath = getTypeFilePath(githubConfig.basePath, payload.contentType);
+    console.log("[PasswordBackup] Target file:", filePath);
+
     // 获取现有备份数据
     console.log("[PasswordBackup] Fetching existing file...");
     const existingFile = await getFileContent(
       githubConfig.owner,
       githubConfig.repo,
-      githubConfig.filePath,
+      filePath,
       githubConfig.branch
     );
 
@@ -218,9 +259,9 @@ async function backupToGithub(
       date: new Date(payload.timestamp).toISOString()
     };
 
-    // 查找是否已存在相同 ID 和类型的条目
+    // 查找是否已存在相同 ID 的条目
     const existingIndex = backupData.entries.findIndex(
-      e => e.id === payload.id && e.contentType === payload.contentType
+      e => e.id === payload.id
     );
 
     if (existingIndex >= 0) {
@@ -242,7 +283,7 @@ async function backupToGithub(
     await createOrUpdateFile(
       githubConfig.owner,
       githubConfig.repo,
-      githubConfig.filePath,
+      filePath,
       JSON.stringify(backupData, null, 2),
       githubConfig.branch,
       `Backup password for ${payload.contentType} #${payload.id}`,
@@ -331,38 +372,98 @@ export async function sendPasswordBackup(
 }
 
 /**
- * 从 GitHub 获取密码备份列表
+ * 从 GitHub 获取指定类型的密码备份列表
  */
-export async function getPasswordBackups(
-  githubConfig: GithubBackupConfig
-): Promise<PasswordBackupData | null> {
+export async function getPasswordBackupsByType(
+  githubConfig: GithubBackupConfig,
+  contentType: "article" | "knowledge" | "record"
+): Promise<PasswordBackupEntry[]> {
+  console.log("[PasswordBackup] getPasswordBackupsByType called:", {
+    enabled: githubConfig.enabled,
+    contentType,
+    basePath: githubConfig.basePath
+  });
+
   if (!githubConfig.enabled) {
-    return null;
+    console.log("[PasswordBackup] GitHub backup not enabled");
+    return [];
   }
 
   try {
+    const filePath = getTypeFilePath(githubConfig.basePath, contentType);
+    console.log("[PasswordBackup] Fetching file:", filePath);
+
     const fileContent = await getFileContent(
       githubConfig.owner,
       githubConfig.repo,
-      githubConfig.filePath,
+      filePath,
       githubConfig.branch
     );
 
     if (!fileContent) {
-      return null;
+      console.log("[PasswordBackup] No file content received for type:", contentType);
+      return [];
     }
 
+    console.log("[PasswordBackup] Parsing file content...");
     const data: PasswordBackupData = JSON.parse(fileContent.content);
+    console.log("[PasswordBackup] Parsed entries count:", data.entries?.length);
 
     // 解密密码
     if (githubConfig.masterKey) {
+      console.log("[PasswordBackup] Decrypting passwords...");
       data.entries = data.entries.map(entry => ({
         ...entry,
         password: xorDecrypt(entry.encryptedPassword, githubConfig.masterKey)
       }));
     }
 
-    return data;
+    console.log("[PasswordBackup] Returning entries:", data.entries?.length);
+    return data.entries || [];
+  } catch (error) {
+    console.error("[PasswordBackup] Get password backups failed:", error);
+    return [];
+  }
+}
+
+/**
+ * 从 GitHub 获取所有密码备份列表（兼容旧版本）
+ */
+export async function getPasswordBackups(
+  githubConfig: GithubBackupConfig
+): Promise<PasswordBackupData | null> {
+  console.log("[PasswordBackup] getPasswordBackups called (legacy):", {
+    enabled: githubConfig.enabled,
+    owner: githubConfig.owner,
+    repo: githubConfig.repo,
+    basePath: githubConfig.basePath,
+    branch: githubConfig.branch
+  });
+
+  if (!githubConfig.enabled) {
+    console.log("[PasswordBackup] GitHub backup not enabled");
+    return null;
+  }
+
+  try {
+    // 尝试从新的分类型文件读取
+    const allEntries: PasswordBackupEntry[] = [];
+
+    for (const contentType of ["article", "record", "knowledge"] as const) {
+      const entries = await getPasswordBackupsByType(githubConfig, contentType);
+      allEntries.push(...entries);
+    }
+
+    // 按时间倒序排序
+    allEntries.sort((a, b) => b.timestamp - a.timestamp);
+
+    console.log("[PasswordBackup] Total entries from all types:", allEntries.length);
+
+    return {
+      version: 1,
+      lastUpdated: Date.now(),
+      entries: allEntries
+    };
   } catch (error) {
     console.error("[PasswordBackup] Get password backups failed:", error);
     return null;
@@ -390,4 +491,218 @@ export function getBackupConfig(): PasswordBackupConfig {
     telegram: cfg.telegramNotify,
     github: cfg.passwordBackupGithub
   };
+}
+
+/**
+ * 更新密码（修改密码后重新加密所有内容）
+ * @param entry 要更新的密码条目
+ * @param newPassword 新密码
+ * @param githubConfig GitHub 配置
+ * @returns 是否成功
+ */
+export async function updatePassword(
+  entry: PasswordBackupEntry,
+  newPassword: string,
+  githubConfig: GithubBackupConfig
+): Promise<boolean> {
+  if (!githubConfig.enabled || !githubConfig.masterKey) {
+    console.error("[PasswordBackup] GitHub backup not enabled or no master key");
+    return false;
+  }
+
+  try {
+    console.log("[PasswordBackup] Updating password for:", entry.contentType, "#", entry.id);
+
+    // 获取现有备份数据
+    const existingFile = await getFileContent(
+      githubConfig.owner,
+      githubConfig.repo,
+      githubConfig.filePath,
+      githubConfig.branch
+    );
+
+    if (!existingFile) {
+      console.error("[PasswordBackup] No existing backup file found");
+      return false;
+    }
+
+    let backupData: PasswordBackupData;
+    try {
+      backupData = JSON.parse(existingFile.content);
+    } catch {
+      console.error("[PasswordBackup] Failed to parse existing backup file");
+      return false;
+    }
+
+    // 查找要更新的条目
+    const entryIndex = backupData.entries.findIndex(
+      e => e.id === entry.id && e.contentType === entry.contentType
+    );
+
+    if (entryIndex < 0) {
+      console.error("[PasswordBackup] Entry not found:", entry.contentType, "#", entry.id);
+      return false;
+    }
+
+    // 更新密码
+    const updatedEntry: PasswordBackupEntry = {
+      ...backupData.entries[entryIndex],
+      password: newPassword,
+      encryptedPassword: xorEncrypt(newPassword, githubConfig.masterKey),
+      timestamp: Date.now(),
+      date: new Date().toISOString()
+    };
+
+    backupData.entries[entryIndex] = updatedEntry;
+    backupData.lastUpdated = Date.now();
+
+    // 保存到 GitHub
+    await createOrUpdateFile(
+      githubConfig.owner,
+      githubConfig.repo,
+      githubConfig.filePath,
+      JSON.stringify(backupData, null, 2),
+      githubConfig.branch,
+      `Update password for ${entry.contentType} #${entry.id}`,
+      existingFile.sha
+    );
+
+    console.log("[PasswordBackup] Password updated successfully");
+    return true;
+  } catch (error) {
+    console.error("[PasswordBackup] Update password failed:", error);
+    return false;
+  }
+}
+
+/**
+ * 触发重新部署（通过创建空提交）
+ * @param githubConfig GitHub 配置
+ * @returns 是否成功
+ */
+export async function triggerRedeploy(githubConfig: GithubBackupConfig): Promise<boolean> {
+  if (!githubConfig.enabled) {
+    console.error("[PasswordBackup] GitHub backup not enabled");
+    return false;
+  }
+
+  try {
+    console.log("[PasswordBackup] Triggering redeploy...");
+
+    const token = getGithubToken();
+
+    // 创建触发部署的文件（.redeploy 文件，使用时间戳作为内容）
+    const redeployPath = ".redeploy-trigger";
+    const timestamp = Date.now().toString();
+
+    // 先尝试获取现有文件（如果存在）
+    let existingSha: string | undefined;
+    try {
+      const response = await axios.get(
+        `${getGithubApiUrl()}/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${redeployPath}?ref=${githubConfig.branch}`,
+        {
+          headers: { Authorization: `token ${token}` }
+        }
+      );
+      existingSha = response.data.sha;
+    } catch {
+      // 文件不存在，忽略错误
+    }
+
+    // 创建或更新触发文件
+    const body: any = {
+      message: `Trigger redeploy at ${new Date().toISOString()}`,
+      content: encode(timestamp),
+      branch: githubConfig.branch
+    };
+
+    if (existingSha) {
+      body.sha = existingSha;
+    }
+
+    await axios.put(
+      `${getGithubApiUrl()}/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${redeployPath}`,
+      body,
+      {
+        headers: { Authorization: `token ${token}` }
+      }
+    );
+
+    console.log("[PasswordBackup] Redeploy triggered successfully");
+    return true;
+  } catch (error) {
+    console.error("[PasswordBackup] Trigger redeploy failed:", error);
+    return false;
+  }
+}
+
+/**
+ * 删除密码条目
+ * @param entry 要删除的密码条目
+ * @param githubConfig GitHub 配置
+ * @returns 是否成功
+ */
+export async function deletePasswordEntry(
+  entry: PasswordBackupEntry,
+  githubConfig: GithubBackupConfig
+): Promise<boolean> {
+  if (!githubConfig.enabled) {
+    console.error("[PasswordBackup] GitHub backup not enabled");
+    return false;
+  }
+
+  try {
+    console.log("[PasswordBackup] Deleting password entry:", entry.contentType, "#", entry.id);
+
+    // 获取现有备份数据
+    const existingFile = await getFileContent(
+      githubConfig.owner,
+      githubConfig.repo,
+      githubConfig.filePath,
+      githubConfig.branch
+    );
+
+    if (!existingFile) {
+      console.error("[PasswordBackup] No existing backup file found");
+      return false;
+    }
+
+    let backupData: PasswordBackupData;
+    try {
+      backupData = JSON.parse(existingFile.content);
+    } catch {
+      console.error("[PasswordBackup] Failed to parse existing backup file");
+      return false;
+    }
+
+    // 过滤掉要删除的条目
+    const originalLength = backupData.entries.length;
+    backupData.entries = backupData.entries.filter(
+      e => !(e.id === entry.id && e.contentType === entry.contentType)
+    );
+
+    if (backupData.entries.length === originalLength) {
+      console.error("[PasswordBackup] Entry not found for deletion");
+      return false;
+    }
+
+    backupData.lastUpdated = Date.now();
+
+    // 保存到 GitHub
+    await createOrUpdateFile(
+      githubConfig.owner,
+      githubConfig.repo,
+      githubConfig.filePath,
+      JSON.stringify(backupData, null, 2),
+      githubConfig.branch,
+      `Delete password for ${entry.contentType} #${entry.id}`,
+      existingFile.sha
+    );
+
+    console.log("[PasswordBackup] Password entry deleted successfully");
+    return true;
+  } catch (error) {
+    console.error("[PasswordBackup] Delete password entry failed:", error);
+    return false;
+  }
 }

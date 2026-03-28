@@ -70,7 +70,7 @@ export default {
     owner: "win2happy", // 私有仓库所有者（GitHub 用户名）
     repo: "password-manager", // 私有仓库名称（如：password-backups）
     branch: "main", // 分支名称
-    filePath: "nuxt3-blog/password-backups.json", // 存储密码的文件路径
+    basePath: "nuxt3-blog/passwords", // 存储密码的基础目录路径
     masterKey: "nuxt3blog" // 主密钥，用于加密/解密密码（请设置一个强密码）
   },
 

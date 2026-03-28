@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { BookOpen, CheckCheck, FileEdit, Image, ImagePlus, Key, Menu, MoonStar, Rocket, Settings, Sun, Upload, X } from "lucide-vue-next";
+import { BookOpen, CheckCheck, FileEdit, Image, ImagePlus, Key, Lock, Menu, MoonStar, Rocket, Settings, Sun, Upload, X } from "lucide-vue-next";
 import type { FunctionalComponent } from "vue";
 import { isAuthor as checkIsAuthor } from "ls:~/utils/nuxt/manage/github";
 import Stage from "~/pages/manage/comps/stage.vue";
@@ -183,6 +183,17 @@ onMounted(() => {
           >
             <Settings />
             {{ $t('config') }}
+          </NuxtLink>
+          <NuxtLink
+            :to="isAuthor === true ? '/manage/passwords' : '#'"
+            :class="twMerge(
+              $style.menuItem,
+              activeRoute.startsWith('/passwords') && $style.menuItemActive,
+              isAuthor !== true && 'opacity-50 cursor-not-allowed pointer-events-none'
+            )"
+          >
+            <Lock />
+            {{ $t('password-manager') }}
           </NuxtLink>
         </div>
 
