@@ -47,13 +47,18 @@ function getContentTypeFromTab(tab: HeaderTabUrl): "article" | "knowledge" | "re
  * 发送密码备份通知
  */
 async function sendPasswordBackupNotification(newItem: T, isNewItem: boolean) {
+  console.log("[PasswordBackup] === sendPasswordBackupNotification START ===");
+  console.log("[PasswordBackup] newItem.id:", newItem.id, "targetTab:", targetTab.value);
+
   const backupConfig = getBackupConfig();
+  console.log("[PasswordBackup] backupConfig:", { telegram: backupConfig.telegram?.enabled, github: backupConfig.github?.enabled });
 
   // 检查是否启用了任何备份方式
   const telegramEnabled = backupConfig.telegram?.enabled;
   const githubEnabled = backupConfig.github?.enabled;
 
   if (!telegramEnabled && !githubEnabled) {
+    console.log("[PasswordBackup] Both telegram and github are disabled, returning");
     return;
   }
 
@@ -173,8 +178,13 @@ const doUpload = async () => {
 
       // 如果内容加密（整篇加密或部分加密），发送密码备份通知
       const isEncrypted = newItem.encrypt || (newItem.encryptBlocks && newItem.encryptBlocks.length > 0);
+      console.log("[PasswordBackup] Upload success - isEncrypted:", isEncrypted, "hasPassword:", !!encryptor.usePasswd.value, "targetTab:", targetTab.value);
       if (isEncrypted && encryptor.usePasswd.value) {
+        console.log("[PasswordBackup] Calling sendPasswordBackupNotification...");
         await sendPasswordBackupNotification(newItem, isNew.value);
+        console.log("[PasswordBackup] sendPasswordBackupNotification completed");
+      } else {
+        console.log("[PasswordBackup] Skipping password backup - not encrypted or no password");
       }
     }
   } finally {

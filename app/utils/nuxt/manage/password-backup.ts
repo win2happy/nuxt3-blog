@@ -331,11 +331,13 @@ async function backupToGithub(
   payload: PasswordNotifyPayload,
   githubConfig: GithubBackupConfig
 ): Promise<boolean> {
-  console.log("[PasswordBackup] Starting GitHub backup:", {
+  console.log("[PasswordBackup] === backupToGithub START ===");
+  console.log("[PasswordBackup] GitHub config:", {
     enabled: githubConfig.enabled,
     hasMasterKey: !!githubConfig.masterKey,
     owner: githubConfig.owner,
     repo: githubConfig.repo,
+    filePath: githubConfig.filePath,
     contentType: payload.contentType
   });
 
@@ -353,6 +355,7 @@ async function backupToGithub(
     console.log("[PasswordBackup] Missing owner or repo");
     return false;
   }
+  console.log("[PasswordBackup] All checks passed, proceeding with backup...");
 
   const maxEntriesPerFile = githubConfig.maxEntriesPerFile || 0;
   const maxFileSizeKB = githubConfig.maxFileSizeKB || 0;
@@ -462,11 +465,16 @@ export async function sendPasswordBackup(
   payload: PasswordNotifyPayload,
   backupConfig: PasswordBackupConfig
 ): Promise<{ telegram: boolean; github: boolean }> {
-  console.log("[PasswordBackup] Starting password backup:", {
+  console.log("[PasswordBackup] === sendPasswordBackup START ===");
+  console.log("[PasswordBackup] Payload:", {
     contentType: payload.contentType,
     id: payload.id,
-    hasTelegram: !!backupConfig.telegram,
-    hasGithub: !!backupConfig.github
+    title: payload.title,
+    isNew: payload.isNew
+  });
+  console.log("[PasswordBackup] Backup config:", {
+    telegramEnabled: backupConfig.telegram?.enabled,
+    githubEnabled: backupConfig.github?.enabled
   });
 
   const results = {
