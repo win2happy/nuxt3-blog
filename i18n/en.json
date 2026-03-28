@@ -224,5 +224,7 @@
   "view-mode-classic": "Classic Mode",
   "view-mode-compact": "Compact Mode",
   "view-mode-card": "Card Mode",
-  "view-mode-calendar": "Calendar Mode"
+  "view-mode-calendar": "Calendar Mode",
+  "password-backup-success": "Password Backup Successful",
+  "password-backup-success-desc": "Password backed up to {0}"
 }
