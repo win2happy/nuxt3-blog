@@ -19,8 +19,11 @@ export interface GithubBackupConfig {
   owner: string;
   repo: string;
   branch: string;
-  filePath: string;
+  backupPrefix?: string;
+  backupPath?: string;
   masterKey: string;
+  maxEntriesPerFile?: number;
+  maxFileSize?: number;
 }
 
 export interface PasswordBackupEntry {
@@ -121,22 +124,29 @@ function getMaxFileSize(): number {
 }
 
 /**
- * 获取备份文件夹路径
+ * 获取备份路径
  */
-function getBackupFolder(): string {
+function getBackupPath(): string {
   const cfg = config as any;
-  return cfg.passwordBackupGithub?.backupFolder || "backups";
+  return cfg.passwordBackupGithub?.backupPath || "";
 }
 
 /**
- * 生成基于时间和序号的文件路径
+ * 获取备份文件前缀
  */
-function generateFilePath(timestamp: number, index: number = 1): string {
-  const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const backupFolder = getBackupFolder();
-  return `${backupFolder}/${year}/${month}/${String(index).padStart(3, "0")}.json`;
+function getBackupPrefix(): string {
+  const cfg = config as any;
+  return cfg.passwordBackupGithub?.backupPrefix || "backups";
+}
+
+/**
+ * 生成基于序号的文件路径
+ */
+function generateFilePath(index: number): string {
+  const backupPath = getBackupPath();
+  const backupPrefix = getBackupPrefix();
+  const basePath = backupPath ? `${backupPath}/` : "";
+  return `${basePath}${backupPrefix}-${String(index).padStart(3, "0")}.json`;
 }
 
 /**
@@ -166,23 +176,20 @@ async function listDirectoryContents(
 }
 
 /**
- * 获取当月的备份文件列表
+ * 获取所有备份文件列表
  */
-async function getMonthlyBackupFiles(
+async function getBackupFiles(
   owner: string,
   repo: string,
-  branch: string,
-  timestamp: number
+  branch: string
 ): Promise<string[]> {
-  const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const backupFolder = getBackupFolder();
-  const directoryPath = `${backupFolder}/${year}/${month}`;
+  const backupPath = getBackupPath();
+  const directoryPath = backupPath || ".";
 
   const contents = await listDirectoryContents(owner, repo, directoryPath, branch);
+  const backupPrefix = getBackupPrefix();
   return contents
-    .filter(item => item.type === "file" && item.name.endsWith(".json"))
+    .filter(item => item.type === "file" && item.name.startsWith(backupPrefix) && item.name.endsWith(".json"))
     .map(item => item.path)
     .sort();
 }
@@ -253,13 +260,12 @@ async function backupToGithub(
   }
 
   try {
-    // 获取当月的备份文件列表
-    console.log("[PasswordBackup] Getting monthly backup files...");
-    const backupFiles = await getMonthlyBackupFiles(
+    // 获取所有备份文件列表
+    console.log("[PasswordBackup] Getting backup files...");
+    const backupFiles = await getBackupFiles(
       githubConfig.owner,
       githubConfig.repo,
-      githubConfig.branch,
-      payload.timestamp
+      githubConfig.branch
     );
 
     let targetFile: { path: string; content: string; sha: string } | null = null;
@@ -302,7 +308,7 @@ async function backupToGithub(
     // 如果没有合适的文件，创建新文件
     if (!targetFile) {
       const newIndex = backupFiles.length + 1;
-      const newFilePath = generateFilePath(payload.timestamp, newIndex);
+      const newFilePath = generateFilePath(newIndex);
       console.log("[PasswordBackup] Creating new file:", newFilePath);
       targetFile = { path: newFilePath, content: JSON.stringify(backupData), sha: undefined! };
     }
@@ -438,28 +444,14 @@ export async function sendPasswordBackup(
 }
 
 /**
- * 递归获取所有备份文件
+ * 获取所有备份文件
  */
 async function getAllBackupFiles(
   owner: string,
   repo: string,
-  branch: string,
-  path?: string
+  branch: string
 ): Promise<string[]> {
-  const startPath = path || getBackupFolder();
-  const contents = await listDirectoryContents(owner, repo, startPath, branch);
-  const files: string[] = [];
-
-  for (const item of contents) {
-    if (item.type === "file" && item.name.endsWith(".json")) {
-      files.push(item.path);
-    } else if (item.type === "dir") {
-      const subFiles = await getAllBackupFiles(owner, repo, branch, item.path);
-      files.push(...subFiles);
-    }
-  }
-
-  return files;
+  return await getBackupFiles(owner, repo, branch);
 }
 
 /**
