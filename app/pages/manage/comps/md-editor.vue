@@ -106,7 +106,8 @@ const initEditor = async () => {
   );
 
   // 注册代码补全提供程序
-  const { languages } = await import("monaco-editor");
+  const monaco = await import("monaco-editor");
+  const { languages } = monaco;
 
   // 确保编辑器选项启用了代码补全
   editor.updateOptions({
@@ -117,31 +118,39 @@ const initEditor = async () => {
       strings: false
     },
     suggestFontSize: 14,
-    suggestLineHeight: 20
+    suggestLineHeight: 20,
+    suggestOnTriggerCharacters: true,
+    quickSuggestionsDelay: 0
   });
 
+  // 注册代码补全提供程序
   const completionProvider = languages.registerCompletionItemProvider("markdown", {
     triggerCharacters: ["/"],
     provideCompletionItems: (model, position) => {
-      const textUntilPosition = model.getValueInRange({
-        startLineNumber: position.lineNumber,
-        startColumn: 1,
-        endLineNumber: position.lineNumber,
-        endColumn: position.column
-      });
+      // 获取当前行文本
+      const lineContent = model.getLineContent(position.lineNumber);
+      const cursorPosition = position.column - 1;
 
-      const lastSlashIndex = textUntilPosition.lastIndexOf("/");
-      if (lastSlashIndex === -1) {
+      // 检查是否在行首或空格后输入了/
+      let hasSlash = false;
+      let slashPosition = -1;
+
+      for (let i = cursorPosition; i >= 0; i--) {
+        if (lineContent[i] === "/") {
+          hasSlash = true;
+          slashPosition = i;
+          break;
+        } else if (lineContent[i] !== " " && lineContent[i] !== "\t") {
+          break;
+        }
+      }
+
+      if (!hasSlash) {
         return { suggestions: [] };
       }
 
-      // 确保斜杠是行的第一个非空白字符或前面有空格
-      const textBeforeSlash = textUntilPosition.substring(0, lastSlashIndex);
-      if (textBeforeSlash.trim() !== "" && !textBeforeSlash.endsWith(" ")) {
-        return { suggestions: [] };
-      }
-
-      const triggerText = textUntilPosition.substring(lastSlashIndex + 1);
+      // 获取触发文本
+      const triggerText = lineContent.substring(slashPosition + 1, cursorPosition + 1);
 
       // 定义所有可用的快捷键
       const allSuggestions = [
@@ -207,17 +216,20 @@ const initEditor = async () => {
         || suggestion.detail.toLowerCase().includes(triggerText.toLowerCase())
       );
 
-      return {
+      // 构建返回结果
+      const result = {
         suggestions: filteredSuggestions.map(suggestion => ({
           ...suggestion,
           range: {
             startLineNumber: position.lineNumber,
-            startColumn: lastSlashIndex + 1,
+            startColumn: slashPosition + 1,
             endLineNumber: position.lineNumber,
             endColumn: position.column
           }
         }))
       };
+
+      return result;
     }
   });
 
