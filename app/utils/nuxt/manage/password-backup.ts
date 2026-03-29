@@ -19,8 +19,11 @@ export interface GithubBackupConfig {
   owner: string;
   repo: string;
   branch: string;
-  filePath: string;
+  backupPrefix?: string;
+  backupPath?: string;
   masterKey: string;
+  maxEntriesPerFile?: number;
+  maxFileSize?: number;
 }
 
 export interface PasswordBackupEntry {
@@ -108,6 +111,90 @@ async function getFileContent(
 }
 
 /**
+ * 获取配置值
+ */
+function getMaxEntriesPerFile(): number {
+  const cfg = config as any;
+  return cfg.passwordBackupGithub?.maxEntriesPerFile || 50;
+}
+
+function getMaxFileSize(): number {
+  const cfg = config as any;
+  return cfg.passwordBackupGithub?.maxFileSize || 10 * 1024;
+}
+
+/**
+ * 获取备份路径
+ */
+function getBackupPath(): string {
+  const cfg = config as any;
+  return cfg.passwordBackupGithub?.backupPath || "";
+}
+
+/**
+ * 获取备份文件前缀
+ */
+function getBackupPrefix(): string {
+  const cfg = config as any;
+  return cfg.passwordBackupGithub?.backupPrefix || "backups";
+}
+
+/**
+ * 生成基于序号的文件路径
+ */
+function generateFilePath(index: number): string {
+  const backupPath = getBackupPath();
+  const backupPrefix = getBackupPrefix();
+  const basePath = backupPath ? `${backupPath}/` : "";
+  return `${basePath}${backupPrefix}-${String(index).padStart(3, "0")}.json`;
+}
+
+/**
+ * 列出目录内容
+ */
+async function listDirectoryContents(
+  owner: string,
+  repo: string,
+  path: string,
+  branch: string
+): Promise<Array<{ name: string; path: string; type: string }>> {
+  try {
+    const token = getGithubToken();
+    const response = await axios.get(
+      `${getGithubApiUrl()}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`,
+      {
+        headers: { Authorization: `token ${token}` }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+}
+
+/**
+ * 获取所有备份文件列表
+ */
+async function getBackupFiles(
+  owner: string,
+  repo: string,
+  branch: string
+): Promise<string[]> {
+  const backupPath = getBackupPath();
+  const directoryPath = backupPath || ".";
+
+  const contents = await listDirectoryContents(owner, repo, directoryPath, branch);
+  const backupPrefix = getBackupPrefix();
+  return contents
+    .filter(item => item.type === "file" && item.name.startsWith(backupPrefix) && item.name.endsWith(".json"))
+    .map(item => item.path)
+    .sort();
+}
+
+/**
  * 创建或更新文件
  */
 async function createOrUpdateFile(
@@ -144,7 +231,7 @@ async function createOrUpdateFile(
 }
 
 /**
- * 备份密码到 GitHub（加密存储）
+ * 备份密码到 GitHub（加密存储，按大小和数量拆分）
  */
 async function backupToGithub(
   payload: PasswordNotifyPayload,
@@ -173,36 +260,57 @@ async function backupToGithub(
   }
 
   try {
-    // 获取现有备份数据
-    console.log("[PasswordBackup] Fetching existing file...");
-    const existingFile = await getFileContent(
+    // 获取所有备份文件列表
+    console.log("[PasswordBackup] Getting backup files...");
+    const backupFiles = await getBackupFiles(
       githubConfig.owner,
       githubConfig.repo,
-      githubConfig.filePath,
       githubConfig.branch
     );
 
-    let backupData: PasswordBackupData;
+    let targetFile: { path: string; content: string; sha: string } | null = null;
+    let backupData: PasswordBackupData = {
+      version: 1,
+      lastUpdated: Date.now(),
+      entries: []
+    };
 
-    if (existingFile) {
-      console.log("[PasswordBackup] Existing file found, parsing...");
-      try {
-        backupData = JSON.parse(existingFile.content);
-      } catch {
-        console.log("[PasswordBackup] Failed to parse existing file, creating new");
-        backupData = {
-          version: 1,
-          lastUpdated: Date.now(),
-          entries: []
-        };
+    // 查找合适的文件
+    if (backupFiles.length > 0) {
+      // 从最新的文件开始检查
+      for (let i = backupFiles.length - 1; i >= 0; i--) {
+        const filePath = backupFiles[i];
+        const fileContent = await getFileContent(
+          githubConfig.owner,
+          githubConfig.repo,
+          filePath,
+          githubConfig.branch
+        );
+
+        if (fileContent) {
+          try {
+            const data = JSON.parse(fileContent.content);
+            // 检查文件大小和条目数量
+            const contentSize = new Blob([JSON.stringify(data)]).size;
+            if (data.entries.length < getMaxEntriesPerFile() && contentSize < getMaxFileSize()) {
+              targetFile = { path: filePath, ...fileContent };
+              backupData = data;
+              console.log("[PasswordBackup] Found suitable file:", filePath);
+              break;
+            }
+          } catch {
+            console.log("[PasswordBackup] Failed to parse file:", filePath);
+          }
+        }
       }
-    } else {
-      console.log("[PasswordBackup] No existing file, creating new");
-      backupData = {
-        version: 1,
-        lastUpdated: Date.now(),
-        entries: []
-      };
+    }
+
+    // 如果没有合适的文件，创建新文件
+    if (!targetFile) {
+      const newIndex = backupFiles.length + 1;
+      const newFilePath = generateFilePath(newIndex);
+      console.log("[PasswordBackup] Creating new file:", newFilePath);
+      targetFile = { path: newFilePath, content: JSON.stringify(backupData), sha: undefined! };
     }
 
     // 创建新条目
@@ -237,16 +345,21 @@ async function backupToGithub(
     // 更新最后更新时间
     backupData.lastUpdated = Date.now();
 
+    // 检查文件大小
+    const updatedContent = JSON.stringify(backupData, null, 2);
+    const contentSize = new Blob([updatedContent]).size;
+    console.log("[PasswordBackup] File size after update:", contentSize, "bytes");
+
     // 保存到 GitHub
     console.log("[PasswordBackup] Saving to GitHub...");
     await createOrUpdateFile(
       githubConfig.owner,
       githubConfig.repo,
-      githubConfig.filePath,
-      JSON.stringify(backupData, null, 2),
+      targetFile.path,
+      updatedContent,
       githubConfig.branch,
       `Backup password for ${payload.contentType} #${payload.id}`,
-      existingFile?.sha
+      targetFile.sha
     );
 
     console.log("[PasswordBackup] GitHub backup successful!");
@@ -331,7 +444,18 @@ export async function sendPasswordBackup(
 }
 
 /**
- * 从 GitHub 获取密码备份列表
+ * 获取所有备份文件
+ */
+async function getAllBackupFiles(
+  owner: string,
+  repo: string,
+  branch: string
+): Promise<string[]> {
+  return await getBackupFiles(owner, repo, branch);
+}
+
+/**
+ * 从 GitHub 获取密码备份列表（支持多文件）
  */
 export async function getPasswordBackups(
   githubConfig: GithubBackupConfig
@@ -341,28 +465,79 @@ export async function getPasswordBackups(
   }
 
   try {
-    const fileContent = await getFileContent(
-      githubConfig.owner,
-      githubConfig.repo,
-      githubConfig.filePath,
-      githubConfig.branch
+    // 获取所有备份文件
+    console.log("[PasswordBackup] Getting all backup files...");
+    const backupFiles = await getAllBackupFiles(
+      githubConfig.owner!,
+      githubConfig.repo!,
+      githubConfig.branch!
     );
 
-    if (!fileContent) {
+    if (backupFiles.length === 0) {
+      console.log("[PasswordBackup] No backup files found");
       return null;
     }
 
-    const data: PasswordBackupData = JSON.parse(fileContent.content);
+    console.log("[PasswordBackup] Found backup files:", backupFiles.length, backupFiles);
+
+    // 读取所有文件内容并合并
+    const allEntries: PasswordBackupEntry[] = [];
+
+    for (const filePath of backupFiles) {
+      try {
+        console.log("[PasswordBackup] Reading file:", filePath);
+        const fileContent = await getFileContent(
+          githubConfig.owner!,
+          githubConfig.repo!,
+          filePath,
+          githubConfig.branch!
+        );
+
+        if (fileContent) {
+          const data: PasswordBackupData = JSON.parse(fileContent.content);
+          console.log("[PasswordBackup] File entries count:", data.entries.length);
+          allEntries.push(...data.entries);
+        }
+      } catch (error) {
+        console.error(`[PasswordBackup] Failed to read file ${filePath}:`, error);
+      }
+    }
+
+    console.log("[PasswordBackup] Total entries before dedup:", allEntries.length);
+
+    if (allEntries.length === 0) {
+      console.log("[PasswordBackup] No backup entries found");
+      return null;
+    }
+
+    // 按时间倒序排序
+    allEntries.sort((a, b) => b.timestamp - a.timestamp);
+
+    // 按ID去重，保留最新的条目
+    const uniqueEntries = [];
+    const seenIds = new Set<number>();
+    for (const entry of allEntries) {
+      if (!seenIds.has(entry.id)) {
+        seenIds.add(entry.id);
+        uniqueEntries.push(entry);
+      }
+    }
+
+    console.log("[PasswordBackup] Total entries after dedup:", uniqueEntries.length);
+    console.log("[PasswordBackup] All IDs:", uniqueEntries.map(e => e.id));
 
     // 解密密码
     if (githubConfig.masterKey) {
-      data.entries = data.entries.map(entry => ({
-        ...entry,
-        password: xorDecrypt(entry.encryptedPassword, githubConfig.masterKey)
-      }));
+      uniqueEntries.forEach((entry) => {
+        entry.password = xorDecrypt(entry.encryptedPassword, githubConfig.masterKey!);
+      });
     }
 
-    return data;
+    return {
+      version: 1,
+      lastUpdated: Date.now(),
+      entries: uniqueEntries
+    };
   } catch (error) {
     console.error("[PasswordBackup] Get password backups failed:", error);
     return null;

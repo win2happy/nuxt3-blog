@@ -227,5 +227,17 @@
   "view-mode-card": "卡片模式",
   "view-mode-calendar": "日历模式",
   "password-backup-success": "密码备份成功",
-  "password-backup-success-desc": "密码已备份到 {0}"
+  "password-backup-success-desc": "密码已备份到 {0}",
+  "password-info": "密码信息",
+  "backup-date": "备份日期",
+  "no-title": "无标题",
+  "password-not-found": "密码未找到",
+  "copy": "复制",
+  "copy-success": "复制成功",
+  "copy-success-desc": "密码已复制到剪贴板",
+  "copy-failed": "复制失败",
+  "copy-failed-desc": "请手动复制密码",
+  "encryption-type": "加密类型",
+  "full-encryption": "🔒 全篇加密",
+  "partial-encryption": "🔓 部分加密"
 }

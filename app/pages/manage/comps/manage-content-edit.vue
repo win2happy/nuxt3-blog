@@ -37,7 +37,9 @@ function getContentTypeFromTab(tab: HeaderTabUrl): "article" | "knowledge" | "re
 /**
  * 发送密码备份通知
  */
-async function sendPasswordBackupNotification(newItem: T, isNewItem: boolean) {
+async function sendPasswordBackupNotification(newItem: T, articleId: number, isNewItem: boolean) {
+  console.log("[PasswordBackup] Sending password backup for article ID:", articleId, "Title:", (newItem as any).title);
+
   const backupConfig = getBackupConfig();
 
   // 检查是否启用了任何备份方式
@@ -45,6 +47,7 @@ async function sendPasswordBackupNotification(newItem: T, isNewItem: boolean) {
   const githubEnabled = backupConfig.github?.enabled;
 
   if (!telegramEnabled && !githubEnabled) {
+    console.log("[PasswordBackup] No backup method enabled");
     return;
   }
 
@@ -52,10 +55,12 @@ async function sendPasswordBackupNotification(newItem: T, isNewItem: boolean) {
     password: encryptor.usePasswd.value,
     contentType: getContentTypeFromTab(targetTab.value),
     title: (newItem as any).title,
-    id: newItem.id,
+    id: articleId,
     isNew: isNewItem,
     timestamp: Date.now()
   };
+
+  console.log("[PasswordBackup] Payload:", payload);
 
   try {
     const results = await sendPasswordBackup(payload, backupConfig);
@@ -161,7 +166,8 @@ const doUpload = async () => {
       // 如果内容加密（整篇加密或部分加密），发送密码备份通知
       const isEncrypted = newItem.encrypt || (newItem.encryptBlocks && newItem.encryptBlocks.length > 0);
       if (isEncrypted && encryptor.usePasswd.value) {
-        await sendPasswordBackupNotification(newItem, isNew.value);
+        // newItem.id 始终是正确的文章ID（新文章是新生成的ID，已有文章是原有ID）
+        await sendPasswordBackupNotification(newItem, newItem.id, isNew.value);
       }
     }
   } finally {
@@ -458,14 +464,15 @@ const publishWithStaged = async () => {
       // 如果当前内容加密（整篇加密或部分加密），发送密码备份通知
       const isCurrentEncrypted = newItem.encrypt || (newItem.encryptBlocks && newItem.encryptBlocks.length > 0);
       if (isCurrentEncrypted && encryptor.usePasswd.value) {
-        await sendPasswordBackupNotification(newItem, isNew.value);
+        // newItem.id 始终是正确的文章ID（新文章是新生成的ID，已有文章是原有ID）
+        await sendPasswordBackupNotification(newItem, newItem.id, isNew.value);
       }
 
       // 处理暂存项的密码备份
       for (const stagedItem of selectedStaged) {
         const isStagedEncrypted = stagedItem.item.encrypt || (stagedItem.item.encryptBlocks && stagedItem.item.encryptBlocks.length > 0);
         if (isStagedEncrypted && encryptor.usePasswd.value) {
-          await sendPasswordBackupNotification(stagedItem.item as T, false);
+          await sendPasswordBackupNotification(stagedItem.item as T, stagedItem.item.id, false);
         }
       }
     }
