@@ -291,7 +291,7 @@ async function backupToGithub(
           try {
             const data = JSON.parse(fileContent.content);
             // 检查文件大小和条目数量
-            const contentSize = Buffer.byteLength(JSON.stringify(data), "utf8");
+            const contentSize = new Blob([JSON.stringify(data)]).size;
             if (data.entries.length < getMaxEntriesPerFile() && contentSize < getMaxFileSize()) {
               targetFile = { path: filePath, ...fileContent };
               backupData = data;
@@ -347,7 +347,7 @@ async function backupToGithub(
 
     // 检查文件大小
     const updatedContent = JSON.stringify(backupData, null, 2);
-    const contentSize = Buffer.byteLength(updatedContent, "utf8");
+    const contentSize = new Blob([updatedContent]).size;
     console.log("[PasswordBackup] File size after update:", contentSize, "bytes");
 
     // 保存到 GitHub
