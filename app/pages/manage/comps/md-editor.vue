@@ -106,7 +106,7 @@ const initEditor = async () => {
   );
 
   // 注册代码补全提供程序
-  const { languages, CompletionItemKind } = await import("monaco-editor");
+  const { languages } = await import("monaco-editor");
 
   // 确保编辑器选项启用了代码补全
   editor.updateOptions({
@@ -146,59 +146,59 @@ const initEditor = async () => {
       // 定义所有可用的快捷键
       const allSuggestions = [
         // 标题
-        { label: "h1", kind: CompletionItemKind.Keyword, insertText: "# 一级标题\n", detail: "插入一级标题", documentation: "# 一级标题" },
-        { label: "h2", kind: CompletionItemKind.Keyword, insertText: "## 二级标题\n", detail: "插入二级标题", documentation: "## 二级标题" },
-        { label: "h3", kind: CompletionItemKind.Keyword, insertText: "### 三级标题\n", detail: "插入三级标题", documentation: "### 三级标题" },
-        { label: "h4", kind: CompletionItemKind.Keyword, insertText: "#### 四级标题\n", detail: "插入四级标题", documentation: "#### 四级标题" },
-        { label: "h5", kind: CompletionItemKind.Keyword, insertText: "##### 五级标题\n", detail: "插入五级标题", documentation: "##### 五级标题" },
-        { label: "h6", kind: CompletionItemKind.Keyword, insertText: "###### 六级标题\n", detail: "插入六级标题", documentation: "###### 六级标题" },
+        { label: "h1", kind: languages.CompletionItemKind.Keyword, insertText: "# 一级标题\n", detail: "插入一级标题", documentation: "# 一级标题" },
+        { label: "h2", kind: languages.CompletionItemKind.Keyword, insertText: "## 二级标题\n", detail: "插入二级标题", documentation: "## 二级标题" },
+        { label: "h3", kind: languages.CompletionItemKind.Keyword, insertText: "### 三级标题\n", detail: "插入三级标题", documentation: "### 三级标题" },
+        { label: "h4", kind: languages.CompletionItemKind.Keyword, insertText: "#### 四级标题\n", detail: "插入四级标题", documentation: "#### 四级标题" },
+        { label: "h5", kind: languages.CompletionItemKind.Keyword, insertText: "##### 五级标题\n", detail: "插入五级标题", documentation: "##### 五级标题" },
+        { label: "h6", kind: languages.CompletionItemKind.Keyword, insertText: "###### 六级标题\n", detail: "插入六级标题", documentation: "###### 六级标题" },
 
         // 文本格式化
-        { label: "bold", kind: CompletionItemKind.Keyword, insertText: "**粗体文本**", detail: "插入粗体文本", documentation: "**粗体文本**" },
-        { label: "italic", kind: CompletionItemKind.Keyword, insertText: "*斜体文本*", detail: "插入斜体文本", documentation: "*斜体文本*" },
-        { label: "strikethrough", kind: CompletionItemKind.Keyword, insertText: "~~删除线文本~~", detail: "插入删除线文本", documentation: "~~删除线文本~~" },
-        { label: "underline", kind: CompletionItemKind.Keyword, insertText: "_(下划线文本)_", detail: "插入下划线文本", documentation: "_(下划线文本)_" },
-        { label: "color", kind: CompletionItemKind.Keyword, insertText: "-(#ff0000: 彩色文本)-", detail: "插入彩色文本", documentation: "-(#ff0000: 彩色文本)-" },
+        { label: "bold", kind: languages.CompletionItemKind.Keyword, insertText: "**粗体文本**", detail: "插入粗体文本", documentation: "**粗体文本**" },
+        { label: "italic", kind: languages.CompletionItemKind.Keyword, insertText: "*斜体文本*", detail: "插入斜体文本", documentation: "*斜体文本*" },
+        { label: "strikethrough", kind: languages.CompletionItemKind.Keyword, insertText: "~~删除线文本~~", detail: "插入删除线文本", documentation: "~~删除线文本~~" },
+        { label: "underline", kind: languages.CompletionItemKind.Keyword, insertText: "_(下划线文本)_", detail: "插入下划线文本", documentation: "_(下划线文本)_" },
+        { label: "color", kind: languages.CompletionItemKind.Keyword, insertText: "-(#ff0000: 彩色文本)-", detail: "插入彩色文本", documentation: "-(#ff0000: 彩色文本)-" },
 
         // 链接和图片
-        { label: "link", kind: CompletionItemKind.Function, insertText: "#[链接文本](https://example.com)", detail: "插入链接", documentation: "#[链接文本](https://example.com)" },
-        { label: "image", kind: CompletionItemKind.Function, insertText: "![图片描述](图片链接)", detail: "插入图片", documentation: "![图片描述](图片链接)" },
+        { label: "link", kind: languages.CompletionItemKind.Function, insertText: "#[链接文本](https://example.com)", detail: "插入链接", documentation: "#[链接文本](https://example.com)" },
+        { label: "image", kind: languages.CompletionItemKind.Function, insertText: "![图片描述](图片链接)", detail: "插入图片", documentation: "![图片描述](图片链接)" },
 
         // 代码
-        { label: "code", kind: CompletionItemKind.Function, insertText: "```javascript\n// 代码\n```", detail: "插入代码块", documentation: "```javascript\n// 代码\n```" },
-        { label: "inlinecode", kind: CompletionItemKind.Function, insertText: "`行内代码`", detail: "插入行内代码", documentation: "`行内代码`" },
+        { label: "code", kind: languages.CompletionItemKind.Function, insertText: "```javascript\n// 代码\n```", detail: "插入代码块", documentation: "```javascript\n// 代码\n```" },
+        { label: "inlinecode", kind: languages.CompletionItemKind.Function, insertText: "`行内代码`", detail: "插入行内代码", documentation: "`行内代码`" },
 
         // 列表
-        { label: "ul", kind: CompletionItemKind.Keyword, insertText: "- 无序列表项\n- 无序列表项\n", detail: "插入无序列表", documentation: "- 无序列表项\n- 无序列表项" },
-        { label: "ol", kind: CompletionItemKind.Keyword, insertText: "1. 有序列表项\n2. 有序列表项\n", detail: "插入有序列表", documentation: "1. 有序列表项\n2. 有序列表项" },
-        { label: "task", kind: CompletionItemKind.Keyword, insertText: "- [x] 已完成任务\n- [ ] 未完成任务\n", detail: "插入任务列表", documentation: "- [x] 已完成任务\n- [ ] 未完成任务" },
+        { label: "ul", kind: languages.CompletionItemKind.Keyword, insertText: "- 无序列表项\n- 无序列表项\n", detail: "插入无序列表", documentation: "- 无序列表项\n- 无序列表项" },
+        { label: "ol", kind: languages.CompletionItemKind.Keyword, insertText: "1. 有序列表项\n2. 有序列表项\n", detail: "插入有序列表", documentation: "1. 有序列表项\n2. 有序列表项" },
+        { label: "task", kind: languages.CompletionItemKind.Keyword, insertText: "- [x] 已完成任务\n- [ ] 未完成任务\n", detail: "插入任务列表", documentation: "- [x] 已完成任务\n- [ ] 未完成任务" },
 
         // 引用和表格
-        { label: "quote", kind: CompletionItemKind.Keyword, insertText: "> 引用文本\n", detail: "插入引用", documentation: "> 引用文本" },
-        { label: "table", kind: CompletionItemKind.Keyword, insertText: "| 表头1 | 表头2 |\n| ---- | ---- |\n| 单元格1 | 单元格2 |\n", detail: "插入表格", documentation: "| 表头1 | 表头2 |\n| ---- | ---- |\n| 单元格1 | 单元格2 |" },
+        { label: "quote", kind: languages.CompletionItemKind.Keyword, insertText: "> 引用文本\n", detail: "插入引用", documentation: "> 引用文本" },
+        { label: "table", kind: languages.CompletionItemKind.Keyword, insertText: "| 表头1 | 表头2 |\n| ---- | ---- |\n| 单元格1 | 单元格2 |\n", detail: "插入表格", documentation: "| 表头1 | 表头2 |\n| ---- | ---- |\n| 单元格1 | 单元格2 |" },
 
         // 数学公式
-        { label: "math", kind: CompletionItemKind.Function, insertText: "$$数学公式$$", detail: "插入数学公式", documentation: "$$数学公式$$" },
-        { label: "mathblock", kind: CompletionItemKind.Function, insertText: "$$\n数学公式\n$$", detail: "插入块级数学公式", documentation: "$$\n数学公式\n$$" },
+        { label: "math", kind: languages.CompletionItemKind.Function, insertText: "$$数学公式$$", detail: "插入数学公式", documentation: "$$数学公式$$" },
+        { label: "mathblock", kind: languages.CompletionItemKind.Function, insertText: "$$\n数学公式\n$$", detail: "插入块级数学公式", documentation: "$$\n数学公式\n$$" },
 
         // 媒体
-        { label: "youtube", kind: CompletionItemKind.Function, insertText: "[youtube][视频标题](https://www.youtube.com/embed/视频ID)", detail: "插入YouTube视频", documentation: "[youtube][视频标题](https://www.youtube.com/embed/视频ID)" },
-        { label: "bili", kind: CompletionItemKind.Function, insertText: "[bili][视频标题](https://player.bilibili.com/player.html?aid=视频ID)", detail: "插入B站视频", documentation: "[bili][视频标题](https://player.bilibili.com/player.html?aid=视频ID)" },
-        { label: "video", kind: CompletionItemKind.Function, insertText: "[video][视频标题](海报链接|视频链接)", detail: "插入视频", documentation: "[video][视频标题](海报链接|视频链接)" },
-        { label: "audio", kind: CompletionItemKind.Function, insertText: "[audio][音频标题](音频链接)", detail: "插入音频", documentation: "[audio][音频标题](音频链接)" },
+        { label: "youtube", kind: languages.CompletionItemKind.Function, insertText: "[youtube][视频标题](https://www.youtube.com/embed/视频ID)", detail: "插入YouTube视频", documentation: "[youtube][视频标题](https://www.youtube.com/embed/视频ID)" },
+        { label: "bili", kind: languages.CompletionItemKind.Function, insertText: "[bili][视频标题](https://player.bilibili.com/player.html?aid=视频ID)", detail: "插入B站视频", documentation: "[bili][视频标题](https://player.bilibili.com/player.html?aid=视频ID)" },
+        { label: "video", kind: languages.CompletionItemKind.Function, insertText: "[video][视频标题](海报链接|视频链接)", detail: "插入视频", documentation: "[video][视频标题](海报链接|视频链接)" },
+        { label: "audio", kind: languages.CompletionItemKind.Function, insertText: "[audio][音频标题](音频链接)", detail: "插入音频", documentation: "[audio][音频标题](音频链接)" },
 
         // 容器
-        { label: "info", kind: CompletionItemKind.Function, insertText: "::: info\n信息内容\n:::", detail: "插入信息容器", documentation: "::: info\n信息内容\n:::" },
-        { label: "tip", kind: CompletionItemKind.Function, insertText: "::: tip\n提示内容\n:::", detail: "插入提示容器", documentation: "::: tip\n提示内容\n:::" },
-        { label: "warning", kind: CompletionItemKind.Function, insertText: "::: warning\n警告内容\n:::", detail: "插入警告容器", documentation: "::: warning\n警告内容\n:::" },
-        { label: "danger", kind: CompletionItemKind.Function, insertText: "::: danger\n危险内容\n:::", detail: "插入危险容器", documentation: "::: danger\n危险内容\n:::" },
-        { label: "details", kind: CompletionItemKind.Function, insertText: "::: details 详情标题\n详情内容\n:::", detail: "插入详情容器", documentation: "::: details 详情标题\n详情内容\n:::" },
+        { label: "info", kind: languages.CompletionItemKind.Function, insertText: "::: info\n信息内容\n:::", detail: "插入信息容器", documentation: "::: info\n信息内容\n:::" },
+        { label: "tip", kind: languages.CompletionItemKind.Function, insertText: "::: tip\n提示内容\n:::", detail: "插入提示容器", documentation: "::: tip\n提示内容\n:::" },
+        { label: "warning", kind: languages.CompletionItemKind.Function, insertText: "::: warning\n警告内容\n:::", detail: "插入警告容器", documentation: "::: warning\n警告内容\n:::" },
+        { label: "danger", kind: languages.CompletionItemKind.Function, insertText: "::: danger\n危险内容\n:::", detail: "插入危险容器", documentation: "::: danger\n危险内容\n:::" },
+        { label: "details", kind: languages.CompletionItemKind.Function, insertText: "::: details 详情标题\n详情内容\n:::", detail: "插入详情容器", documentation: "::: details 详情标题\n详情内容\n:::" },
 
         // 其他
-        { label: "encrypt", kind: CompletionItemKind.Function, insertText: "[encrypt]\n加密内容\n[/encrypt]", detail: "插入加密块", documentation: "[encrypt]\n加密内容\n[/encrypt]" },
-        { label: "html", kind: CompletionItemKind.Function, insertText: "[html]\n<div>HTML内容</div>\n[/html]", detail: "插入原始HTML", documentation: "[html]\n<div>HTML内容</div>\n[/html]" },
-        { label: "fieldset", kind: CompletionItemKind.Function, insertText: "--字段集标题--\n字段集内容\n-- --", detail: "插入字段集", documentation: "--字段集标题--\n字段集内容\n-- --" },
-        { label: "sticker", kind: CompletionItemKind.Function, insertText: "![sticker](sticker/yellow-face/18)", detail: "插入贴纸", documentation: "![sticker](sticker/yellow-face/18)" }
+        { label: "encrypt", kind: languages.CompletionItemKind.Function, insertText: "[encrypt]\n加密内容\n[/encrypt]", detail: "插入加密块", documentation: "[encrypt]\n加密内容\n[/encrypt]" },
+        { label: "html", kind: languages.CompletionItemKind.Function, insertText: "[html]\n<div>HTML内容</div>\n[/html]", detail: "插入原始HTML", documentation: "[html]\n<div>HTML内容</div>\n[/html]" },
+        { label: "fieldset", kind: languages.CompletionItemKind.Function, insertText: "--字段集标题--\n字段集内容\n-- --", detail: "插入字段集", documentation: "--字段集标题--\n字段集内容\n-- --" },
+        { label: "sticker", kind: languages.CompletionItemKind.Function, insertText: "![sticker](sticker/yellow-face/18)", detail: "插入贴纸", documentation: "![sticker](sticker/yellow-face/18)" }
       ];
 
       // 过滤匹配的建议
