@@ -63,141 +63,63 @@ const stopResize = () => {
   document.body.classList.remove("resizing");
 };
 
-// 智能提示相关
-const showSuggestions = ref(false);
-const suggestions = ref<any[]>([]);
-const selectedSuggestion = ref(0);
-const suggestionPosition = ref({ x: 0, y: 0 });
-const inputText = ref("");
-
 // 定义智能提示项
 const suggestionItems = [
   // 标题
-  { id: "h1", label: "一级标题", insertText: "# 一级标题\n", shortcut: "h1", icon: "H1" },
-  { id: "h2", label: "二级标题", insertText: "## 二级标题\n", shortcut: "h2", icon: "H2" },
-  { id: "h3", label: "三级标题", insertText: "### 三级标题\n", shortcut: "h3", icon: "H3" },
-  { id: "h4", label: "四级标题", insertText: "#### 四级标题\n", shortcut: "h4", icon: "H4" },
-  { id: "h5", label: "五级标题", insertText: "##### 五级标题\n", shortcut: "h5", icon: "H5" },
-  { id: "h6", label: "六级标题", insertText: "###### 六级标题\n", shortcut: "h6", icon: "H6" },
+  { label: "h1 一级标题", insertText: "# 一级标题\n", kind: 17, detail: "快捷键: h1" },
+  { label: "h2 二级标题", insertText: "## 二级标题\n", kind: 17, detail: "快捷键: h2" },
+  { label: "h3 三级标题", insertText: "### 三级标题\n", kind: 17, detail: "快捷键: h3" },
+  { label: "h4 四级标题", insertText: "#### 四级标题\n", kind: 17, detail: "快捷键: h4" },
+  { label: "h5 五级标题", insertText: "##### 五级标题\n", kind: 17, detail: "快捷键: h5" },
+  { label: "h6 六级标题", insertText: "###### 六级标题\n", kind: 17, detail: "快捷键: h6" },
 
   // 文本格式化
-  { id: "bold", label: "粗体", insertText: "**粗体文本**", shortcut: "bold", icon: "B" },
-  { id: "italic", label: "斜体", insertText: "*斜体文本*", shortcut: "italic", icon: "I" },
-  { id: "strikethrough", label: "删除线", insertText: "~~删除线文本~~", shortcut: "strikethrough", icon: "S" },
-  { id: "underline", label: "下划线", insertText: "_(下划线文本)_", shortcut: "underline", icon: "U" },
-  { id: "color", label: "彩色文本", insertText: "-(#ff0000: 彩色文本)-", shortcut: "color", icon: "C" },
+  { label: "bold 粗体", insertText: "**粗体文本**", kind: 14, detail: "快捷键: bold" },
+  { label: "italic 斜体", insertText: "*斜体文本*", kind: 14, detail: "快捷键: italic" },
+  { label: "strikethrough 删除线", insertText: "~~删除线文本~~", kind: 14, detail: "快捷键: strikethrough" },
+  { label: "underline 下划线", insertText: "_(下划线文本)_", kind: 14, detail: "快捷键: underline" },
+  { label: "color 彩色文本", insertText: "-(#ff0000: 彩色文本)-", kind: 14, detail: "快捷键: color" },
 
   // 链接和图片
-  { id: "link", label: "链接", insertText: "#[链接文本](https://example.com)", shortcut: "link", icon: "🔗" },
-  { id: "image", label: "图片", insertText: "![图片描述](图片链接)", shortcut: "image", icon: "🖼️" },
+  { label: "link 链接", insertText: "#[链接文本](https://example.com)", kind: 10, detail: "快捷键: link" },
+  { label: "image 图片", insertText: "![图片描述](图片链接)", kind: 10, detail: "快捷键: image" },
 
   // 代码
-  { id: "code", label: "代码块", insertText: "```javascript\n// 代码\n```", shortcut: "code", icon: "💻" },
-  { id: "inlinecode", label: "行内代码", insertText: "`行内代码`", shortcut: "inlinecode", icon: "`" },
+  { label: "code 代码块", insertText: "```javascript\n// 代码\n```", kind: 1, detail: "快捷键: code" },
+  { label: "inlinecode 行内代码", insertText: "`行内代码`", kind: 1, detail: "快捷键: inlinecode" },
 
   // 列表
-  { id: "ul", label: "无序列表", insertText: "- 无序列表项\n- 无序列表项\n", shortcut: "ul", icon: "•" },
-  { id: "ol", label: "有序列表", insertText: "1. 有序列表项\n2. 有序列表项\n", shortcut: "ol", icon: "1." },
-  { id: "task", label: "任务列表", insertText: "- [x] 已完成任务\n- [ ] 未完成任务\n", shortcut: "task", icon: "☑️" },
+  { label: "ul 无序列表", insertText: "- 无序列表项\n- 无序列表项\n", kind: 12, detail: "快捷键: ul" },
+  { label: "ol 有序列表", insertText: "1. 有序列表项\n2. 有序列表项\n", kind: 12, detail: "快捷键: ol" },
+  { label: "task 任务列表", insertText: "- [x] 已完成任务\n- [ ] 未完成任务\n", kind: 12, detail: "快捷键: task" },
 
   // 引用和表格
-  { id: "quote", label: "引用", insertText: "> 引用文本\n", shortcut: "quote", icon: ">" },
-  { id: "table", label: "表格", insertText: "| 表头1 | 表头2 |\n| ---- | ---- |\n| 单元格1 | 单元格2 |\n", shortcut: "table", icon: "📊" },
+  { label: "quote 引用", insertText: "> 引用文本\n", kind: 13, detail: "快捷键: quote" },
+  { label: "table 表格", insertText: "| 表头1 | 表头2 |\n| ---- | ---- |\n| 单元格1 | 单元格2 |\n", kind: 9, detail: "快捷键: table" },
 
   // 数学公式
-  { id: "math", label: "数学公式", insertText: "$$数学公式$$", shortcut: "math", icon: "∑" },
-  { id: "mathblock", label: "块级数学公式", insertText: "$$\n数学公式\n$$", shortcut: "mathblock", icon: "∫" },
+  { label: "math 数学公式", insertText: "$$数学公式$$", kind: 1, detail: "快捷键: math" },
+  { label: "mathblock 块级数学公式", insertText: "$$\n数学公式\n$$", kind: 1, detail: "快捷键: mathblock" },
 
   // 媒体
-  { id: "youtube", label: "YouTube视频", insertText: "[youtube][视频标题](https://www.youtube.com/embed/视频ID)", shortcut: "youtube", icon: "🎥" },
-  { id: "bili", label: "B站视频", insertText: "[bili][视频标题](https://player.bilibili.com/player.html?aid=视频ID)", shortcut: "bili", icon: "📺" },
-  { id: "video", label: "视频", insertText: "[video][视频标题](海报链接|视频链接)", shortcut: "video", icon: "🎬" },
-  { id: "audio", label: "音频", insertText: "[audio][音频标题](音频链接)", shortcut: "audio", icon: "🎵" },
+  { label: "youtube YouTube视频", insertText: "[youtube][视频标题](https://www.youtube.com/embed/视频ID)", kind: 10, detail: "快捷键: youtube" },
+  { label: "bili B站视频", insertText: "[bili][视频标题](https://player.bilibili.com/player.html?aid=视频ID)", kind: 10, detail: "快捷键: bili" },
+  { label: "video 视频", insertText: "[video][视频标题](海报链接|视频链接)", kind: 10, detail: "快捷键: video" },
+  { label: "audio 音频", insertText: "[audio][音频标题](音频链接)", kind: 10, detail: "快捷键: audio" },
 
   // 容器
-  { id: "info", label: "信息容器", insertText: "::: info\n信息内容\n:::", shortcut: "info", icon: "ℹ️" },
-  { id: "tip", label: "提示容器", insertText: "::: tip\n提示内容\n:::", shortcut: "tip", icon: "💡" },
-  { id: "warning", label: "警告容器", insertText: "::: warning\n警告内容\n:::", shortcut: "warning", icon: "⚠️" },
-  { id: "danger", label: "危险容器", insertText: "::: danger\n危险内容\n:::", shortcut: "danger", icon: "🚨" },
-  { id: "details", label: "详情容器", insertText: "::: details 详情标题\n详情内容\n:::", shortcut: "details", icon: "🔽" },
+  { label: "info 信息容器", insertText: "::: info\n信息内容\n:::", kind: 23, detail: "快捷键: info" },
+  { label: "tip 提示容器", insertText: "::: tip\n提示内容\n:::", kind: 23, detail: "快捷键: tip" },
+  { label: "warning 警告容器", insertText: "::: warning\n警告内容\n:::", kind: 23, detail: "快捷键: warning" },
+  { label: "danger 危险容器", insertText: "::: danger\n危险内容\n:::", kind: 23, detail: "快捷键: danger" },
+  { label: "details 详情容器", insertText: "::: details 详情标题\n详情内容\n:::", kind: 23, detail: "快捷键: details" },
 
   // 其他
-  { id: "encrypt", label: "加密块", insertText: "[encrypt]\n加密内容\n[/encrypt]", shortcut: "encrypt", icon: "🔒" },
-  { id: "html", label: "原始HTML", insertText: "[html]\n<div>HTML内容</div>\n[/html]", shortcut: "html", icon: "<>'" },
-  { id: "fieldset", label: "字段集", insertText: "--字段集标题--\n字段集内容\n-- --", shortcut: "fieldset", icon: "📋" },
-  { id: "sticker", label: "贴纸", insertText: "![sticker](sticker/yellow-face/18)", shortcut: "sticker", icon: "😊" }
+  { label: "encrypt 加密块", insertText: "[encrypt]\n加密内容\n[/encrypt]", kind: 23, detail: "快捷键: encrypt" },
+  { label: "html 原始HTML", insertText: "[html]\n<div>HTML内容</div>\n[/html]", kind: 1, detail: "快捷键: html" },
+  { label: "fieldset 字段集", insertText: "--字段集标题--\n字段集内容\n-- --", kind: 23, detail: "快捷键: fieldset" },
+  { label: "sticker 贴纸", insertText: "![sticker](sticker/yellow-face/18)", kind: 10, detail: "快捷键: sticker" }
 ];
-
-// 过滤建议
-const filterSuggestions = (text: string) => {
-  if (!text) {
-    suggestions.value = suggestionItems;
-  } else {
-    suggestions.value = suggestionItems.filter(item =>
-      item.label.toLowerCase().includes(text.toLowerCase())
-      || item.shortcut.toLowerCase().includes(text.toLowerCase())
-    );
-  }
-  selectedSuggestion.value = 0;
-};
-
-// 插入选中的建议
-const insertSuggestion = (suggestion: any) => {
-  if (editor) {
-    // 获取当前光标位置
-    const position = editor.getPosition();
-    if (position) {
-      // 获取当前行内容
-      const lineContent = editor.getModel()!.getLineContent(position.lineNumber);
-      // 找到/的位置
-      const slashIndex = lineContent.lastIndexOf("/");
-      if (slashIndex !== -1) {
-        // 计算需要替换的范围
-        const range = {
-          startLineNumber: position.lineNumber,
-          startColumn: slashIndex + 1,
-          endLineNumber: position.lineNumber,
-          endColumn: position.column
-        };
-        // 替换文本
-        editor.executeEdits("suggestion", [{
-          range,
-          text: suggestion.insertText,
-          forceMoveMarkers: true
-        }]);
-      }
-    }
-  }
-  showSuggestions.value = false;
-  inputText.value = "";
-};
-
-// 处理键盘事件
-const handleKeyDown = (e: KeyboardEvent) => {
-  if (!showSuggestions.value) return;
-
-  switch (e.key) {
-    case "ArrowDown":
-      e.preventDefault();
-      selectedSuggestion.value = (selectedSuggestion.value + 1) % suggestions.value.length;
-      break;
-    case "ArrowUp":
-      e.preventDefault();
-      selectedSuggestion.value = (selectedSuggestion.value - 1 + suggestions.value.length) % suggestions.value.length;
-      break;
-    case "Enter":
-      e.preventDefault();
-      if (suggestions.value[selectedSuggestion.value]) {
-        insertSuggestion(suggestions.value[selectedSuggestion.value]);
-      }
-      break;
-    case "Escape":
-      e.preventDefault();
-      showSuggestions.value = false;
-      inputText.value = "";
-      break;
-  }
-};
 
 // 初始化manoco。mounted 或者 loadingChange 后执行，但只执行一次
 const { themeMode } = useThemeMode();
@@ -241,63 +163,39 @@ const initEditor = async () => {
     }, 500)
   );
 
-  // 监听键盘输入
-  editor.onKeyDown((e) => {
-    if (e.key === "/") {
-      const position = editor.getPosition();
-      if (position) {
-        const lineContent = editor.getModel()!.getLineContent(position.lineNumber);
-        const column = position.column - 1;
-        const textBefore = lineContent.substring(0, column);
-        if (textBefore.trim() === "") {
-          // 延迟显示，确保DOM更新
-          setTimeout(() => {
-            showSuggestions.value = true;
-            filterSuggestions("");
-            // 使用固定位置，确保面板可见
-            suggestionPosition.value = {
-              x: 100,
-              y: 100
-            };
-          }, 100);
-        }
+  // 注册代码补全提供者
+  const { languages } = module;
+  languages.registerCompletionItemProvider("markdown", {
+    triggerCharacters: ["/"],
+    provideCompletionItems: (model, position) => {
+      const textBeforeCursor = model.getValueInRange({
+        startLineNumber: position.lineNumber,
+        startColumn: 1,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column
+      });
+
+      const slashIndex = textBeforeCursor.lastIndexOf("/");
+      if (slashIndex !== -1) {
+        const range = {
+          startLineNumber: position.lineNumber,
+          startColumn: slashIndex + 1,
+          endLineNumber: position.lineNumber,
+          endColumn: position.column
+        };
+
+        const completions = suggestionItems.map(item => ({
+          label: item.label,
+          kind: item.kind,
+          detail: item.detail,
+          insertText: item.insertText,
+          range: range
+        }));
+        return {
+          suggestions: completions
+        };
       }
-    }
-    handleKeyDown(e.event);
-  });
-
-  // 监听文本变化，检测/
-  editor.onDidChangeModelContent(() => {
-    const position = editor.getPosition();
-    if (position) {
-      const lineContent = editor.getModel()!.getLineContent(position.lineNumber);
-      const column = position.column - 1;
-
-      // 检查是否输入了/
-      if (column >= 0 && lineContent[column] === "/") {
-        // 检查/是否在行首或前面只有空格
-        const textBefore = lineContent.substring(0, column);
-        if (textBefore.trim() === "") {
-          // 显示建议
-          showSuggestions.value = true;
-          filterSuggestions("");
-
-          // 使用固定位置，确保面板可见
-          suggestionPosition.value = {
-            x: 100,
-            y: 100
-          };
-        }
-      } else if (column > 0 && lineContent[column - 1] === "/") {
-        // 过滤建议
-        const textAfterSlash = lineContent.substring(lineContent.lastIndexOf("/") + 1, column + 1);
-        inputText.value = textAfterSlash;
-        filterSuggestions(textAfterSlash);
-      } else {
-        // 隐藏建议
-        showSuggestions.value = false;
-        inputText.value = "";
-      }
+      return { suggestions: [] };
     }
   });
 };
@@ -414,66 +312,6 @@ initViewer(markdownRef);
           ref="editorContainer"
           class="h-full"
         />
-
-        <!-- 智能提示面板 -->
-        <div
-          v-if="showSuggestions && suggestions.length > 0"
-          class="absolute z-50 max-h-96 w-80 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-dark-800"
-          :style="{
-            left: `${suggestionPosition.x}px`,
-            top: `${suggestionPosition.y}px`
-          }"
-        >
-          <div class="mb-2 flex items-center justify-between border-b border-gray-200 pb-2 dark:border-gray-700">
-            <div class="flex items-center gap-2">
-              <div class="rounded-full bg-purple-100 p-1 dark:bg-purple-900">
-                <span class="font-medium text-purple-600 dark:text-purple-300">✨</span>
-              </div>
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">智能提示</span>
-            </div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">
-              12
-            </div>
-          </div>
-          <div class="space-y-1">
-            <div
-              v-for="(item, index) in suggestions"
-              :key="item.id"
-              :class="twMerge(
-                'flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700',
-                index === selectedSuggestion && 'bg-purple-100 dark:bg-purple-900'
-              )"
-              @click="insertSuggestion(item)"
-            >
-              <div class="flex items-center gap-3">
-                <div class="flex size-6 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                  {{ index + 1 }}
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="rounded bg-gray-200 p-1 text-sm dark:bg-gray-600">
-                    {{ item.icon }}
-                  </div>
-                  <div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {{ item.label }}
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                      插入{{ item.label }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                {{ item.shortcut }}
-              </div>
-            </div>
-          </div>
-          <div class="mt-2 flex items-center justify-between border-t border-gray-200 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
-            <div>⇧ # 导航</div>
-            <div>Enter 选择</div>
-            <div>Esc 关闭</div>
-          </div>
-        </div>
       </div>
       <div
         ref="resizeRef"
