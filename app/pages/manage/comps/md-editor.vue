@@ -63,6 +63,142 @@ const stopResize = () => {
   document.body.classList.remove("resizing");
 };
 
+// 智能提示相关
+const showSuggestions = ref(false);
+const suggestions = ref<any[]>([]);
+const selectedSuggestion = ref(0);
+const suggestionPosition = ref({ x: 0, y: 0 });
+const inputText = ref("");
+
+// 定义智能提示项
+const suggestionItems = [
+  // 标题
+  { id: "h1", label: "一级标题", insertText: "# 一级标题\n", shortcut: "h1", icon: "H1" },
+  { id: "h2", label: "二级标题", insertText: "## 二级标题\n", shortcut: "h2", icon: "H2" },
+  { id: "h3", label: "三级标题", insertText: "### 三级标题\n", shortcut: "h3", icon: "H3" },
+  { id: "h4", label: "四级标题", insertText: "#### 四级标题\n", shortcut: "h4", icon: "H4" },
+  { id: "h5", label: "五级标题", insertText: "##### 五级标题\n", shortcut: "h5", icon: "H5" },
+  { id: "h6", label: "六级标题", insertText: "###### 六级标题\n", shortcut: "h6", icon: "H6" },
+
+  // 文本格式化
+  { id: "bold", label: "粗体", insertText: "**粗体文本**", shortcut: "bold", icon: "B" },
+  { id: "italic", label: "斜体", insertText: "*斜体文本*", shortcut: "italic", icon: "I" },
+  { id: "strikethrough", label: "删除线", insertText: "~~删除线文本~~", shortcut: "strikethrough", icon: "S" },
+  { id: "underline", label: "下划线", insertText: "_(下划线文本)_", shortcut: "underline", icon: "U" },
+  { id: "color", label: "彩色文本", insertText: "-(#ff0000: 彩色文本)-", shortcut: "color", icon: "C" },
+
+  // 链接和图片
+  { id: "link", label: "链接", insertText: "#[链接文本](https://example.com)", shortcut: "link", icon: "🔗" },
+  { id: "image", label: "图片", insertText: "![图片描述](图片链接)", shortcut: "image", icon: "🖼️" },
+
+  // 代码
+  { id: "code", label: "代码块", insertText: "```javascript\n// 代码\n```", shortcut: "code", icon: "💻" },
+  { id: "inlinecode", label: "行内代码", insertText: "`行内代码`", shortcut: "inlinecode", icon: "`" },
+
+  // 列表
+  { id: "ul", label: "无序列表", insertText: "- 无序列表项\n- 无序列表项\n", shortcut: "ul", icon: "•" },
+  { id: "ol", label: "有序列表", insertText: "1. 有序列表项\n2. 有序列表项\n", shortcut: "ol", icon: "1." },
+  { id: "task", label: "任务列表", insertText: "- [x] 已完成任务\n- [ ] 未完成任务\n", shortcut: "task", icon: "☑️" },
+
+  // 引用和表格
+  { id: "quote", label: "引用", insertText: "> 引用文本\n", shortcut: "quote", icon: ">" },
+  { id: "table", label: "表格", insertText: "| 表头1 | 表头2 |\n| ---- | ---- |\n| 单元格1 | 单元格2 |\n", shortcut: "table", icon: "📊" },
+
+  // 数学公式
+  { id: "math", label: "数学公式", insertText: "$$数学公式$$", shortcut: "math", icon: "∑" },
+  { id: "mathblock", label: "块级数学公式", insertText: "$$\n数学公式\n$$", shortcut: "mathblock", icon: "∫" },
+
+  // 媒体
+  { id: "youtube", label: "YouTube视频", insertText: "[youtube][视频标题](https://www.youtube.com/embed/视频ID)", shortcut: "youtube", icon: "🎥" },
+  { id: "bili", label: "B站视频", insertText: "[bili][视频标题](https://player.bilibili.com/player.html?aid=视频ID)", shortcut: "bili", icon: "📺" },
+  { id: "video", label: "视频", insertText: "[video][视频标题](海报链接|视频链接)", shortcut: "video", icon: "🎬" },
+  { id: "audio", label: "音频", insertText: "[audio][音频标题](音频链接)", shortcut: "audio", icon: "🎵" },
+
+  // 容器
+  { id: "info", label: "信息容器", insertText: "::: info\n信息内容\n:::", shortcut: "info", icon: "ℹ️" },
+  { id: "tip", label: "提示容器", insertText: "::: tip\n提示内容\n:::", shortcut: "tip", icon: "💡" },
+  { id: "warning", label: "警告容器", insertText: "::: warning\n警告内容\n:::", shortcut: "warning", icon: "⚠️" },
+  { id: "danger", label: "危险容器", insertText: "::: danger\n危险内容\n:::", shortcut: "danger", icon: "🚨" },
+  { id: "details", label: "详情容器", insertText: "::: details 详情标题\n详情内容\n:::", shortcut: "details", icon: "🔽" },
+
+  // 其他
+  { id: "encrypt", label: "加密块", insertText: "[encrypt]\n加密内容\n[/encrypt]", shortcut: "encrypt", icon: "🔒" },
+  { id: "html", label: "原始HTML", insertText: "[html]\n<div>HTML内容</div>\n[/html]", shortcut: "html", icon: "<>'" },
+  { id: "fieldset", label: "字段集", insertText: "--字段集标题--\n字段集内容\n-- --", shortcut: "fieldset", icon: "📋" },
+  { id: "sticker", label: "贴纸", insertText: "![sticker](sticker/yellow-face/18)", shortcut: "sticker", icon: "😊" }
+];
+
+// 过滤建议
+const filterSuggestions = (text: string) => {
+  if (!text) {
+    suggestions.value = suggestionItems;
+  } else {
+    suggestions.value = suggestionItems.filter(item =>
+      item.label.toLowerCase().includes(text.toLowerCase())
+      || item.shortcut.toLowerCase().includes(text.toLowerCase())
+    );
+  }
+  selectedSuggestion.value = 0;
+};
+
+// 插入选中的建议
+const insertSuggestion = (suggestion: any) => {
+  if (editor) {
+    // 获取当前光标位置
+    const position = editor.getPosition();
+    if (position) {
+      // 获取当前行内容
+      const lineContent = editor.getModel()!.getLineContent(position.lineNumber);
+      // 找到/的位置
+      const slashIndex = lineContent.lastIndexOf("/");
+      if (slashIndex !== -1) {
+        // 计算需要替换的范围
+        const range = {
+          startLineNumber: position.lineNumber,
+          startColumn: slashIndex + 1,
+          endLineNumber: position.lineNumber,
+          endColumn: position.column
+        };
+        // 替换文本
+        editor.executeEdits("suggestion", [{
+          range,
+          text: suggestion.insertText,
+          forceMoveMarkers: true
+        }]);
+      }
+    }
+  }
+  showSuggestions.value = false;
+  inputText.value = "";
+};
+
+// 处理键盘事件
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (!showSuggestions.value) return;
+
+  switch (e.key) {
+    case "ArrowDown":
+      e.preventDefault();
+      selectedSuggestion.value = (selectedSuggestion.value + 1) % suggestions.value.length;
+      break;
+    case "ArrowUp":
+      e.preventDefault();
+      selectedSuggestion.value = (selectedSuggestion.value - 1 + suggestions.value.length) % suggestions.value.length;
+      break;
+    case "Enter":
+      e.preventDefault();
+      if (suggestions.value[selectedSuggestion.value]) {
+        insertSuggestion(suggestions.value[selectedSuggestion.value]);
+      }
+      break;
+    case "Escape":
+      e.preventDefault();
+      showSuggestions.value = false;
+      inputText.value = "";
+      break;
+  }
+};
+
 // 初始化manoco。mounted 或者 loadingChange 后执行，但只执行一次
 const { themeMode } = useThemeMode();
 const editorContainer = ref<HTMLElement>();
@@ -105,137 +241,50 @@ const initEditor = async () => {
     }, 500)
   );
 
-  // 注册代码补全提供程序
-  const monaco = await import("monaco-editor");
-  const { languages } = monaco;
-
-  // 确保编辑器选项启用了代码补全
-  editor.updateOptions({
-    suggestOnTriggerCharacters: true,
-    quickSuggestions: {
-      other: true,
-      comments: false,
-      strings: false
-    },
-    suggestFontSize: 14,
-    suggestLineHeight: 20,
-    suggestOnTriggerCharacters: true,
-    quickSuggestionsDelay: 0
+  // 监听键盘输入
+  editor.onKeyDown((e) => {
+    handleKeyDown(e.event);
   });
 
-  // 注册代码补全提供程序
-  const completionProvider = languages.registerCompletionItemProvider("markdown", {
-    triggerCharacters: ["/"],
-    provideCompletionItems: (model, position) => {
-      // 获取当前行文本
-      const lineContent = model.getLineContent(position.lineNumber);
-      const cursorPosition = position.column - 1;
+  // 监听文本变化，检测/
+  editor.onDidChangeModelContent(() => {
+    const position = editor.getPosition();
+    if (position) {
+      const lineContent = editor.getModel()!.getLineContent(position.lineNumber);
+      const column = position.column - 1;
 
-      // 检查是否在行首或空格后输入了/
-      let hasSlash = false;
-      let slashPosition = -1;
+      // 检查是否输入了/
+      if (column >= 0 && lineContent[column] === "/") {
+        // 检查/是否在行首或前面只有空格
+        const textBefore = lineContent.substring(0, column);
+        if (textBefore.trim() === "") {
+          // 显示建议
+          showSuggestions.value = true;
+          filterSuggestions("");
 
-      for (let i = cursorPosition; i >= 0; i--) {
-        if (lineContent[i] === "/") {
-          hasSlash = true;
-          slashPosition = i;
-          break;
-        } else if (lineContent[i] !== " " && lineContent[i] !== "\t") {
-          break;
-        }
-      }
-
-      if (!hasSlash) {
-        return { suggestions: [] };
-      }
-
-      // 获取触发文本
-      const triggerText = lineContent.substring(slashPosition + 1, cursorPosition + 1);
-
-      // 定义所有可用的快捷键
-      const allSuggestions = [
-        // 标题
-        { label: "h1", kind: languages.CompletionItemKind.Keyword, insertText: "# 一级标题\n", detail: "插入一级标题", documentation: "# 一级标题" },
-        { label: "h2", kind: languages.CompletionItemKind.Keyword, insertText: "## 二级标题\n", detail: "插入二级标题", documentation: "## 二级标题" },
-        { label: "h3", kind: languages.CompletionItemKind.Keyword, insertText: "### 三级标题\n", detail: "插入三级标题", documentation: "### 三级标题" },
-        { label: "h4", kind: languages.CompletionItemKind.Keyword, insertText: "#### 四级标题\n", detail: "插入四级标题", documentation: "#### 四级标题" },
-        { label: "h5", kind: languages.CompletionItemKind.Keyword, insertText: "##### 五级标题\n", detail: "插入五级标题", documentation: "##### 五级标题" },
-        { label: "h6", kind: languages.CompletionItemKind.Keyword, insertText: "###### 六级标题\n", detail: "插入六级标题", documentation: "###### 六级标题" },
-
-        // 文本格式化
-        { label: "bold", kind: languages.CompletionItemKind.Keyword, insertText: "**粗体文本**", detail: "插入粗体文本", documentation: "**粗体文本**" },
-        { label: "italic", kind: languages.CompletionItemKind.Keyword, insertText: "*斜体文本*", detail: "插入斜体文本", documentation: "*斜体文本*" },
-        { label: "strikethrough", kind: languages.CompletionItemKind.Keyword, insertText: "~~删除线文本~~", detail: "插入删除线文本", documentation: "~~删除线文本~~" },
-        { label: "underline", kind: languages.CompletionItemKind.Keyword, insertText: "_(下划线文本)_", detail: "插入下划线文本", documentation: "_(下划线文本)_" },
-        { label: "color", kind: languages.CompletionItemKind.Keyword, insertText: "-(#ff0000: 彩色文本)-", detail: "插入彩色文本", documentation: "-(#ff0000: 彩色文本)-" },
-
-        // 链接和图片
-        { label: "link", kind: languages.CompletionItemKind.Function, insertText: "#[链接文本](https://example.com)", detail: "插入链接", documentation: "#[链接文本](https://example.com)" },
-        { label: "image", kind: languages.CompletionItemKind.Function, insertText: "![图片描述](图片链接)", detail: "插入图片", documentation: "![图片描述](图片链接)" },
-
-        // 代码
-        { label: "code", kind: languages.CompletionItemKind.Function, insertText: "```javascript\n// 代码\n```", detail: "插入代码块", documentation: "```javascript\n// 代码\n```" },
-        { label: "inlinecode", kind: languages.CompletionItemKind.Function, insertText: "`行内代码`", detail: "插入行内代码", documentation: "`行内代码`" },
-
-        // 列表
-        { label: "ul", kind: languages.CompletionItemKind.Keyword, insertText: "- 无序列表项\n- 无序列表项\n", detail: "插入无序列表", documentation: "- 无序列表项\n- 无序列表项" },
-        { label: "ol", kind: languages.CompletionItemKind.Keyword, insertText: "1. 有序列表项\n2. 有序列表项\n", detail: "插入有序列表", documentation: "1. 有序列表项\n2. 有序列表项" },
-        { label: "task", kind: languages.CompletionItemKind.Keyword, insertText: "- [x] 已完成任务\n- [ ] 未完成任务\n", detail: "插入任务列表", documentation: "- [x] 已完成任务\n- [ ] 未完成任务" },
-
-        // 引用和表格
-        { label: "quote", kind: languages.CompletionItemKind.Keyword, insertText: "> 引用文本\n", detail: "插入引用", documentation: "> 引用文本" },
-        { label: "table", kind: languages.CompletionItemKind.Keyword, insertText: "| 表头1 | 表头2 |\n| ---- | ---- |\n| 单元格1 | 单元格2 |\n", detail: "插入表格", documentation: "| 表头1 | 表头2 |\n| ---- | ---- |\n| 单元格1 | 单元格2 |" },
-
-        // 数学公式
-        { label: "math", kind: languages.CompletionItemKind.Function, insertText: "$$数学公式$$", detail: "插入数学公式", documentation: "$$数学公式$$" },
-        { label: "mathblock", kind: languages.CompletionItemKind.Function, insertText: "$$\n数学公式\n$$", detail: "插入块级数学公式", documentation: "$$\n数学公式\n$$" },
-
-        // 媒体
-        { label: "youtube", kind: languages.CompletionItemKind.Function, insertText: "[youtube][视频标题](https://www.youtube.com/embed/视频ID)", detail: "插入YouTube视频", documentation: "[youtube][视频标题](https://www.youtube.com/embed/视频ID)" },
-        { label: "bili", kind: languages.CompletionItemKind.Function, insertText: "[bili][视频标题](https://player.bilibili.com/player.html?aid=视频ID)", detail: "插入B站视频", documentation: "[bili][视频标题](https://player.bilibili.com/player.html?aid=视频ID)" },
-        { label: "video", kind: languages.CompletionItemKind.Function, insertText: "[video][视频标题](海报链接|视频链接)", detail: "插入视频", documentation: "[video][视频标题](海报链接|视频链接)" },
-        { label: "audio", kind: languages.CompletionItemKind.Function, insertText: "[audio][音频标题](音频链接)", detail: "插入音频", documentation: "[audio][音频标题](音频链接)" },
-
-        // 容器
-        { label: "info", kind: languages.CompletionItemKind.Function, insertText: "::: info\n信息内容\n:::", detail: "插入信息容器", documentation: "::: info\n信息内容\n:::" },
-        { label: "tip", kind: languages.CompletionItemKind.Function, insertText: "::: tip\n提示内容\n:::", detail: "插入提示容器", documentation: "::: tip\n提示内容\n:::" },
-        { label: "warning", kind: languages.CompletionItemKind.Function, insertText: "::: warning\n警告内容\n:::", detail: "插入警告容器", documentation: "::: warning\n警告内容\n:::" },
-        { label: "danger", kind: languages.CompletionItemKind.Function, insertText: "::: danger\n危险内容\n:::", detail: "插入危险容器", documentation: "::: danger\n危险内容\n:::" },
-        { label: "details", kind: languages.CompletionItemKind.Function, insertText: "::: details 详情标题\n详情内容\n:::", detail: "插入详情容器", documentation: "::: details 详情标题\n详情内容\n:::" },
-
-        // 其他
-        { label: "encrypt", kind: languages.CompletionItemKind.Function, insertText: "[encrypt]\n加密内容\n[/encrypt]", detail: "插入加密块", documentation: "[encrypt]\n加密内容\n[/encrypt]" },
-        { label: "html", kind: languages.CompletionItemKind.Function, insertText: "[html]\n<div>HTML内容</div>\n[/html]", detail: "插入原始HTML", documentation: "[html]\n<div>HTML内容</div>\n[/html]" },
-        { label: "fieldset", kind: languages.CompletionItemKind.Function, insertText: "--字段集标题--\n字段集内容\n-- --", detail: "插入字段集", documentation: "--字段集标题--\n字段集内容\n-- --" },
-        { label: "sticker", kind: languages.CompletionItemKind.Function, insertText: "![sticker](sticker/yellow-face/18)", detail: "插入贴纸", documentation: "![sticker](sticker/yellow-face/18)" }
-      ];
-
-      // 过滤匹配的建议
-      const filteredSuggestions = allSuggestions.filter(suggestion =>
-        suggestion.label.toLowerCase().startsWith(triggerText.toLowerCase())
-        || suggestion.detail.toLowerCase().includes(triggerText.toLowerCase())
-      );
-
-      // 构建返回结果
-      const result = {
-        suggestions: filteredSuggestions.map(suggestion => ({
-          ...suggestion,
-          range: {
-            startLineNumber: position.lineNumber,
-            startColumn: slashPosition + 1,
-            endLineNumber: position.lineNumber,
-            endColumn: position.column
+          // 计算建议面板位置
+          const domPosition = editor.getTargetAtClientPoint(column, position.lineNumber);
+          if (domPosition && domPosition.position) {
+            const element = editorContainer.value;
+            if (element) {
+              suggestionPosition.value = {
+                x: domPosition.position.left,
+                y: domPosition.position.top + 20
+              };
+            }
           }
-        }))
-      };
-
-      return result;
+        }
+      } else if (column > 0 && lineContent[column - 1] === "/") {
+        // 过滤建议
+        const textAfterSlash = lineContent.substring(lineContent.lastIndexOf("/") + 1, column + 1);
+        inputText.value = textAfterSlash;
+        filterSuggestions(textAfterSlash);
+      } else {
+        // 隐藏建议
+        showSuggestions.value = false;
+        inputText.value = "";
+      }
     }
-  });
-
-  // 保存注册的提供程序，以便在组件卸载时注销
-  destroyFns.push(() => {
-    completionProvider.dispose();
   });
 };
 
@@ -336,7 +385,7 @@ initViewer(markdownRef);
     <div class="flex grow overflow-hidden border border-dark-200 dark:border-dark-700">
       <div
         :class="twMerge(
-          'w-1/2 min-w-24 h-full',
+          'w-1/2 min-w-24 h-full relative',
           currentView === 'both' && '',
           currentView === 'edit' && 'w-full',
           currentView === 'preview' && 'hidden'
@@ -351,6 +400,66 @@ initViewer(markdownRef);
           ref="editorContainer"
           class="h-full"
         />
+
+        <!-- 智能提示面板 -->
+        <div
+          v-if="showSuggestions && suggestions.length > 0"
+          class="absolute z-50 max-h-96 w-80 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-dark-800"
+          :style="{
+            left: `${suggestionPosition.x}px`,
+            top: `${suggestionPosition.y}px`
+          }"
+        >
+          <div class="mb-2 flex items-center justify-between border-b border-gray-200 pb-2 dark:border-gray-700">
+            <div class="flex items-center gap-2">
+              <div class="rounded-full bg-purple-100 p-1 dark:bg-purple-900">
+                <span class="font-medium text-purple-600 dark:text-purple-300">✨</span>
+              </div>
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">智能提示</span>
+            </div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">
+              12
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div
+              v-for="(item, index) in suggestions"
+              :key="item.id"
+              :class="twMerge(
+                'flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700',
+                index === selectedSuggestion && 'bg-purple-100 dark:bg-purple-900'
+              )"
+              @click="insertSuggestion(item)"
+            >
+              <div class="flex items-center gap-3">
+                <div class="flex size-6 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                  {{ index + 1 }}
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="rounded bg-gray-200 p-1 text-sm dark:bg-gray-600">
+                    {{ item.icon }}
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {{ item.label }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                      插入{{ item.label }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                {{ item.shortcut }}
+              </div>
+            </div>
+          </div>
+          <div class="mt-2 flex items-center justify-between border-t border-gray-200 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+            <div>⇧ # 导航</div>
+            <div>Enter 选择</div>
+            <div>Esc 关闭</div>
+          </div>
+        </div>
       </div>
       <div
         ref="resizeRef"
