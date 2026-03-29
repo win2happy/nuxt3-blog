@@ -326,9 +326,9 @@ async function backupToGithub(
       date: new Date(payload.timestamp).toISOString()
     };
 
-    // 查找是否已存在相同 ID 和类型的条目
+    // 查找是否已存在相同 ID 的条目
     const existingIndex = backupData.entries.findIndex(
-      e => e.id === payload.id && e.contentType === payload.contentType
+      e => e.id === payload.id
     );
 
     if (existingIndex >= 0) {
