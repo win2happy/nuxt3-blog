@@ -104,6 +104,70 @@ const initEditor = async () => {
       currentText.value = text;
     }, 500)
   );
+
+  // 注册代码补全提供程序
+  const { languages } = await import("monaco-editor");
+  const completionProvider = languages.registerCompletionItemProvider("markdown", {
+    triggerCharacters: ["/"],
+    provideCompletionItems: (model, position) => {
+      const textUntilPosition = model.getValueInRange({
+        startLineNumber: position.lineNumber,
+        startColumn: 1,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column
+      });
+
+      const lastSlashIndex = textUntilPosition.lastIndexOf("/");
+      if (lastSlashIndex === -1) {
+        return { suggestions: [] };
+      }
+
+      const triggerText = textUntilPosition.substring(lastSlashIndex + 1);
+
+      // 定义所有可用的快捷键
+      const allSuggestions = [
+        { label: "link", kind: languages.CompletionItemKind.Function, insertText: "#[链接文本](https://example.com)", detail: "插入链接" },
+        { label: "image", kind: languages.CompletionItemKind.Function, insertText: "![图片描述](图片链接)", detail: "插入图片" },
+        { label: "code", kind: languages.CompletionItemKind.Function, insertText: "```javascript\n// 代码\n```", detail: "插入代码块" },
+        { label: "math", kind: languages.CompletionItemKind.Function, insertText: "$$数学公式$$", detail: "插入数学公式" },
+        { label: "youtube", kind: languages.CompletionItemKind.Function, insertText: "[youtube][视频标题](https://www.youtube.com/embed/视频ID)", detail: "插入YouTube视频" },
+        { label: "bili", kind: languages.CompletionItemKind.Function, insertText: "[bili][视频标题](https://player.bilibili.com/player.html?aid=视频ID)", detail: "插入B站视频" },
+        { label: "video", kind: languages.CompletionItemKind.Function, insertText: "[video][视频标题](海报链接|视频链接)", detail: "插入视频" },
+        { label: "audio", kind: languages.CompletionItemKind.Function, insertText: "[audio][音频标题](音频链接)", detail: "插入音频" },
+        { label: "info", kind: languages.CompletionItemKind.Function, insertText: "::: info\n信息内容\n:::", detail: "插入信息容器" },
+        { label: "tip", kind: languages.CompletionItemKind.Function, insertText: "::: tip\n提示内容\n:::", detail: "插入提示容器" },
+        { label: "warning", kind: languages.CompletionItemKind.Function, insertText: "::: warning\n警告内容\n:::", detail: "插入警告容器" },
+        { label: "danger", kind: languages.CompletionItemKind.Function, insertText: "::: danger\n危险内容\n:::", detail: "插入危险容器" },
+        { label: "details", kind: languages.CompletionItemKind.Function, insertText: "::: details 详情标题\n详情内容\n:::", detail: "插入详情容器" },
+        { label: "encrypt", kind: languages.CompletionItemKind.Function, insertText: "[encrypt]\n加密内容\n[/encrypt]", detail: "插入加密块" },
+        { label: "html", kind: languages.CompletionItemKind.Function, insertText: "[html]\n<div>HTML内容</div>\n[/html]", detail: "插入原始HTML" },
+        { label: "fieldset", kind: languages.CompletionItemKind.Function, insertText: "--字段集标题--\n字段集内容\n-- --", detail: "插入字段集" },
+        { label: "sticker", kind: languages.CompletionItemKind.Function, insertText: "![sticker](sticker/yellow-face/18)", detail: "插入贴纸" }
+      ];
+
+      // 过滤匹配的建议
+      const filteredSuggestions = allSuggestions.filter(suggestion =>
+        suggestion.label.toLowerCase().startsWith(triggerText.toLowerCase())
+      );
+
+      return {
+        suggestions: filteredSuggestions.map(suggestion => ({
+          ...suggestion,
+          range: {
+            startLineNumber: position.lineNumber,
+            startColumn: lastSlashIndex + 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column
+          }
+        }))
+      };
+    }
+  });
+
+  // 保存注册的提供程序，以便在组件卸载时注销
+  destroyFns.push(() => {
+    completionProvider.dispose();
+  });
 };
 
 watch(inputValue, (text) => {
