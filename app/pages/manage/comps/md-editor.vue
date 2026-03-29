@@ -243,6 +243,26 @@ const initEditor = async () => {
 
   // 监听键盘输入
   editor.onKeyDown((e) => {
+    if (e.key === "/") {
+      const position = editor.getPosition();
+      if (position) {
+        const lineContent = editor.getModel()!.getLineContent(position.lineNumber);
+        const column = position.column - 1;
+        const textBefore = lineContent.substring(0, column);
+        if (textBefore.trim() === "") {
+          // 延迟显示，确保DOM更新
+          setTimeout(() => {
+            showSuggestions.value = true;
+            filterSuggestions("");
+            // 使用固定位置，确保面板可见
+            suggestionPosition.value = {
+              x: 100,
+              y: 100
+            };
+          }, 100);
+        }
+      }
+    }
     handleKeyDown(e.event);
   });
 
@@ -262,17 +282,11 @@ const initEditor = async () => {
           showSuggestions.value = true;
           filterSuggestions("");
 
-          // 计算建议面板位置
-          const domPosition = editor.getTargetAtClientPoint(column, position.lineNumber);
-          if (domPosition && domPosition.position) {
-            const element = editorContainer.value;
-            if (element) {
-              suggestionPosition.value = {
-                x: domPosition.position.left,
-                y: domPosition.position.top + 20
-              };
-            }
-          }
+          // 使用固定位置，确保面板可见
+          suggestionPosition.value = {
+            x: 100,
+            y: 100
+          };
         }
       } else if (column > 0 && lineContent[column - 1] === "/") {
         // 过滤建议
