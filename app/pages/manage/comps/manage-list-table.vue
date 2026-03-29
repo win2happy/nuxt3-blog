@@ -6,6 +6,7 @@ import { useStatusText } from "~/utils/nuxt/manage";
 import { useManageList } from "~/utils/nuxt/manage/list";
 import { formatTime } from "~/utils/nuxt/format-time";
 import { useStaging } from "~/utils/hooks/useStaging";
+import { getPasswordBackups, getBackupConfig } from "~/utils/nuxt/manage/password-backup";
 
 const props = defineProps<{
   filterFn: (item: T, search: string) => boolean;
@@ -15,6 +16,46 @@ const { targetTab, list, originList, decryptedList } = await useManageList<T>();
 const { isItemStaged } = useStaging();
 
 const searchValue = ref("");
+
+// 密码模态框相关
+const showPasswordModal = ref(false);
+const currentItem = ref<T | null>(null);
+const passwordInfo = ref<{ password: string; title?: string; date: string } | null>(null);
+const loadingPassword = ref(false);
+
+// 获取密码并显示模态框
+const showPasswordInfo = async (item: T) => {
+  if (!item.encrypt) return;
+
+  // 重置密码信息，确保不会显示之前的密码
+  passwordInfo.value = null;
+  currentItem.value = item;
+  loadingPassword.value = true;
+
+  try {
+    const backupConfig = getBackupConfig();
+    if (backupConfig.github) {
+      const backups = await getPasswordBackups(backupConfig.github);
+      if (backups) {
+        const entry = backups.entries.find(
+          e => e.id === item.id
+        );
+        if (entry) {
+          passwordInfo.value = {
+            password: entry.password,
+            title: entry.title || item.title,
+            date: entry.date
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to get password:", error);
+  } finally {
+    loadingPassword.value = false;
+    showPasswordModal.value = true;
+  }
+};
 
 const searchedList = computed(() => {
   return decryptedList.value.filter((item) => {
@@ -171,10 +212,17 @@ const deleteSelect = async () => {
                 {{ formatTime(item.time, 'date') }}
               </td>
               <td :class="twMerge($style.td, 'max-md:hidden')">
-                <Lock
+                <div
                   v-if="item.encrypt"
-                  class="mr-1 size-4"
-                />
+                  class="flex items-center gap-2"
+                >
+                  <button
+                    class="cursor-pointer text-blue-500 transition-colors hover:text-blue-700"
+                    @click="showPasswordInfo(item)"
+                  >
+                    <Lock class="size-4" />
+                  </button>
+                </div>
               </td>
               <td :class="$style.td">
                 <CommonCheckbox
@@ -210,6 +258,70 @@ const deleteSelect = async () => {
     </template>
     <template #body>
       <p v-html="$t('selected-items', [selectedList.length])" />
+    </template>
+  </common-modal>
+
+  <!-- 密码信息模态框 -->
+  <common-modal
+    v-model="showPasswordModal"
+    ok-test-id="password-modal-close"
+  >
+    <template #title>
+      {{ $t('password-info') }}
+    </template>
+    <template #body>
+      <div
+        v-if="loadingPassword"
+        class="py-4 text-center"
+      >
+        <p>加载密码中...</p>
+      </div>
+      <div
+        v-else-if="passwordInfo"
+        class="space-y-4"
+      >
+        <div>
+          <label class="mb-1 block text-sm font-medium text-dark-700">
+            {{ $t('title') }}
+          </label>
+          <p class="text-sm text-dark-500">
+            {{ passwordInfo.title || $t('no-title') }}
+          </p>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-dark-700">
+            {{ $t('password') }}
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              :value="passwordInfo.password"
+              readonly
+              class="flex-1 rounded-md border border-dark-300 px-3 py-2 text-sm"
+            >
+            <button
+              class="rounded-md bg-blue-500 px-3 py-2 text-sm text-white transition-colors hover:bg-blue-600"
+              @click="navigator.clipboard.writeText(passwordInfo.password)"
+            >
+              {{ $t('copy') }}
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-dark-700">
+            {{ $t('backup-date') }}
+          </label>
+          <p class="text-sm text-dark-500">
+            {{ formatTime(new Date(passwordInfo.date).getTime(), 'datetime') }}
+          </p>
+        </div>
+      </div>
+      <div
+        v-else
+        class="py-4 text-center"
+      >
+        <p>{{ $t('password-not-found') }}</p>
+      </div>
     </template>
   </common-modal>
 </template>

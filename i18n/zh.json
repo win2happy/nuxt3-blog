@@ -227,5 +227,9 @@
   "view-mode-card": "卡片模式",
   "view-mode-calendar": "日历模式",
   "password-backup-success": "密码备份成功",
-  "password-backup-success-desc": "密码已备份到 {0}"
+  "password-backup-success-desc": "密码已备份到 {0}",
+  "password-info": "密码信息",
+  "backup-date": "备份日期",
+  "no-title": "无标题",
+  "password-not-found": "密码未找到"
 }

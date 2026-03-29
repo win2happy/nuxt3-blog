@@ -478,13 +478,14 @@ export async function getPasswordBackups(
       return null;
     }
 
-    console.log("[PasswordBackup] Found backup files:", backupFiles.length);
+    console.log("[PasswordBackup] Found backup files:", backupFiles.length, backupFiles);
 
     // 读取所有文件内容并合并
     const allEntries: PasswordBackupEntry[] = [];
 
     for (const filePath of backupFiles) {
       try {
+        console.log("[PasswordBackup] Reading file:", filePath);
         const fileContent = await getFileContent(
           githubConfig.owner!,
           githubConfig.repo!,
@@ -494,12 +495,15 @@ export async function getPasswordBackups(
 
         if (fileContent) {
           const data: PasswordBackupData = JSON.parse(fileContent.content);
+          console.log("[PasswordBackup] File entries count:", data.entries.length);
           allEntries.push(...data.entries);
         }
       } catch (error) {
         console.error(`[PasswordBackup] Failed to read file ${filePath}:`, error);
       }
     }
+
+    console.log("[PasswordBackup] Total entries before dedup:", allEntries.length);
 
     if (allEntries.length === 0) {
       console.log("[PasswordBackup] No backup entries found");
@@ -509,9 +513,22 @@ export async function getPasswordBackups(
     // 按时间倒序排序
     allEntries.sort((a, b) => b.timestamp - a.timestamp);
 
+    // 按ID去重，保留最新的条目
+    const uniqueEntries = [];
+    const seenIds = new Set<number>();
+    for (const entry of allEntries) {
+      if (!seenIds.has(entry.id)) {
+        seenIds.add(entry.id);
+        uniqueEntries.push(entry);
+      }
+    }
+
+    console.log("[PasswordBackup] Total entries after dedup:", uniqueEntries.length);
+    console.log("[PasswordBackup] All IDs:", uniqueEntries.map(e => e.id));
+
     // 解密密码
     if (githubConfig.masterKey) {
-      allEntries.forEach((entry) => {
+      uniqueEntries.forEach((entry) => {
         entry.password = xorDecrypt(entry.encryptedPassword, githubConfig.masterKey!);
       });
     }
@@ -519,7 +536,7 @@ export async function getPasswordBackups(
     return {
       version: 1,
       lastUpdated: Date.now(),
-      entries: allEntries
+      entries: uniqueEntries
     };
   } catch (error) {
     console.error("[PasswordBackup] Get password backups failed:", error);
