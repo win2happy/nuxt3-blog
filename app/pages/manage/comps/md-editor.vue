@@ -168,6 +168,8 @@ const initEditor = async () => {
   languages.registerCompletionItemProvider("markdown", {
     triggerCharacters: ["/"],
     provideCompletionItems: (model, position) => {
+      console.log("触发补全，当前位置:", position);
+
       const textBeforeCursor = model.getValueInRange({
         startLineNumber: position.lineNumber,
         startColumn: 1,
@@ -175,7 +177,11 @@ const initEditor = async () => {
         endColumn: position.column
       });
 
+      console.log("光标前文本:", textBeforeCursor);
+
       const slashIndex = textBeforeCursor.lastIndexOf("/");
+      console.log("斜线位置:", slashIndex);
+
       if (slashIndex !== -1) {
         const range = {
           startLineNumber: position.lineNumber,
@@ -191,11 +197,27 @@ const initEditor = async () => {
           insertText: item.insertText,
           range: range
         }));
+
+        console.log("返回补全项数量:", completions.length);
         return {
           suggestions: completions
         };
       }
+
+      console.log("没有找到斜线，返回空补全");
       return { suggestions: [] };
+    }
+  });
+
+  // 监听键盘事件，手动触发补全
+  editor.onKeyDown((e) => {
+    console.log("按键:", e.key);
+    if (e.key === "/") {
+      console.log("按下 / 键，等待后触发补全");
+      setTimeout(() => {
+        console.log("手动触发补全");
+        editor.trigger("keyboard", "editor.action.triggerSuggest", {});
+      }, 50);
     }
   });
 };
