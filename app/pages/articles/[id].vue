@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { addScrollListener, rmScrollListener } from "~/utils/common/scroll-event";
 import type { ArticleItem } from "~/utils/common/types";
+import type { ShareData } from "~/utils/social-share";
 import { useContentPage } from "~/utils/nuxt/public/detail";
 import { Comments, Visitors, WroteDate } from "~/utils/nuxt/public/components";
 import { useCommonSEOTitle } from "~/utils/nuxt/utils";
 import { initViewer } from "~/utils/nuxt/viewer";
+import config from "~/../config";
 
 const { originList, item, menuItems, htmlContent, markdownRef } = await useContentPage<ArticleItem>(() => {
   const hash = useRoute().hash;
@@ -16,6 +18,14 @@ const { originList, item, menuItems, htmlContent, markdownRef } = await useConte
     });
   }
 });
+
+const route = useRoute();
+const shareData = computed<ShareData>(() => ({
+  title: item.title,
+  url: `${config.domain}${route.fullPath}`,
+  description: item.excerpt || "",
+  coverImage: item.coverImage
+}));
 const relativeArticles = originList.filter(i => i.id !== item.id)
   .map<{ count: number; item: ArticleItem }>(i => ({ item: i, count: i.tags.filter(t => item.tags.includes(t)).length }))
   .filter(i => i && i.count > 0)
@@ -24,7 +34,6 @@ const relativeArticles = originList.filter(i => i.id !== item.id)
 
 // 计算上一篇和下一篇文章
 // 获取URL中的tag参数
-const route = useRoute();
 const tagParam = route.query.tag as string | undefined;
 const selectedTags = tagParam ? tagParam.split(",") : [];
 
@@ -176,6 +185,10 @@ initViewer(root);
               {{ tag }}
             </the-tag>
           </div>
+          <SocialShare
+            v-if="!item.encrypt && config.socialShare?.enabled"
+            :share-data="shareData"
+          />
         </div>
 
         <article

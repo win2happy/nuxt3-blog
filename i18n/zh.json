@@ -239,5 +239,18 @@
   "copy-failed-desc": "请手动复制密码",
   "encryption-type": "加密类型",
   "full-encryption": "🔒 全篇加密",
-  "partial-encryption": "🔓 部分加密"
+  "partial-encryption": "🔓 部分加密",
+  "share": "分享",
+  "shareTo": "分享到",
+  "copyLink": "复制链接",
+  "linkCopied": "链接已复制",
+  "weibo": "微博",
+  "QQ": "QQ",
+  "zhihu": "知乎",
+  "douban": "豆瓣",
+  "twitter": "Twitter",
+  "linkedin": "LinkedIn",
+  "facebook": "Facebook",
+  "telegram": "Telegram",
+  "email": "邮件"
 }
