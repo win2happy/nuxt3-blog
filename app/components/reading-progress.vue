@@ -28,26 +28,6 @@ const props = withDefaults(defineProps<{
 
 const progress = ref(0);
 
-// 获取当前系统主题颜色
-const getCurrentThemeColor = (): string => {
-  if (import.meta.client) {
-    const classList = document.documentElement.classList;
-    const themeColors = config.themeColor || ["cyan"];
-
-    for (const color of themeColors) {
-      if (classList.contains(`theme-${color}`)) {
-        return color;
-      }
-    }
-
-    // 如果没有找到，返回第一个主题颜色
-    return themeColors[0];
-  }
-
-  // 服务端渲染时返回默认颜色
-  return config.themeColor?.[0] || "cyan";
-};
-
 const containerStyle = computed(() => ({
   position: "fixed",
   [props.position]: "0",
@@ -60,37 +40,30 @@ const containerStyle = computed(() => ({
 }));
 
 const progressStyle = computed(() => {
-  // 支持 Tailwind 主题色或自定义颜色
-  let colorValue = "";
+  // 支持自定义颜色或使用主题色变量
+  let backgroundColor: string;
+  let boxShadowColor: string;
 
-  // 如果 color 为空，使用系统当前主题颜色
-  const actualColor = props.color || getCurrentThemeColor();
-
-  if (actualColor.startsWith("#")) {
-    colorValue = actualColor;
+  if (props.color) {
+    // 如果有自定义颜色，直接使用
+    backgroundColor = props.color.startsWith("#")
+      ? props.color
+      : `var(--color-${props.color}-500, var(--color-primary-500))`;
+    boxShadowColor = props.color.startsWith("#")
+      ? `${props.color}40`
+      : `var(--color-${props.color}-500)40`;
   } else {
-    // Tailwind 颜色映射
-    const colorMap: Record<string, string> = {
-      cyan: "#06b6d4",
-      sky: "#0ea5e9",
-      teal: "#14b8a6",
-      emerald: "#10b981",
-      purple: "#a855f7",
-      indigo: "#6366f1",
-      fuchsia: "#d946ef",
-      orange: "#f97316",
-      amber: "#f59e0b",
-      primary: "#3b82f6"
-    };
-    colorValue = colorMap[actualColor] || colorMap["cyan"];
+    // 没有自定义颜色时，使用主题色变量
+    backgroundColor = "var(--color-primary-500)";
+    boxShadowColor = "var(--color-primary-500)40";
   }
 
   return {
     width: `${progress.value}%`,
     height: "100%",
-    backgroundColor: colorValue,
+    backgroundColor,
     transition: "width 0.15s ease-out",
-    boxShadow: `0 0 10px ${colorValue}40`
+    boxShadow: `0 0 10px ${boxShadowColor}`
   };
 });
 
