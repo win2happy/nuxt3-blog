@@ -18,7 +18,7 @@ export async function useContentPage<T extends CommonItem> (onAfterInsertHtml?: 
   
   const destroyFns = useUnmount();
 
-  const { originList, decryptedItem, decryptedMd } = await useBlogItem<T>(id, targetTab);
+  const { originList, decryptedItem, decryptedMd, originMd } = await useBlogItem<T>(id, targetTab);
 
   const { htmlContent, markdownRef, menuItems } = await useMarkdownParser({ mdValueRef: decryptedMd, onAfterInsertHtml, destroyFns })
 
@@ -43,6 +43,7 @@ export async function useContentPage<T extends CommonItem> (onAfterInsertHtml?: 
     item: decryptedItem.value,
     htmlContent,
     menuItems,
-    markdownRef
+    markdownRef,
+    originMd
   };
 }

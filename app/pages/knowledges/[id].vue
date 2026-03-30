@@ -1,13 +1,23 @@
 <script setup lang="ts">
 import { Link } from "lucide-vue-next";
 import type { KnowledgeItem } from "~/utils/common/types";
+import type { ShareData } from "~/utils/social-share";
 import { useContentPage } from "~/utils/nuxt/public/detail";
 import { Visitors, Comments, WroteDate } from "~/utils/nuxt/public/components";
 import { useCommonSEOTitle } from "~/utils/nuxt/utils";
 import { initViewer } from "~/utils/nuxt/viewer";
+import config from "~/../config";
 
 const { item, markdownRef, htmlContent } = await useContentPage<KnowledgeItem>();
 useCommonSEOTitle(computed(() => item.title));
+
+const route = useRoute();
+const shareData = computed<ShareData>(() => ({
+  title: item.title,
+  url: `${config.domain}${route.fullPath}`,
+  description: item.summary || item.title,
+  coverImage: item.cover
+}));
 
 const root = ref<HTMLElement>();
 initViewer(root);
@@ -57,6 +67,10 @@ initViewer(root);
           <div class="flex items-center space-x-4 text-sm text-dark-500 dark:text-dark-400">
             <WroteDate :item="item" />
             <Visitors :visitors="item._visitors" />
+            <SocialShare
+              v-if="!item.encrypt && config.socialShare?.enabled"
+              :share-data="shareData"
+            />
           </div>
         </div>
 

@@ -5,6 +5,7 @@ export interface ShareData {
   coverImage?: string;
   author?: string;
   date?: string;
+  tags?: string[];
 }
 
 export type SharePlatform =

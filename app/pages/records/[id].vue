@@ -1,14 +1,24 @@
 <script setup lang="ts">
 import type { RecordItem } from "~/utils/common/types";
+import type { ShareData } from "~/utils/social-share";
 import { formatTime } from "~/utils/nuxt/format-time";
 import { translate } from "~/utils/nuxt/i18n";
 import { useContentPage } from "~/utils/nuxt/public/detail";
 import { Visitors, Comments, WroteDate } from "~/utils/nuxt/public/components";
 import { useCommonSEOTitle } from "~/utils/nuxt/utils";
 import { initViewer } from "~/utils/nuxt/viewer";
+import config from "~/../config";
 
 const { item, htmlContent, markdownRef } = await useContentPage<RecordItem>();
 useCommonSEOTitle(computed(() => `${translate("records")}: ${formatTime(item.time, "date")}`));
+
+const route = useRoute();
+const shareData = computed<ShareData>(() => ({
+  title: `${translate("records")}: ${formatTime(item.time, "date")}`,
+  url: `${config.domain}${route.fullPath}`,
+  description: item.images[0]?.alt || `${translate("records")}: ${formatTime(item.time, "date")}`,
+  coverImage: item.images[0]?.src
+}));
 
 const root = ref<HTMLElement>();
 initViewer(root);
@@ -51,9 +61,15 @@ initViewer(root);
         />
 
         <div class="border-t border-dark-100 py-6 dark:border-dark-700">
-          <div class="flex items-center space-x-4 text-sm text-dark-500 dark:text-dark-400">
-            <WroteDate :item="item" />
-            <Visitors :visitors="item._visitors" />
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-4 text-sm text-dark-500 dark:text-dark-400">
+              <WroteDate :item="item" />
+              <Visitors :visitors="item._visitors" />
+            </div>
+            <SocialShare
+              v-if="!item.encrypt && config.socialShare?.enabled"
+              :share-data="shareData"
+            />
           </div>
         </div>
       </div>

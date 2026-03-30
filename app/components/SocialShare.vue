@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Share2, X, Check, Copy, Mail, MessageCircle, Twitter, Linkedin, Facebook, Send, BookOpen, Heart, Share } from "lucide-vue-next";
+import { Share2, X, Check, Copy, Mail, MessageCircle, Twitter, Linkedin, Facebook, Send, BookOpen, Heart, Share, Image as ImageIcon } from "lucide-vue-next";
 import type { ShareData, SharePlatform } from "~/utils/social-share";
 import { translate } from "~/utils/nuxt/i18n";
 import config from "~/../config";
@@ -9,6 +9,7 @@ const props = defineProps<{
 }>();
 
 const { handleShare, sharePanelVisible, showCopiedToast, toggleSharePanel, closeSharePanel, setShareData } = useSocialShare();
+const showCardPreview = ref(false);
 
 onMounted(() => {
   setShareData(props.shareData);
@@ -219,9 +220,25 @@ onBeforeUnmount(() => {
               </span>
             </button>
           </div>
+
+          <div class="mt-4 border-t border-dark-200 pt-4 dark:border-dark-700">
+            <button
+              class="dark:bg-primary-900/20 dark:hover:bg-primary-900/30 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-50 px-4 py-3 font-medium text-primary-600 transition hover:bg-primary-100 dark:text-primary-400"
+              @click="showCardPreview = true; closeSharePanel();"
+            >
+              <ImageIcon class="size-5" />
+              <span>{{ translate('generateShareCard') }}</span>
+            </button>
+          </div>
         </div>
       </Transition>
     </Teleport>
+
+    <ShareCardPreview
+      :show="showCardPreview"
+      :share-data="shareData"
+      @close="showCardPreview = false"
+    />
 
     <Teleport to="body">
       <Transition name="toast">

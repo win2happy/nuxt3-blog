@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { addScrollListener, rmScrollListener } from "~/utils/common/scroll-event";
+import { extractArticlePreview } from "~/utils/common/extract-preview";
 import type { ArticleItem } from "~/utils/common/types";
 import type { ShareData } from "~/utils/social-share";
 import { useContentPage } from "~/utils/nuxt/public/detail";
@@ -8,7 +9,7 @@ import { useCommonSEOTitle } from "~/utils/nuxt/utils";
 import { initViewer } from "~/utils/nuxt/viewer";
 import config from "~/../config";
 
-const { originList, item, menuItems, htmlContent, markdownRef } = await useContentPage<ArticleItem>(() => {
+const { originList, item, menuItems, htmlContent, markdownRef, originMd } = await useContentPage<ArticleItem>(() => {
   const hash = useRoute().hash;
   if (hash) {
     window.scrollTo({
@@ -20,11 +21,13 @@ const { originList, item, menuItems, htmlContent, markdownRef } = await useConte
 });
 
 const route = useRoute();
+const articlePreview = computed(() => extractArticlePreview(originMd));
 const shareData = computed<ShareData>(() => ({
   title: item.title,
   url: `${config.domain}${route.fullPath}`,
-  description: item.excerpt || "",
-  coverImage: item.coverImage
+  description: articlePreview.value.excerpt || item.title,
+  coverImage: item.coverImage || articlePreview.value.coverImage,
+  tags: item.tags
 }));
 const relativeArticles = originList.filter(i => i.id !== item.id)
   .map<{ count: number; item: ArticleItem }>(i => ({ item: i, count: i.tags.filter(t => item.tags.includes(t)).length }))
