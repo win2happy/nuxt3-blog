@@ -23,6 +23,9 @@ const useCustomGradient = ref(false);
 const gradientFrom = ref("#3b82f6");
 const gradientTo = ref("#8b5cf6");
 
+// 显示完整内容或简介
+const showFullContent = ref(false);
+
 const styleOptions = [
   { key: "simple", label: "简约", icon: "📝", desc: "简洁清爽" },
   { key: "gradient", label: "渐变", icon: "🎨", desc: "色彩渐变" },
@@ -47,6 +50,8 @@ const presetGradients = [
 // 计算带渐变色的分享数据
 const shareDataWithGradient = computed(() => ({
   ...props.shareData,
+  // 当显示完整内容时，使用fullContent作为description
+  description: showFullContent.value ? props.shareData.fullContent : props.shareData.description,
   gradient: cardStyle.value === "gradient" && useCustomGradient.value
     ? {
         from: gradientFrom.value,
@@ -285,6 +290,41 @@ const downloadCard = async () => {
                   <span class="font-medium">{{ size.label }}</span>
                   <span class="font-mono text-[10px] opacity-60">{{ size.desc }}</span>
                 </button>
+              </div>
+            </div>
+
+            <div>
+              <div class="mb-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="size-4 rounded bg-gradient-to-r from-green-500 to-blue-500" />
+                  <label class="text-sm font-semibold text-dark-800 dark:text-dark-200">
+                    显示内容
+                  </label>
+                </div>
+                <!-- 开关 -->
+                <button
+                  :class="[
+                    'relative h-6 w-11 rounded-full transition-colors duration-200',
+                    showFullContent ? 'bg-primary-500' : 'bg-dark-300 dark:bg-dark-600'
+                  ]"
+                  @click="showFullContent = !showFullContent"
+                >
+                  <span
+                    :class="[
+                      'absolute left-1 top-1 size-4 rounded-full bg-white transition-transform duration-200',
+                      showFullContent ? 'translate-x-5' : 'translate-x-0'
+                    ]"
+                  />
+                </button>
+              </div>
+              <div class="text-xs text-dark-500 dark:text-dark-400">
+                {{ showFullContent ? '显示完整文章内容' : '显示文章简介' }}
+              </div>
+              <div
+                v-if="showFullContent"
+                class="mt-2 rounded-lg bg-yellow-50 p-2 text-xs text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300"
+              >
+                ⚠️ 提示：完整内容模式不适合太长的文章，也不适合包含视频、图片的文章
               </div>
             </div>
 

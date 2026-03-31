@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ShareData } from "~/utils/social-share";
 import config from "~/../config";
+import { parseMarkdownSync } from "~/utils/common/markdown-sync";
 
 const props = defineProps<{
   shareData: ShareData;
@@ -43,6 +44,37 @@ const cardClasses = computed(() => {
 });
 
 const isLightStyle = computed(() => cardStyle.value === "simple");
+
+// 安全的Markdown解析
+const safeParseMarkdown = (content: string | undefined): string => {
+  if (!content || typeof content !== "string") {
+    return "";
+  }
+  try {
+    const html = parseMarkdownSync(content);
+    // 移除可能导致布局问题的元素
+    return html
+      .replace(/<h[1-6]>/g, "<div class=\"font-bold text-lg\">")
+      .replace(/<\/h[1-6]>/g, "</div>")
+      .replace(/<ul>/g, "<div class=\"list-disc pl-4\">")
+      .replace(/<\/ul>/g, "</div>")
+      .replace(/<ol>/g, "<div class=\"list-decimal pl-4\">")
+      .replace(/<\/ol>/g, "</div>")
+      .replace(/<li>/g, "<div class=\"ml-2\">")
+      .replace(/<\/li>/g, "</div>")
+      .replace(/<code>/g, "<span class=\"bg-gray-100 px-1 rounded\">")
+      .replace(/<\/code>/g, "</span>")
+      .replace(/<pre>/g, "<div class=\"bg-gray-100 p-2 rounded overflow-x-auto\">")
+      .replace(/<\/pre>/g, "</div>")
+      .replace(/<blockquote>/g, "<div class=\"border-l-4 border-gray-300 pl-4 italic\">")
+      .replace(/<\/blockquote>/g, "</div>")
+      .replace(/<hr>/g, "<div class=\"h-px bg-gray-300 my-2\"></div>")
+      .replace(/<img[^>]*>/g, ""); // 移除图片
+  } catch (error) {
+    console.error("Markdown parsing error:", error);
+    return content;
+  }
+};
 </script>
 
 <template>
@@ -115,7 +147,7 @@ const isLightStyle = computed(() => cardStyle.value === "simple");
       </div>
 
       <!-- 中间：封面图(左) + 标题简介(右) -->
-      <div class="my-4 flex min-h-0 flex-1 items-stretch gap-6">
+      <div class="my-4 flex min-h-0 flex-1 items-center gap-6">
         <!-- 封面图 - 占 1/3 宽度，高度自适应（图片样式时不显示） -->
         <div
           v-if="shareData.coverImage && cardStyle !== 'image'"
@@ -135,7 +167,7 @@ const isLightStyle = computed(() => cardStyle.value === "simple");
         >
           <h1
             :class="[
-              'mb-5 font-bold leading-tight',
+              'mb-4 font-bold leading-tight',
               cardSize === 'horizontal' ? 'text-4xl' : 'text-5xl',
               isLightStyle ? 'text-gray-900' : 'text-white'
             ]"
@@ -143,15 +175,24 @@ const isLightStyle = computed(() => cardStyle.value === "simple");
             {{ shareData.title }}
           </h1>
 
-          <p
+          <div
             v-if="shareData.description"
+            :class="[
+              'flex-1 leading-relaxed opacity-80',
+              cardSize === 'horizontal' ? 'text-xl' : 'text-2xl',
+              isLightStyle ? 'text-gray-600' : 'text-white/90'
+            ]"
+            v-html="safeParseMarkdown(shareData.description)"
+          />
+          <p
+            v-else
             :class="[
               'leading-relaxed opacity-80',
               cardSize === 'horizontal' ? 'text-xl' : 'text-2xl',
               isLightStyle ? 'text-gray-600' : 'text-white/90'
             ]"
           >
-            {{ shareData.description }}
+            暂无内容
           </p>
         </div>
       </div>

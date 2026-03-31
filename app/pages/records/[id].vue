@@ -9,7 +9,7 @@ import { useCommonSEOTitle } from "~/utils/nuxt/utils";
 import { initViewer } from "~/utils/nuxt/viewer";
 import config from "~/../config";
 
-const { item, htmlContent, markdownRef } = await useContentPage<RecordItem>();
+const { item, htmlContent, markdownRef, originMd } = await useContentPage<RecordItem>();
 useCommonSEOTitle(computed(() => `${translate("records")}: ${formatTime(item.time, "date")}`));
 
 const route = useRoute();
@@ -17,6 +17,7 @@ const shareData = computed<ShareData>(() => ({
   title: `${translate("records")}: ${formatTime(item.time, "date")}`,
   url: `${config.domain}${route.fullPath}`,
   description: item.images[0]?.alt || `${translate("records")}: ${formatTime(item.time, "date")}`,
+  fullContent: originMd,
   coverImage: item.images[0]?.src
 }));
 

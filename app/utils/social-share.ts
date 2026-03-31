@@ -2,6 +2,7 @@ export interface ShareData {
   title: string;
   url: string;
   description?: string;
+  fullContent?: string;
   coverImage?: string;
   author?: string;
   date?: string;

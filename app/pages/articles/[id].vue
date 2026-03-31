@@ -26,6 +26,7 @@ const shareData = computed<ShareData>(() => ({
   title: item.title,
   url: `${config.domain}${route.fullPath}`,
   description: articlePreview.value.excerpt || item.title,
+  fullContent: originMd,
   coverImage: item.coverImage || articlePreview.value.coverImage,
   tags: item.tags
 }));
