@@ -6,6 +6,10 @@ export interface ShareData {
   author?: string;
   date?: string;
   tags?: string[];
+  gradient?: {
+    from: string;
+    to: string;
+  };
 }
 
 export type SharePlatform =

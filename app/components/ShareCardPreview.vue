@@ -18,6 +18,11 @@ const cardSize = ref<"horizontal" | "vertical">("horizontal");
 const isGenerating = ref(false);
 const innerCardRef = ref<HTMLElement>();
 
+// 自定义渐变色
+const useCustomGradient = ref(false);
+const gradientFrom = ref("#3b82f6");
+const gradientTo = ref("#8b5cf6");
+
 const styleOptions = [
   { key: "simple", label: "简约", icon: "📝", desc: "简洁清爽" },
   { key: "gradient", label: "渐变", icon: "🎨", desc: "色彩渐变" },
@@ -28,6 +33,27 @@ const sizeOptions = [
   { key: "horizontal", label: "横向", icon: "↔️", desc: "A4 横向" },
   { key: "vertical", label: "纵向", icon: "↕️", desc: "A4 纵向" }
 ];
+
+// 预设渐变色
+const presetGradients = [
+  { from: "#3b82f6", to: "#8b5cf6", name: "蓝紫" },
+  { from: "#f97316", to: "#ef4444", name: "橙红" },
+  { from: "#10b981", to: "#06b6d4", name: "绿青" },
+  { from: "#ec4899", to: "#8b5cf6", name: "粉紫" },
+  { from: "#f59e0b", to: "#f97316", name: "金黄" },
+  { from: "#6366f1", to: "#a855f7", name: "靛紫" }
+];
+
+// 计算带渐变色的分享数据
+const shareDataWithGradient = computed(() => ({
+  ...props.shareData,
+  gradient: cardStyle.value === "gradient" && useCustomGradient.value
+    ? {
+        from: gradientFrom.value,
+        to: gradientTo.value
+      }
+    : undefined
+}));
 
 const downloadCardRef = ref<HTMLElement>();
 
@@ -131,7 +157,7 @@ const downloadCard = async () => {
               >
                 <ShareCard
                   ref="innerCardRef"
-                  :share-data="shareData"
+                  :share-data="shareDataWithGradient"
                   :style="cardStyle"
                   :size="cardSize"
                 />
@@ -164,6 +190,75 @@ const downloadCard = async () => {
                   <span class="font-medium">{{ style.label }}</span>
                   <span class="text-[10px] opacity-60">{{ style.desc }}</span>
                 </button>
+              </div>
+            </div>
+
+            <!-- 渐变色选择器 - 仅在渐变样式时显示 -->
+            <div v-if="cardStyle === 'gradient'">
+              <div class="mb-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="size-4 rounded bg-gradient-to-r from-blue-500 to-purple-500" />
+                  <label class="text-sm font-semibold text-dark-800 dark:text-dark-200">
+                    自定义渐变色
+                  </label>
+                </div>
+                <!-- 开关 -->
+                <button
+                  :class="[
+                    'relative h-6 w-11 rounded-full transition-colors duration-200',
+                    useCustomGradient ? 'bg-primary-500' : 'bg-dark-300 dark:bg-dark-600'
+                  ]"
+                  @click="useCustomGradient = !useCustomGradient"
+                >
+                  <span
+                    :class="[
+                      'absolute left-1 top-1 size-4 rounded-full bg-white transition-transform duration-200',
+                      useCustomGradient ? 'translate-x-5' : 'translate-x-0'
+                    ]"
+                  />
+                </button>
+              </div>
+              <!-- 预设渐变色 -->
+              <div
+                v-if="useCustomGradient"
+                class="mb-3 grid grid-cols-6 gap-1"
+              >
+                <button
+                  v-for="(preset, index) in presetGradients"
+                  :key="index"
+                  class="h-6 rounded border-2 transition-all duration-200"
+                  :class="[
+                    gradientFrom === preset.from && gradientTo === preset.to
+                      ? 'border-primary-500 shadow-sm'
+                      : 'border-transparent hover:border-primary-300'
+                  ]"
+                  :style="{ background: `linear-gradient(135deg, ${preset.from} 0%, ${preset.to} 100%)` }"
+                  :title="preset.name"
+                  @click="gradientFrom = preset.from; gradientTo = preset.to"
+                />
+              </div>
+              <!-- 自定义颜色 -->
+              <div
+                v-if="useCustomGradient"
+                class="flex items-center gap-2"
+              >
+                <div class="flex items-center gap-1">
+                  <input
+                    v-model="gradientFrom"
+                    type="color"
+                    class="h-8 w-12 cursor-pointer rounded border border-dark-200 bg-transparent dark:border-dark-700"
+                  >
+                  <span class="text-xs text-dark-500 dark:text-dark-400">起始</span>
+                </div>
+                <div class="h-px flex-1 bg-dark-200 dark:bg-dark-700" />
+                <div class="flex items-center gap-1">
+                  <input
+                    v-model="gradientTo"
+                    type="color"
+                    class="h-8 w-12 cursor-pointer rounded border border-dark-200 bg-transparent dark:border-dark-700"
+                  >
+                  <span class="text-xs text-dark-500 dark:text-dark-400">结束</span>
+                </div>
               </div>
             </div>
 
@@ -210,7 +305,7 @@ const downloadCard = async () => {
         <div class="fixed left-[9999px] top-0">
           <div ref="downloadCardRef">
             <ShareCard
-              :share-data="shareData"
+              :share-data="shareDataWithGradient"
               :style="cardStyle"
               :size="cardSize"
             />

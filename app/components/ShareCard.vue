@@ -18,9 +18,17 @@ const cardStyle = computed(() => {
 const cardSize = computed(() => props.size || "horizontal");
 
 // 使用 CSS 变量创建渐变，与网站主题色保持一致
-const gradientStyle = computed(() => ({
-  background: "linear-gradient(135deg, var(--color-primary-300) 0%, var(--color-primary-900) 100%)"
-}));
+// 支持自定义渐变色
+const gradientStyle = computed(() => {
+  if (props.shareData.gradient) {
+    return {
+      background: `linear-gradient(135deg, ${props.shareData.gradient.from} 0%, ${props.shareData.gradient.to} 100%)`
+    };
+  }
+  return {
+    background: "linear-gradient(135deg, var(--color-primary-300) 0%, var(--color-primary-900) 100%)"
+  };
+});
 
 // A4 纸尺寸比例 1:1.414 (210mm x 297mm)
 // 使用 4x 分辨率以获得高清图片
