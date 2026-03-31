@@ -52,6 +52,11 @@ export default {
     contentTextColor: "#374151" // 内容文字颜色
   },
 
+  socialShare: { // 社交分享配置
+    enabled: true, // 是否启用社交分享功能
+    platforms: ["weibo", "twitter", "QQ", "zhihu", "douban", "linkedin", "facebook", "telegram", "email", "copy"] // 启用的分享平台,支持的平台有：weibo, QQ, zhihu, douban, twitter, linkedin, facebook, telegram, email, copy
+  },
+
   /** -------------------------------------------------密码备份配置----------------------------------------------------- */
 
   // Telegram 密码通知配置

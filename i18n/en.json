@@ -226,5 +226,20 @@
   "view-mode-card": "Card Mode",
   "view-mode-calendar": "Calendar Mode",
   "password-backup-success": "Password Backup Successful",
-  "password-backup-success-desc": "Password backed up to {0}"
+  "password-backup-success-desc": "Password backed up to {0}",
+  "share": "Share",
+  "shareTo": "Share to",
+  "copyLink": "Copy link",
+  "linkCopied": "Link copied",
+  "generateShareCard": "Generate Share Card",
+  "downloadCard": "Download Card",
+  "weibo": "Weibo",
+  "QQ": "QQ",
+  "zhihu": "Zhihu",
+  "douban": "Douban",
+  "twitter": "Twitter",
+  "linkedin": "LinkedIn",
+  "facebook": "Facebook",
+  "telegram": "Telegram",
+  "email": "Email"
 }
