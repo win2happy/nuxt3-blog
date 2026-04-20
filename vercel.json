@@ -6,6 +6,16 @@
         "silent": true,
         "autoJobCancelation": true
     },
+    "routes": [
+        {
+            "src": "/robots.txt",
+            "headers": {
+                "content-type": "text/plain"
+            },
+            "dest": "/robots.txt",
+            "continue": true
+        }
+    ],
     "headers": [
         {
             "source": "/(.*)",
@@ -13,6 +23,15 @@
                 {
                     "key": "Cache-Control",
                     "value": "no-cache, no-store, must-revalidate, max-age=0"
+                }
+            ]
+        },
+        {
+            "source": "/robots.txt",
+            "headers": [
+                {
+                    "key": "content-type",
+                    "value": "text/plain"
                 }
             ]
         }
