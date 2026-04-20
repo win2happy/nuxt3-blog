@@ -51,8 +51,83 @@ export function generateThemeColorsCSS() {
 
 export function generateSiteMap(publicDir: string) {
   nbLog("sitemap");
-  fs.writeFileSync(path.resolve(publicDir, "sitemap.xml"),
+  // 生成 RSS 格式的 rss.xml
+  fs.writeFileSync(path.resolve(publicDir, "rss.xml"),
     genRss(JSON.parse(fs.readFileSync(getRebuildPath("json", "articles.json")).toString())));
+
+  // 生成 Google Search Console 格式的 sitemap.xml
+  fs.writeFileSync(path.resolve(publicDir, "sitemap.xml"),
+    generateGoogleSitemap());
+}
+
+/**
+ * 生成 Google Search Console 格式的 sitemap.xml
+ */
+export function generateGoogleSitemap() {
+  const origin = config.domain;
+  const startStr = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">";
+  const endStr = "</urlset>";
+
+  let urlEntries = "";
+
+  // 生成文章 URLs
+  const articles = JSON.parse(fs.readFileSync(getRebuildPath("json", "articles.json")).toString());
+  for (const item of articles.filter((i: any) => !i.encrypt)) {
+    urlEntries += `
+  <url>
+    <loc>${origin}/articles/${item.customSlug || item.id}</loc>
+    <lastmod>${new Date(item.modifyTime || item.time).toISOString()}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+  }
+
+  // 生成记录 URLs
+  const records = JSON.parse(fs.readFileSync(getRebuildPath("json", "records.json")).toString());
+  for (const item of records.filter((i: any) => !i.encrypt)) {
+    urlEntries += `
+  <url>
+    <loc>${origin}/records/${item.id}</loc>
+    <lastmod>${new Date(item.modifyTime || item.time).toISOString()}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>`;
+  }
+
+  // 生成知识 URLs
+  const knowledges = JSON.parse(fs.readFileSync(getRebuildPath("json", "knowledges.json")).toString());
+  for (const item of knowledges.filter((i: any) => !i.encrypt)) {
+    urlEntries += `
+  <url>
+    <loc>${origin}/knowledges/${item.id}</loc>
+    <lastmod>${new Date(item.modifyTime || item.time).toISOString()}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>`;
+  }
+
+  // 添加首页和其他重要页面
+  const importantPages = [
+    "/",
+    "/articles",
+    "/records",
+    "/knowledges",
+    "/news",
+    "/about"
+  ];
+
+  for (const page of importantPages) {
+    urlEntries += `
+  <url>
+    <loc>${origin}${page}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>`;
+  }
+
+  return `${startStr}${urlEntries}
+${endStr}`;
 }
 
 export async function uploadAlgoliaIndex() {
