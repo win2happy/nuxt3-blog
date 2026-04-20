@@ -1,0 +1,4 @@
+# ads.txt file for Google AdSense
+# 请替换下面的示例为您实际的广告发布商 ID
+
+google.com, pub-9641488811625665, DIRECT, f08c47fec0942fa0
