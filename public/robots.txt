@@ -1,2 +1,4 @@
 User-agent: *
 Disallow: /manage/
+
+Sitemap: https://www.blog8.pp.ua/sitemap.xml
