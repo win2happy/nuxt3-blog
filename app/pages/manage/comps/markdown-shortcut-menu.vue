@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { markdownShortcuts, shortcutCategories, type MarkdownShortcut } from "~/utils/manage/markdown-shortcuts";
+import { markdownShortcuts, type MarkdownShortcut } from "~/utils/manage/markdown-shortcuts";
 
-const props = defineProps<{
+defineProps<{
   show: boolean;
   x: number;
   y: number;
@@ -13,95 +13,18 @@ const emit = defineEmits<{
 }>();
 
 const searchQuery = ref("");
-const selectedIndex = ref(0);
-const inputRef = ref<HTMLInputElement>();
-const menuHeight = 400;
-
-const adjustedY = computed(() => {
-  if (typeof window === "undefined") return props.y;
-  const viewportHeight = window.innerHeight;
-  const menuBottom = props.y + menuHeight;
-  if (menuBottom > viewportHeight - 20) {
-    return Math.max(20, props.y - (menuBottom - viewportHeight) - 20);
-  }
-  return Math.max(20, props.y);
-});
 
 const filteredShortcuts = computed(() => {
-  if (!searchQuery.value) {
-    return markdownShortcuts;
-  }
-  const query = searchQuery.value.toLowerCase();
-  return markdownShortcuts.filter(
-    s =>
-      s.trigger.toLowerCase().includes(query)
-      || s.label.toLowerCase().includes(query)
-      || s.labelEn.toLowerCase().includes(query)
-      || s.description.toLowerCase().includes(query)
-      || s.descriptionEn.toLowerCase().includes(query)
+  if (!searchQuery.value) return markdownShortcuts;
+  const q = searchQuery.value.toLowerCase();
+  return markdownShortcuts.filter(s =>
+    s.trigger.includes(q) || s.label.includes(q)
   );
 });
-
-const groupedShortcuts = computed(() => {
-  const groups: Record<string, MarkdownShortcut[]> = {};
-  for (const category of shortcutCategories) {
-    const items = filteredShortcuts.value.filter(s => s.category === category.key);
-    if (items.length > 0) {
-      groups[category.key] = items;
-    }
-  }
-  return groups;
-});
-
-const flatShortcuts = computed(() => filteredShortcuts.value);
-
-watch(
-  () => props.show,
-  (show) => {
-    if (show) {
-      searchQuery.value = "";
-      selectedIndex.value = 0;
-      nextTick(() => {
-        inputRef.value?.focus();
-      });
-    }
-  }
-);
-
-watch(filteredShortcuts, () => {
-  selectedIndex.value = 0;
-});
-
-const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    selectedIndex.value = Math.min(selectedIndex.value + 1, flatShortcuts.value.length - 1);
-  } else if (e.key === "ArrowUp") {
-    e.preventDefault();
-    selectedIndex.value = Math.max(selectedIndex.value - 1, 0);
-  } else if (e.key === "Enter") {
-    e.preventDefault();
-    if (flatShortcuts.value[selectedIndex.value]) {
-      selectShortcut(flatShortcuts.value[selectedIndex.value]);
-    }
-  } else if (e.key === "Escape") {
-    e.preventDefault();
-    emit("update:show", false);
-  }
-};
 
 const selectShortcut = (shortcut: MarkdownShortcut) => {
   emit("select", shortcut);
   emit("update:show", false);
-};
-
-const isSelected = (shortcut: MarkdownShortcut) => {
-  return flatShortcuts.value[selectedIndex.value] === shortcut;
-};
-
-const getCategoryLabel = (key: string) => {
-  const category = shortcutCategories.find(c => c.key === key);
-  return category ? category.label : key;
 };
 </script>
 
@@ -109,71 +32,25 @@ const getCategoryLabel = (key: string) => {
   <Teleport to="body">
     <div
       v-if="show"
-      class="fixed z-[9999] flex flex-col"
-      :style="{
-        left: `${Math.max(0, x)}px`,
-        top: adjustedY,
-        maxHeight: '400px'
-      }"
-      @click.stop
+      style="position: fixed; left: 400px; top: 200px; width: 320px; background: white; border: 2px solid red; z-index: 9999; max-height: 400px; overflow-y: auto;"
     >
+      <div style="padding: 8px; border-bottom: 1px solid #ccc;">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="搜索..."
+          style="width: 100%; padding: 8px; border: 1px solid #ccc;"
+        >
+      </div>
       <div
-        class="flex flex-col rounded-lg border border-dark-200 bg-white shadow-lg dark:border-dark-700 dark:bg-dark-800"
-        style="width: 320px;"
+        v-for="shortcut in filteredShortcuts"
+        :key="shortcut.trigger"
+        style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;"
       >
-        <div class="border-b border-dark-200 p-2 dark:border-dark-700">
-          <input
-            ref="inputRef"
-            v-model="searchQuery"
-            type="text"
-            placeholder="搜索快捷命令..."
-            class="w-full rounded border border-dark-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:border-dark-700 dark:bg-dark-900 dark:text-white"
-            @keydown="handleKeydown"
-          >
-        </div>
-        <div class="max-h-[320px] overflow-y-auto p-1">
-          <template
-            v-for="(shortcuts, category) in groupedShortcuts"
-            :key="category"
-          >
-            <div class="px-2 py-1 text-xs font-semibold text-dark-400 dark:text-dark-500">
-              {{ getCategoryLabel(category) }}
-            </div>
-            <div
-              v-for="shortcut in shortcuts"
-              :key="shortcut.trigger"
-              class="flex cursor-pointer items-center gap-3 rounded p-2 transition-colors"
-              :class="isSelected(shortcut) ? 'bg-primary/10 text-primary' : 'hover:bg-dark-100 dark:hover:bg-dark-700'"
-              @click="selectShortcut(shortcut)"
-              @mouseenter="selectedIndex = flatShortcuts.indexOf(shortcut)"
-            >
-              <span class="flex size-8 shrink-0 items-center justify-center rounded bg-dark-100 text-sm font-bold dark:bg-dark-700">
-                {{ shortcut.icon }}
-              </span>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <span class="font-medium">{{ shortcut.label }}</span>
-                  <code class="rounded bg-dark-100 px-1.5 py-0.5 text-xs dark:bg-dark-700">{{ shortcut.trigger }}</code>
-                </div>
-                <p class="truncate text-xs text-dark-400 dark:text-dark-500">
-                  {{ shortcut.description }}
-                </p>
-              </div>
-            </div>
-          </template>
-          <div
-            v-if="filteredShortcuts.length === 0"
-            class="p-4 text-center text-sm text-dark-400 dark:text-dark-500"
-          >
-            未找到匹配的快捷命令
-          </div>
+        <div @click="selectShortcut(shortcut)">
+          {{ shortcut.label }} - {{ shortcut.trigger }}
         </div>
       </div>
     </div>
-    <div
-      v-if="show"
-      class="fixed inset-0 z-[9998]"
-      @click="emit('update:show', false)"
-    />
   </Teleport>
 </template>

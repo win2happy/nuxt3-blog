@@ -133,13 +133,10 @@ const handleEditorInputChange = () => {
 };
 
 const openShortcutMenu = () => {
-  console.log("openShortcutMenu called, editor:", !!editor);
   lastSlashPosition = null;
   shortcutMenuX.value = 400;
   shortcutMenuY.value = 200;
-  console.log("Setting showShortcutMenu to true");
   showShortcutMenu.value = true;
-  console.log("showShortcutMenu is now:", showShortcutMenu.value);
 };
 
 // sticker
