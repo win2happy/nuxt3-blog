@@ -133,26 +133,13 @@ const handleEditorInputChange = () => {
 };
 
 const openShortcutMenu = () => {
+  console.log("openShortcutMenu called, editor:", !!editor);
   lastSlashPosition = null;
-  const position = editor?.getPosition();
-  if (editor && position) {
-    const coordinates = editor.getScrolledVisiblePosition(position);
-    if (coordinates) {
-      const editorDom = editor.getDomNode();
-      if (editorDom) {
-        const editorRect = editorDom.getBoundingClientRect();
-        shortcutMenuX.value = editorRect.left + coordinates.left + 50;
-        shortcutMenuY.value = editorRect.top + coordinates.top + 30;
-      }
-    }
-  }
-  if (!shortcutMenuX.value || shortcutMenuX.value < 100) {
-    shortcutMenuX.value = 400;
-  }
-  if (!shortcutMenuY.value || shortcutMenuY.value < 100) {
-    shortcutMenuY.value = 200;
-  }
+  shortcutMenuX.value = 400;
+  shortcutMenuY.value = 200;
+  console.log("Setting showShortcutMenu to true");
   showShortcutMenu.value = true;
+  console.log("showShortcutMenu is now:", showShortcutMenu.value);
 };
 
 // sticker
