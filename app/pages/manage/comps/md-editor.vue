@@ -4,9 +4,11 @@ import debounce from "lodash/debounce.js";
 import { Columns2, Loader2, Menu, SquareAsterisk } from "lucide-vue-next";
 import type { editor as MonacoEditor } from "monaco-editor";
 import StickerPick from "./sticker-pick.vue";
+import MarkdownShortcutMenu from "./markdown-shortcut-menu.vue";
 import { initViewer } from "~/utils/nuxt/viewer";
 import { useMarkdownParser } from "~/utils/hooks/useMarkdownParser";
 import { useUnmount } from "~/utils/hooks/useUnmount";
+import type { MarkdownShortcut } from "~/utils/manage/markdown-shortcuts";
 
 const props = defineProps<{
   disabled?: boolean;
@@ -28,6 +30,72 @@ const { htmlContent, markdownRef, menuItems } = await useMarkdownParser({
   fromEdit: true,
   destroyFns
 });
+
+// markdown shortcut menu
+const showShortcutMenu = ref(false);
+const shortcutMenuX = ref(0);
+const shortcutMenuY = ref(0);
+let lastSlashPosition: { lineNumber: number; column: number } | null = null;
+
+const insertShortcut = (shortcut: MarkdownShortcut) => {
+  if (!editor || !lastSlashPosition) return;
+
+  const model = editor.getModel();
+  if (!model) return;
+
+  const lineContent = model.getLineContent(lastSlashPosition.lineNumber);
+  const textBeforeSlash = lineContent.substring(0, lastSlashPosition.column - 1);
+
+  const slashIndex = textBeforeSlash.lastIndexOf("/");
+  if (slashIndex === -1) return;
+
+  const range = {
+    startLineNumber: lastSlashPosition.lineNumber,
+    startColumn: slashIndex + 1,
+    endLineNumber: lastSlashPosition.lineNumber,
+    endColumn: lastSlashPosition.column
+  };
+
+  const selection = editor.getSelection();
+  if (selection) {
+    editor.executeEdits("insert-shortcut", [{
+      range,
+      text: shortcut.insertText,
+      forceMoveMarkers: true
+    }]);
+  }
+
+  lastSlashPosition = null;
+};
+
+const handleEditorKeyUp = () => {
+  if (!editor) return;
+
+  const position = editor.getPosition();
+  if (!position) return;
+
+  const model = editor.getModel();
+  if (!model) return;
+
+  const lineContent = model.getLineContent(position.lineNumber);
+  const charBeforeCursor = lineContent.charAt(position.column - 2);
+
+  if (charBeforeCursor === "/") {
+    lastSlashPosition = { lineNumber: position.lineNumber, column: position.column };
+    const coordinates = editor.getScrolledVisiblePosition(position);
+    if (coordinates) {
+      const editorDom = editor.getDomNode();
+      if (editorDom) {
+        const editorRect = editorDom.getBoundingClientRect();
+        shortcutMenuX.value = editorRect.left + coordinates.left;
+        shortcutMenuY.value = editorRect.top + coordinates.top + 24;
+      }
+    }
+    showShortcutMenu.value = true;
+  } else if (showShortcutMenu.value && charBeforeCursor !== "/") {
+    showShortcutMenu.value = false;
+  }
+};
 
 // sticker
 const showStickers = ref(false);
@@ -104,6 +172,7 @@ const initEditor = async () => {
       currentText.value = text;
     }, 500)
   );
+  editor.onDidKeyUp(handleEditorKeyUp);
 };
 
 watch(inputValue, (text) => {
@@ -250,6 +319,12 @@ initViewer(markdownRef);
         />
       </div>
     </div>
+    <MarkdownShortcutMenu
+      v-model:show="showShortcutMenu"
+      :x="shortcutMenuX"
+      :y="shortcutMenuY"
+      @select="insertShortcut"
+    />
   </div>
 </template>
 
