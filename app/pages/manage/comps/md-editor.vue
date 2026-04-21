@@ -50,6 +50,9 @@ const insertShortcut = (shortcut: MarkdownShortcut) => {
   if (!model) return;
 
   const insertText = shortcut.insertText;
+  const cursorOffset = shortcut.cursorOffset ?? 0;
+  const lineOffset = shortcut.lineOffset ?? 0;
+
   if (lastSlashPosition) {
     const lineContent = model.getLineContent(lastSlashPosition.lineNumber);
     const textBeforeSlash = lineContent.substring(0, lastSlashPosition.column - 1);
@@ -67,6 +70,15 @@ const insertShortcut = (shortcut: MarkdownShortcut) => {
         forceMoveMarkers: true
       }]);
       lastSlashPosition = null;
+
+      const newPosition = {
+        lineNumber: position.lineNumber + lineOffset,
+        column: cursorOffset + 1
+      };
+      nextTick(() => {
+        editor?.setPosition(newPosition);
+        editor?.focus();
+      });
       return;
     }
   }
@@ -82,7 +94,13 @@ const insertShortcut = (shortcut: MarkdownShortcut) => {
     forceMoveMarkers: true
   }]);
   lastSlashPosition = null;
+
+  const newPosition = {
+    lineNumber: position.lineNumber + lineOffset,
+    column: cursorOffset + 1
+  };
   nextTick(() => {
+    editor?.setPosition(newPosition);
     editor?.focus();
   });
 };
@@ -112,6 +130,20 @@ const handleEditorInputChange = () => {
     }
     showShortcutMenu.value = true;
   }
+};
+
+const openShortcutMenu = () => {
+  lastSlashPosition = null;
+  const editorContainer = document.querySelector(".monaco-editor");
+  if (editorContainer) {
+    const rect = editorContainer.getBoundingClientRect();
+    shortcutMenuX.value = rect.left + 50;
+    shortcutMenuY.value = rect.top + rect.height * 0.3;
+  } else {
+    shortcutMenuX.value = window.innerWidth / 2 - 160;
+    shortcutMenuY.value = window.innerHeight / 2 - 200;
+  }
+  showShortcutMenu.value = true;
 };
 
 // sticker
@@ -248,7 +280,7 @@ initViewer(markdownRef);
       <button
         class="icon-button"
         title="快捷菜单"
-        @click="() => { showShortcutMenu = true; }"
+        @click="() => { openShortcutMenu(); }"
       >
         <Terminal class="size-6" />
       </button>

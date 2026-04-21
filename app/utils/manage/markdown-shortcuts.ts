@@ -8,6 +8,8 @@ export interface MarkdownShortcut {
   insertText: string;
   insertTextEn: string;
   category: "basic" | "media" | "advance" | "container";
+  cursorOffset?: number;
+  lineOffset?: number;
 }
 
 export const markdownShortcuts: MarkdownShortcut[] = [
@@ -20,7 +22,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "H1",
     insertText: "# ",
     insertTextEn: "# ",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 2
   },
   {
     trigger: "/h2",
@@ -31,7 +34,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "H2",
     insertText: "## ",
     insertTextEn: "## ",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 3
   },
   {
     trigger: "/h3",
@@ -42,7 +46,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "H3",
     insertText: "### ",
     insertTextEn: "### ",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 4
   },
   {
     trigger: "/bold",
@@ -53,7 +58,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "B",
     insertText: "**${text}**",
     insertTextEn: "**${text}**",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 2
   },
   {
     trigger: "/italic",
@@ -64,7 +70,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "I",
     insertText: "*${text}*",
     insertTextEn: "*${text}*",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 1
   },
   {
     trigger: "/underline",
@@ -75,7 +82,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "U",
     insertText: "_(${text})_",
     insertTextEn: "_(${text})_",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 2
   },
   {
     trigger: "/link",
@@ -86,7 +94,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "🔗",
     insertText: "[${text}](${url})",
     insertTextEn: "[${text}](${url})",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 1
   },
   {
     trigger: "/image",
@@ -97,7 +106,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "🖼️",
     insertText: "![${alt}](${url})",
     insertTextEn: "![${alt}](${url})",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 2
   },
   {
     trigger: "/code",
@@ -108,7 +118,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "</>",
     insertText: "```\n${code}\n```",
     insertTextEn: "```\n${code}\n```",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 4,
+    lineOffset: 1
   },
   {
     trigger: "/inline-code",
@@ -119,7 +131,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "`",
     insertText: "`${code}`",
     insertTextEn: "`${code}`",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 1
   },
   {
     trigger: "/quote",
@@ -130,7 +143,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "❝",
     insertText: "> ",
     insertTextEn: "> ",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 2
   },
   {
     trigger: "/list",
@@ -141,7 +155,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "•",
     insertText: "- ",
     insertTextEn: "- ",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 2
   },
   {
     trigger: "/numlist",
@@ -152,7 +167,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "1.",
     insertText: "1. ",
     insertTextEn: "1. ",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 3
   },
   {
     trigger: "/task",
@@ -163,7 +179,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "☐",
     insertText: "- [ ] ",
     insertTextEn: "- [ ] ",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 5
   },
   {
     trigger: "/table",
@@ -174,7 +191,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "⊞",
     insertText: "| Column 1 | Column 2 | Column 3 |\n|----------|----------|----------|\n| Cell 1   | Cell 2   | Cell 3   |",
     insertTextEn: "| Column 1 | Column 2 | Column 3 |\n|----------|----------|----------|\n| Cell 1   | Cell 2   | Cell 3   |",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 4,
+    lineOffset: 2
   },
   {
     trigger: "/hr",
@@ -185,7 +204,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "—",
     insertText: "\n---\n",
     insertTextEn: "\n---\n",
-    category: "basic"
+    category: "basic",
+    cursorOffset: 4,
+    lineOffset: 1
   },
   {
     trigger: "/youtube",
@@ -196,7 +217,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "▶️",
     insertText: "[youtube][${text}](${url})[/youtube]",
     insertTextEn: "[youtube][${text}](${url})[/youtube]",
-    category: "media"
+    category: "media",
+    cursorOffset: 9
   },
   {
     trigger: "/bili",
@@ -207,7 +229,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "📺",
     insertText: "[bili][${text}](${url})[/bili]",
     insertTextEn: "[bili][${text}](${url})[/bili]",
-    category: "media"
+    category: "media",
+    cursorOffset: 6
   },
   {
     trigger: "/video",
@@ -218,7 +241,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "🎬",
     insertText: "[video][${text}][${poster}](${url})[/video]",
     insertTextEn: "[video][${text}][${poster}](${url})[/video]",
-    category: "media"
+    category: "media",
+    cursorOffset: 8
   },
   {
     trigger: "/audio",
@@ -229,7 +253,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "🎵",
     insertText: "[audio][${text}](${url})[/audio]",
     insertTextEn: "[audio][${text}](${url})[/audio]",
-    category: "media"
+    category: "media",
+    cursorOffset: 8
   },
   {
     trigger: "/sticker",
@@ -240,7 +265,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "😊",
     insertText: "![sticker](${url})",
     insertTextEn: "![sticker](${url})",
-    category: "media"
+    category: "media",
+    cursorOffset: 11
   },
   {
     trigger: "/math",
@@ -251,7 +277,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "∑",
     insertText: "$${formula}$$",
     insertTextEn: "$${formula}$$",
-    category: "advance"
+    category: "advance",
+    cursorOffset: 2
   },
   {
     trigger: "/math-block",
@@ -262,7 +289,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "∫",
     insertText: "$$\n${formula}\n$$",
     insertTextEn: "$$\n${formula}\n$$",
-    category: "advance"
+    category: "advance",
+    cursorOffset: 3,
+    lineOffset: 1
   },
   {
     trigger: "/mermaid",
@@ -273,7 +302,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "📊",
     insertText: "```mermaid\n${diagram}\n```",
     insertTextEn: "```mermaid\n${diagram}\n```",
-    category: "advance"
+    category: "advance",
+    cursorOffset: 12,
+    lineOffset: 1
   },
   {
     trigger: "/color",
@@ -284,7 +315,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "🎨",
     insertText: "-(${color}: ${text})-",
     insertTextEn: "-(${color}: ${text})-",
-    category: "advance"
+    category: "advance",
+    cursorOffset: 2
   },
   {
     trigger: "/blank",
@@ -306,7 +338,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "</>",
     insertText: "[html]\n${html}\n[/html]",
     insertTextEn: "[html]\n${html}\n[/html]",
-    category: "advance"
+    category: "advance",
+    cursorOffset: 7,
+    lineOffset: 1
   },
   {
     trigger: "/newtab",
@@ -317,7 +351,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "↗",
     insertText: "#[${text}](${url})",
     insertTextEn: "#[${text}](${url})",
-    category: "advance"
+    category: "advance",
+    cursorOffset: 2
   },
   {
     trigger: "/hide",
@@ -328,7 +363,8 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "👁️",
     insertText: "[!${text}!]",
     insertTextEn: "[!${text}!]",
-    category: "advance"
+    category: "advance",
+    cursorOffset: 2
   },
   {
     trigger: "/fieldset",
@@ -339,7 +375,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "▦",
     insertText: "--${title}--\n${content}\n-- --",
     insertTextEn: "--${title}--\n${content}\n-- --",
-    category: "container"
+    category: "container",
+    cursorOffset: 2,
+    lineOffset: 1
   },
   {
     trigger: "/encrypt",
@@ -350,7 +388,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "🔒",
     insertText: "[encrypt]\n${content}\n[/encrypt]",
     insertTextEn: "[encrypt]\n${content}\n[/encrypt]",
-    category: "container"
+    category: "container",
+    cursorOffset: 10,
+    lineOffset: 1
   },
   {
     trigger: "/info",
@@ -361,7 +401,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "ℹ️",
     insertText: ":::info\n${content}\n:::",
     insertTextEn: ":::info\n${content}\n:::",
-    category: "container"
+    category: "container",
+    cursorOffset: 9,
+    lineOffset: 1
   },
   {
     trigger: "/tip",
@@ -372,7 +414,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "💡",
     insertText: ":::tip\n${content}\n:::",
     insertTextEn: ":::tip\n${content}\n:::",
-    category: "container"
+    category: "container",
+    cursorOffset: 8,
+    lineOffset: 1
   },
   {
     trigger: "/warning",
@@ -383,7 +427,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "⚠️",
     insertText: ":::warning\n${content}\n:::",
     insertTextEn: ":::warning\n${content}\n:::",
-    category: "container"
+    category: "container",
+    cursorOffset: 11,
+    lineOffset: 1
   },
   {
     trigger: "/danger",
@@ -394,7 +440,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "⛔",
     insertText: ":::danger\n${content}\n:::",
     insertTextEn: ":::danger\n${content}\n:::",
-    category: "container"
+    category: "container",
+    cursorOffset: 10,
+    lineOffset: 1
   },
   {
     trigger: "/details",
@@ -405,7 +453,9 @@ export const markdownShortcuts: MarkdownShortcut[] = [
     icon: "📁",
     insertText: ":::details ${title}\n${content}\n:::",
     insertTextEn: ":::details ${title}\n${content}\n:::",
-    category: "container"
+    category: "container",
+    cursorOffset: 16,
+    lineOffset: 1
   }
 ];
 
