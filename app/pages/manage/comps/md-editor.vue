@@ -134,8 +134,24 @@ const handleEditorInputChange = () => {
 
 const openShortcutMenu = () => {
   lastSlashPosition = null;
-  shortcutMenuX.value = 400;
-  shortcutMenuY.value = 200;
+  const position = editor?.getPosition();
+  if (editor && position) {
+    const coordinates = editor.getScrolledVisiblePosition(position);
+    if (coordinates) {
+      const editorDom = editor.getDomNode();
+      if (editorDom) {
+        const editorRect = editorDom.getBoundingClientRect();
+        shortcutMenuX.value = editorRect.left + coordinates.left;
+        shortcutMenuY.value = editorRect.top + coordinates.top + 30;
+      }
+    }
+  }
+  if (!shortcutMenuX.value || shortcutMenuX.value < 100) {
+    shortcutMenuX.value = 300;
+  }
+  if (!shortcutMenuY.value || shortcutMenuY.value < 100) {
+    shortcutMenuY.value = 150;
+  }
   showShortcutMenu.value = true;
 };
 
