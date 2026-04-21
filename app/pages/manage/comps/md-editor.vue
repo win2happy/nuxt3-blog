@@ -68,7 +68,7 @@ const insertShortcut = (shortcut: MarkdownShortcut) => {
   lastSlashPosition = null;
 };
 
-const handleEditorKeyDown = (e: any) => {
+const handleEditorInputChange = () => {
   if (!editor) return;
 
   const position = editor.getPosition();
@@ -92,8 +92,6 @@ const handleEditorKeyDown = (e: any) => {
       }
     }
     showShortcutMenu.value = true;
-  } else if (showShortcutMenu.value && e.key === "Escape") {
-    showShortcutMenu.value = false;
   }
 };
 
@@ -172,7 +170,7 @@ const initEditor = async () => {
       currentText.value = text;
     }, 500)
   );
-  editor.onKeyDown(handleEditorKeyDown);
+  editor.onDidChangeModelContent(handleEditorInputChange);
 };
 
 watch(inputValue, (text) => {
@@ -228,6 +226,13 @@ initViewer(markdownRef);
       >
         <SquareAsterisk class="size-6" />
       </NuxtLink>
+      <button
+        class="icon-button"
+        title="快捷菜单"
+        @click="showShortcutMenu = true"
+      >
+        <span class="text-sm">/</span>
+      </button>
       <button
         class="icon-button ml-auto"
         :title="$t('contents')"
