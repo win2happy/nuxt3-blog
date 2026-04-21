@@ -68,7 +68,7 @@ const insertShortcut = (shortcut: MarkdownShortcut) => {
   lastSlashPosition = null;
 };
 
-const handleEditorKeyUp = () => {
+const handleEditorKeyDown = (e: any) => {
   if (!editor) return;
 
   const position = editor.getPosition();
@@ -78,10 +78,10 @@ const handleEditorKeyUp = () => {
   if (!model) return;
 
   const lineContent = model.getLineContent(position.lineNumber);
-  const charBeforeCursor = lineContent.charAt(position.column - 2);
+  const charBeforeCursor = lineContent.charAt(position.column - 1);
 
-  if (charBeforeCursor === "/") {
-    lastSlashPosition = { lineNumber: position.lineNumber, column: position.column };
+  if (charBeforeCursor === "/" && !showShortcutMenu.value) {
+    lastSlashPosition = { lineNumber: position.lineNumber, column: position.column + 1 };
     const coordinates = editor.getScrolledVisiblePosition(position);
     if (coordinates) {
       const editorDom = editor.getDomNode();
@@ -92,7 +92,7 @@ const handleEditorKeyUp = () => {
       }
     }
     showShortcutMenu.value = true;
-  } else if (showShortcutMenu.value && charBeforeCursor !== "/") {
+  } else if (showShortcutMenu.value && e.key === "Escape") {
     showShortcutMenu.value = false;
   }
 };
@@ -172,7 +172,7 @@ const initEditor = async () => {
       currentText.value = text;
     }, 500)
   );
-  editor.onDidKeyUp(handleEditorKeyUp);
+  editor.onKeyDown(handleEditorKeyDown);
 };
 
 watch(inputValue, (text) => {
