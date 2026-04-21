@@ -100,8 +100,8 @@ const getCategoryLabel = (key: string) => {
       v-if="show"
       class="fixed z-[9999] flex flex-col"
       :style="{
-        left: `${x}px`,
-        top: `${y}px`,
+        left: `${Math.max(0, x)}px`,
+        top: `${Math.max(0, y)}px`,
         maxHeight: '400px'
       }"
       @click.stop

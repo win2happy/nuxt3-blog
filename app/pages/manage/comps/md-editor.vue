@@ -38,33 +38,49 @@ const shortcutMenuY = ref(0);
 let lastSlashPosition: { lineNumber: number; column: number } | null = null;
 
 const insertShortcut = (shortcut: MarkdownShortcut) => {
-  if (!editor || !lastSlashPosition) return;
+  if (!editor) return;
+
+  let position = lastSlashPosition;
+  if (!position) {
+    position = editor.getPosition();
+  }
+  if (!position) return;
 
   const model = editor.getModel();
   if (!model) return;
 
-  const lineContent = model.getLineContent(lastSlashPosition.lineNumber);
-  const textBeforeSlash = lineContent.substring(0, lastSlashPosition.column - 1);
-
-  const slashIndex = textBeforeSlash.lastIndexOf("/");
-  if (slashIndex === -1) return;
-
-  const range = {
-    startLineNumber: lastSlashPosition.lineNumber,
-    startColumn: slashIndex + 1,
-    endLineNumber: lastSlashPosition.lineNumber,
-    endColumn: lastSlashPosition.column
-  };
-
-  const selection = editor.getSelection();
-  if (selection) {
-    editor.executeEdits("insert-shortcut", [{
-      range,
-      text: shortcut.insertText,
-      forceMoveMarkers: true
-    }]);
+  const insertText = shortcut.insertText;
+  if (lastSlashPosition) {
+    const lineContent = model.getLineContent(lastSlashPosition.lineNumber);
+    const textBeforeSlash = lineContent.substring(0, lastSlashPosition.column - 1);
+    const slashIndex = textBeforeSlash.lastIndexOf("/");
+    if (slashIndex !== -1) {
+      const range = {
+        startLineNumber: lastSlashPosition.lineNumber,
+        startColumn: slashIndex + 1,
+        endLineNumber: lastSlashPosition.lineNumber,
+        endColumn: lastSlashPosition.column
+      };
+      editor.executeEdits("insert-shortcut", [{
+        range,
+        text: insertText,
+        forceMoveMarkers: true
+      }]);
+      lastSlashPosition = null;
+      return;
+    }
   }
 
+  editor.executeEdits("insert-shortcut", [{
+    range: {
+      startLineNumber: position.lineNumber,
+      startColumn: position.column,
+      endLineNumber: position.lineNumber,
+      endColumn: position.column
+    },
+    text: insertText,
+    forceMoveMarkers: true
+  }]);
   lastSlashPosition = null;
 };
 
@@ -93,6 +109,27 @@ const handleEditorInputChange = () => {
     }
     showShortcutMenu.value = true;
   }
+};
+
+const openShortcutMenu = () => {
+  if (!editor) return;
+  const position = editor.getPosition();
+  if (position) {
+    lastSlashPosition = { lineNumber: position.lineNumber, column: position.column };
+  }
+  const coordinates = position ? editor.getScrolledVisiblePosition(position) : null;
+  if (coordinates) {
+    const editorDom = editor.getDomNode();
+    if (editorDom) {
+      const editorRect = editorDom.getBoundingClientRect();
+      shortcutMenuX.value = editorRect.left + coordinates.left;
+      shortcutMenuY.value = editorRect.top + coordinates.top + 24;
+    }
+  } else {
+    shortcutMenuX.value = 100;
+    shortcutMenuY.value = 100;
+  }
+  showShortcutMenu.value = true;
 };
 
 // sticker
@@ -229,7 +266,7 @@ initViewer(markdownRef);
       <button
         class="icon-button"
         title="快捷菜单"
-        @click="showShortcutMenu = true"
+        @click="openShortcutMenu"
       >
         <span class="text-sm">/</span>
       </button>
