@@ -16,6 +16,16 @@ const searchQuery = ref("");
 const selectedIndex = ref(0);
 const inputRef = ref<HTMLInputElement>();
 const menuHeight = 400;
+const menuWidth = 320;
+
+const adjustedX = computed(() => {
+  if (typeof window === "undefined") return props.x;
+  const viewportWidth = window.innerWidth;
+  if (props.x + menuWidth > viewportWidth - 20) {
+    return Math.max(20, viewportWidth - menuWidth - 20);
+  }
+  return Math.max(20, props.x);
+});
 
 const adjustedY = computed(() => {
   if (typeof window === "undefined") return props.y;
@@ -109,7 +119,7 @@ const closeMenu = () => {
     <div
       v-if="show"
       class="fixed z-[9999] flex flex-col rounded-lg border border-dark-200 bg-white shadow-xl dark:border-dark-700 dark:bg-dark-800"
-      :style="{ left: `${x}px`, top: `${adjustedY}px`, width: '320px', maxHeight: '400px' }"
+      :style="{ left: `${adjustedX}px`, top: `${adjustedY}px`, width: '320px', maxHeight: '400px' }"
       @click.stop
     >
       <div class="flex items-center justify-between border-b border-dark-200 px-3 py-2 dark:border-dark-700">
