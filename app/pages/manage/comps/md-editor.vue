@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import throttle from "lodash/throttle.js";
 import debounce from "lodash/debounce.js";
-import { Columns2, Loader2, Menu, SquareAsterisk } from "lucide-vue-next";
+import { Columns2, Loader2, Menu, SquareAsterisk, Terminal } from "lucide-vue-next";
 import type { editor as MonacoEditor } from "monaco-editor";
 import StickerPick from "./sticker-pick.vue";
+import MarkdownShortcutMenu from "./markdown-shortcut-menu.vue";
 import { initViewer } from "~/utils/nuxt/viewer";
 import { useMarkdownParser } from "~/utils/hooks/useMarkdownParser";
 import { useUnmount } from "~/utils/hooks/useUnmount";
+import type { MarkdownShortcut } from "~/utils/manage/markdown-shortcuts";
 
 const props = defineProps<{
   disabled?: boolean;
@@ -28,6 +30,130 @@ const { htmlContent, markdownRef, menuItems } = await useMarkdownParser({
   fromEdit: true,
   destroyFns
 });
+
+// markdown shortcut menu
+const showShortcutMenu = ref(false);
+const shortcutMenuX = ref(0);
+const shortcutMenuY = ref(0);
+let lastSlashPosition: { lineNumber: number; column: number } | null = null;
+
+const insertShortcut = (shortcut: MarkdownShortcut) => {
+  if (!editor) return;
+
+  let position = lastSlashPosition;
+  if (!position) {
+    position = editor.getPosition();
+  }
+  if (!position) return;
+
+  const model = editor.getModel();
+  if (!model) return;
+
+  const insertText = shortcut.insertText;
+  const cursorOffset = shortcut.cursorOffset ?? 0;
+  const lineOffset = shortcut.lineOffset ?? 0;
+
+  if (lastSlashPosition) {
+    const lineContent = model.getLineContent(lastSlashPosition.lineNumber);
+    const textBeforeSlash = lineContent.substring(0, lastSlashPosition.column - 1);
+    const slashIndex = textBeforeSlash.lastIndexOf("/");
+    if (slashIndex !== -1) {
+      const range = {
+        startLineNumber: lastSlashPosition.lineNumber,
+        startColumn: slashIndex + 1,
+        endLineNumber: lastSlashPosition.lineNumber,
+        endColumn: lastSlashPosition.column
+      };
+      editor.executeEdits("insert-shortcut", [{
+        range,
+        text: insertText,
+        forceMoveMarkers: true
+      }]);
+      lastSlashPosition = null;
+
+      const newPosition = {
+        lineNumber: position.lineNumber + lineOffset,
+        column: cursorOffset + 1
+      };
+      nextTick(() => {
+        editor?.setPosition(newPosition);
+        editor?.focus();
+      });
+      return;
+    }
+  }
+
+  editor.executeEdits("insert-shortcut", [{
+    range: {
+      startLineNumber: position.lineNumber,
+      startColumn: position.column,
+      endLineNumber: position.lineNumber,
+      endColumn: position.column
+    },
+    text: insertText,
+    forceMoveMarkers: true
+  }]);
+  lastSlashPosition = null;
+
+  const newPosition = {
+    lineNumber: position.lineNumber + lineOffset,
+    column: cursorOffset + 1
+  };
+  nextTick(() => {
+    editor?.setPosition(newPosition);
+    editor?.focus();
+  });
+};
+
+const handleEditorInputChange = () => {
+  if (!editor) return;
+
+  const position = editor.getPosition();
+  if (!position) return;
+
+  const model = editor.getModel();
+  if (!model) return;
+
+  const lineContent = model.getLineContent(position.lineNumber);
+  const charBeforeCursor = lineContent.charAt(position.column - 1);
+
+  if (charBeforeCursor === "/" && !showShortcutMenu.value) {
+    lastSlashPosition = { lineNumber: position.lineNumber, column: position.column + 1 };
+    const coordinates = editor.getScrolledVisiblePosition(position);
+    if (coordinates) {
+      const editorDom = editor.getDomNode();
+      if (editorDom) {
+        const editorRect = editorDom.getBoundingClientRect();
+        shortcutMenuX.value = editorRect.left + coordinates.left;
+        shortcutMenuY.value = editorRect.top + coordinates.top + 24;
+      }
+    }
+    showShortcutMenu.value = true;
+  }
+};
+
+const openShortcutMenu = () => {
+  lastSlashPosition = null;
+  const position = editor?.getPosition();
+  if (editor && position) {
+    const coordinates = editor.getScrolledVisiblePosition(position);
+    if (coordinates) {
+      const editorDom = editor.getDomNode();
+      if (editorDom) {
+        const editorRect = editorDom.getBoundingClientRect();
+        shortcutMenuX.value = editorRect.left + coordinates.left;
+        shortcutMenuY.value = editorRect.top + coordinates.top + 30;
+      }
+    }
+  }
+  if (!shortcutMenuX.value || shortcutMenuX.value < 100) {
+    shortcutMenuX.value = 300;
+  }
+  if (!shortcutMenuY.value || shortcutMenuY.value < 100) {
+    shortcutMenuY.value = 150;
+  }
+  showShortcutMenu.value = true;
+};
 
 // sticker
 const showStickers = ref(false);
@@ -104,6 +230,7 @@ const initEditor = async () => {
       currentText.value = text;
     }, 500)
   );
+  editor.onDidChangeModelContent(handleEditorInputChange);
 };
 
 watch(inputValue, (text) => {
@@ -159,6 +286,13 @@ initViewer(markdownRef);
       >
         <SquareAsterisk class="size-6" />
       </NuxtLink>
+      <button
+        class="icon-button"
+        title="快捷菜单"
+        @click="() => { openShortcutMenu(); }"
+      >
+        <Terminal class="size-6" />
+      </button>
       <button
         class="icon-button ml-auto"
         :title="$t('contents')"
@@ -250,6 +384,12 @@ initViewer(markdownRef);
         />
       </div>
     </div>
+    <MarkdownShortcutMenu
+      v-model:show="showShortcutMenu"
+      :x="shortcutMenuX"
+      :y="shortcutMenuY"
+      @select="insertShortcut"
+    />
   </div>
 </template>
 
