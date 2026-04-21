@@ -134,14 +134,23 @@ const handleEditorInputChange = () => {
 
 const openShortcutMenu = () => {
   lastSlashPosition = null;
-  const editorContainer = document.querySelector(".monaco-editor");
-  if (editorContainer) {
-    const rect = editorContainer.getBoundingClientRect();
-    shortcutMenuX.value = rect.left + 50;
-    shortcutMenuY.value = rect.top + rect.height * 0.3;
-  } else {
-    shortcutMenuX.value = window.innerWidth / 2 - 160;
-    shortcutMenuY.value = window.innerHeight / 2 - 200;
+  const position = editor?.getPosition();
+  if (editor && position) {
+    const coordinates = editor.getScrolledVisiblePosition(position);
+    if (coordinates) {
+      const editorDom = editor.getDomNode();
+      if (editorDom) {
+        const editorRect = editorDom.getBoundingClientRect();
+        shortcutMenuX.value = editorRect.left + coordinates.left + 50;
+        shortcutMenuY.value = editorRect.top + coordinates.top + 30;
+      }
+    }
+  }
+  if (!shortcutMenuX.value || shortcutMenuX.value < 100) {
+    shortcutMenuX.value = 400;
+  }
+  if (!shortcutMenuY.value || shortcutMenuY.value < 100) {
+    shortcutMenuY.value = 200;
   }
   showShortcutMenu.value = true;
 };

@@ -18,11 +18,13 @@ const inputRef = ref<HTMLInputElement>();
 const menuHeight = 400;
 
 const adjustedY = computed(() => {
-  const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 800;
-  if (props.y + menuHeight > viewportHeight) {
-    return Math.max(0, props.y - menuHeight - 40);
+  if (typeof window === "undefined") return props.y;
+  const viewportHeight = window.innerHeight;
+  const menuBottom = props.y + menuHeight;
+  if (menuBottom > viewportHeight - 20) {
+    return Math.max(20, props.y - (menuBottom - viewportHeight) - 20);
   }
-  return Math.max(0, props.y);
+  return Math.max(20, props.y);
 });
 
 const filteredShortcuts = computed(() => {
