@@ -82,6 +82,9 @@ const insertShortcut = (shortcut: MarkdownShortcut) => {
     forceMoveMarkers: true
   }]);
   lastSlashPosition = null;
+  nextTick(() => {
+    editor?.focus();
+  });
 };
 
 const handleEditorInputChange = () => {

@@ -15,6 +15,15 @@ const emit = defineEmits<{
 const searchQuery = ref("");
 const selectedIndex = ref(0);
 const inputRef = ref<HTMLInputElement>();
+const menuHeight = 400;
+
+const adjustedY = computed(() => {
+  const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 800;
+  if (props.y + menuHeight > viewportHeight) {
+    return Math.max(0, props.y - menuHeight - 40);
+  }
+  return Math.max(0, props.y);
+});
 
 const filteredShortcuts = computed(() => {
   if (!searchQuery.value) {
@@ -101,7 +110,7 @@ const getCategoryLabel = (key: string) => {
       class="fixed z-[9999] flex flex-col"
       :style="{
         left: `${Math.max(0, x)}px`,
-        top: `${Math.max(0, y)}px`,
+        top: adjustedY,
         maxHeight: '400px'
       }"
       @click.stop
