@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import throttle from "lodash/throttle.js";
 import debounce from "lodash/debounce.js";
-import { Columns2, Loader2, Menu, SquareAsterisk } from "lucide-vue-next";
+import { Columns2, Loader2, Menu, SquareAsterisk, Terminal } from "lucide-vue-next";
 import type { editor as MonacoEditor } from "monaco-editor";
 import StickerPick from "./sticker-pick.vue";
 import MarkdownShortcutMenu from "./markdown-shortcut-menu.vue";
@@ -112,27 +112,6 @@ const handleEditorInputChange = () => {
     }
     showShortcutMenu.value = true;
   }
-};
-
-const openShortcutMenu = () => {
-  if (!editor) return;
-  const position = editor.getPosition();
-  if (position) {
-    lastSlashPosition = { lineNumber: position.lineNumber, column: position.column };
-  }
-  const coordinates = position ? editor.getScrolledVisiblePosition(position) : null;
-  if (coordinates) {
-    const editorDom = editor.getDomNode();
-    if (editorDom) {
-      const editorRect = editorDom.getBoundingClientRect();
-      shortcutMenuX.value = editorRect.left + coordinates.left;
-      shortcutMenuY.value = editorRect.top + coordinates.top + 24;
-    }
-  } else {
-    shortcutMenuX.value = 100;
-    shortcutMenuY.value = 100;
-  }
-  showShortcutMenu.value = true;
 };
 
 // sticker
@@ -269,9 +248,9 @@ initViewer(markdownRef);
       <button
         class="icon-button"
         title="快捷菜单"
-        @click="openShortcutMenu"
+        @click="() => { showShortcutMenu = true; }"
       >
-        <span class="text-sm">/</span>
+        <Terminal class="size-6" />
       </button>
       <button
         class="icon-button ml-auto"
