@@ -99,7 +99,16 @@ async function writeFileToGitHub(content: string, sha: string | null): Promise<b
 }
 
 async function appendToGitHub(nid: number, ntype: string, retryCount: number = 0) {
-  if (!isValidLogRepoConfig()) return;
+  if (!isValidLogRepoConfig()) {
+    console.warn("[VisitorLog] GitHub repo config not set, skipping GitHub sync");
+    return;
+  }
+
+  const token = await getGitHubToken();
+  if (!token) {
+    console.warn("[VisitorLog] VISITOR_LOG_GITHUB_TOKEN not found, skipping GitHub sync");
+    return;
+  }
 
   try {
     const entry: LogEntry = { nid, ntype, t: Date.now() };
@@ -117,16 +126,22 @@ async function appendToGitHub(nid: number, ntype: string, retryCount: number = 0
     content += entryLine;
     const success = await writeFileToGitHub(content, sha);
 
-    if (!success && retryCount < 2) {
-      await new Promise(r => setTimeout(r, 100));
-      await appendToGitHub(nid, ntype, retryCount + 1);
-    }
-  } catch (e) {
-    if (retryCount < 2) {
+    if (success) {
+      console.log("[VisitorLog] Successfully synced log to GitHub");
+    } else if (retryCount < 2) {
+      console.warn("[VisitorLog] GitHub write failed, retrying...", retryCount + 1);
       await new Promise(r => setTimeout(r, 100));
       await appendToGitHub(nid, ntype, retryCount + 1);
     } else {
-      console.error("appendToGitHub error:", e);
+      console.error("[VisitorLog] GitHub write failed after retries");
+    }
+  } catch (e) {
+    if (retryCount < 2) {
+      console.warn("[VisitorLog] GitHub sync error, retrying...", e);
+      await new Promise(r => setTimeout(r, 100));
+      await appendToGitHub(nid, ntype, retryCount + 1);
+    } else {
+      console.error("[VisitorLog] GitHub sync error after retries:", e);
     }
   }
 }
@@ -151,6 +166,7 @@ function readLogsFresh(): LogEntry[] {
 export async function readLogs(): Promise<LogEntry[]> {
   const now = Date.now();
   if (cachedLogs && now - cachedLogs.mtime < CACHE_TTL) {
+    console.log("[VisitorLog] Returning cached logs:", cachedLogs.entries.length);
     return cachedLogs.entries;
   }
 
@@ -167,26 +183,31 @@ export async function readLogs(): Promise<LogEntry[]> {
           }
         }).filter(Boolean) as LogEntry[];
         cachedLogs = { entries, mtime: now, githubEtag: result.sha };
+        console.log("[VisitorLog] Read", entries.length, "entries from GitHub");
         return entries;
+      } else {
+        console.log("[VisitorLog] GitHub file not found, falling back to local");
       }
-    } catch {
-      // fallback to local file
+    } catch (e) {
+      console.warn("[VisitorLog] GitHub read error, falling back to local:", e);
     }
   }
 
   const entries = readLogsFresh();
   cachedLogs = { entries, mtime: now, githubEtag: "" };
+  console.log("[VisitorLog] Read", entries.length, "entries from local file");
   return entries;
 }
 
-export function appendLog(nid: number, ntype: string) {
+export async function appendLog(nid: number, ntype: string) {
   const entry: LogEntry = { nid, ntype, t: Date.now() };
 
   ensureDir();
   fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + "\n", "utf-8");
   cachedLogs = null;
 
-  appendToGitHub(nid, ntype).catch(() => {});
+  console.log("[VisitorLog] Logged visit:", nid, ntype);
+  await appendToGitHub(nid, ntype);
 }
 
 export function restoreFromSnapshot(snapshot: SnapshotData) {
