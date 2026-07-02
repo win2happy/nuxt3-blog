@@ -3,7 +3,8 @@ import path from "path";
 import axios from "axios";
 import config from "../../config";
 
-const DATA_DIR = process.env.VISITOR_DATA_DIR || path.join(process.cwd(), "data");
+const isVercel = !!process.env.VERCEL;
+const DATA_DIR = process.env.VISITOR_DATA_DIR || (isVercel ? "/tmp/visitor-logs" : path.join(process.cwd(), "data"));
 const LOG_FILE = path.join(DATA_DIR, "visitor-logs.jsonl");
 const GITHUB_LOG_PATH = "visitor-logs.jsonl";
 const API_URL = config.githubApiUrl || "https://api.github.com";
@@ -147,20 +148,25 @@ async function appendToGitHub(nid: number, ntype: string, retryCount: number = 0
 }
 
 function readLogsFresh(): LogEntry[] {
-  if (!fs.existsSync(LOG_FILE)) {
-    return [];
-  }
-  const content = fs.readFileSync(LOG_FILE, "utf-8");
-  if (!content.trim()) {
-    return [];
-  }
-  return content.split("\n").filter(Boolean).map((line) => {
-    try {
-      return JSON.parse(line) as LogEntry;
-    } catch {
-      return null;
+  try {
+    if (!fs.existsSync(LOG_FILE)) {
+      return [];
     }
-  }).filter(Boolean) as LogEntry[];
+    const content = fs.readFileSync(LOG_FILE, "utf-8");
+    if (!content.trim()) {
+      return [];
+    }
+    return content.split("\n").filter(Boolean).map((line) => {
+      try {
+        return JSON.parse(line) as LogEntry;
+      } catch {
+        return null;
+      }
+    }).filter(Boolean) as LogEntry[];
+  } catch (e) {
+    console.warn("[VisitorLog] Failed to read local log:", e);
+    return [];
+  }
 }
 
 export async function readLogs(): Promise<LogEntry[]> {
@@ -202,11 +208,15 @@ export async function readLogs(): Promise<LogEntry[]> {
 export async function appendLog(nid: number, ntype: string) {
   const entry: LogEntry = { nid, ntype, t: Date.now() };
 
-  ensureDir();
-  fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + "\n", "utf-8");
+  try {
+    ensureDir();
+    fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + "\n", "utf-8");
+    console.log("[VisitorLog] Logged visit:", nid, ntype);
+  } catch (e) {
+    console.warn("[VisitorLog] Failed to write local log:", e);
+  }
   cachedLogs = null;
 
-  console.log("[VisitorLog] Logged visit:", nid, ntype);
   await appendToGitHub(nid, ntype);
 }
 
@@ -214,7 +224,12 @@ export function restoreFromSnapshot(snapshot: SnapshotData) {
   if (!snapshot?.articles?.length) {
     return;
   }
-  ensureDir();
+  try {
+    ensureDir();
+  } catch {
+    console.warn("[VisitorLog] Failed to create dir for restore");
+    return;
+  }
   const now = snapshot.generatedAt;
   const totalVisits = snapshot.articles.reduce((s, a) => s + a.visitors, 0);
   const spreadMs = Math.min(totalVisits * 60 * 1000, 30 * 24 * 60 * 60 * 1000);
