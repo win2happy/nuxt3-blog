@@ -82,6 +82,12 @@ export default {
     maxFileSize: 10 * 1024 // 每个文件最大大小（字节）
   },
 
+  visitorLogRepo: {
+    owner: "tech4evo", // 私有仓库所有者（GitHub 用户名）
+    repo: "nuxt3-blog-data", // 访问日志存储仓库名称
+    branch: "main" // 分支名称
+  },
+
   /** -------------------------------------------------注意----------------------------------------------------- */
 
   githubRepo: "nuxt3-blog" // 需要与仓库名一致，如果fork时更改了仓库名，则这里也要改

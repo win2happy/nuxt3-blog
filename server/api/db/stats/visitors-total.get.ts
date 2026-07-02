@@ -4,5 +4,5 @@ import { getVisitorsByArticle, tryRestoreFromPublic } from "../../../utils/visit
 export default defineEventHandler(async (event) => {
   tryRestoreFromPublic();
   const query = getQuery(event);
-  return getVisitorsByArticle(query.type as string || undefined);
+  return await getVisitorsByArticle(query.type as string || undefined);
 });

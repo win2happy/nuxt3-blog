@@ -10,5 +10,5 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, data: "Missing or invalid nid or ntype" });
   }
 
-  return getArticleVisitors(nid, ntype);
+  return await getArticleVisitors(nid, ntype);
 });
