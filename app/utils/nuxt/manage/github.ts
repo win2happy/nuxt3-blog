@@ -66,6 +66,18 @@ export async function isAuthor(token: string): Promise<boolean> {
   }
 }
 
+async function fetchVisitorSnapshot(): Promise<CommitParamsAddition | null> {
+  try {
+    const snapshot = await $fetch<{ articles: { nid: number; ntype: string; visitors: number }[]; total: number; generatedAt: number }>("/api/db/stats/snapshot");
+    return {
+      path: "public/rebuild/json/visitor-snapshot.json",
+      content: JSON.stringify(snapshot)
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  *
  * @param commit commit信息
@@ -89,11 +101,14 @@ export async function createCommit(
   if (!(await createDiffModal({ additions, deletions }))) {
     return false;
   }
+  // 在用户确认后，自动附带 visitor 快照（不展示在 diff 中）
+  const snapshotAddition = await fetchVisitorSnapshot();
+  const allAdditions = snapshotAddition ? [...(additions || []), snapshotAddition] : additions;
   let add = "";
   let del = "";
-  if (additions?.length) {
+  if (allAdditions?.length) {
     add = "additions: [";
-    additions.forEach((item) => {
+    allAdditions.forEach((item) => {
       add += `{path: "${item.path}",contents: "${encodeB64(item.content)}"},`;
     });
     add += "],";

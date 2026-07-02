@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { BookOpen, CheckCheck, FileEdit, Image, ImagePlus, Key, Menu, MoonStar, Rocket, Settings, Sun, Upload, X } from "lucide-vue-next";
+import { BookOpen, CheckCheck, FileEdit, Image, ImagePlus, Key, Menu, MoonStar, Rocket, Settings, Sun, TrendingUp, Upload, X } from "lucide-vue-next";
 import type { FunctionalComponent } from "vue";
 import { isAuthor as checkIsAuthor } from "ls:~/utils/nuxt/manage/github";
 import Stage from "~/pages/manage/comps/stage.vue";
@@ -172,6 +172,17 @@ onMounted(() => {
           >
             <component :is="IconMap[item]" />
             {{ $t(item) }}
+          </NuxtLink>
+          <NuxtLink
+            :to="isAuthor === true ? '/manage/dashboard' : '#'"
+            :class="twMerge(
+              $style.menuItem,
+              activeRoute.startsWith('/dashboard') && $style.menuItemActive,
+              isAuthor !== true && 'opacity-50 cursor-not-allowed pointer-events-none'
+            )"
+          >
+            <TrendingUp />
+            {{ $t('dashboard') }}
           </NuxtLink>
           <NuxtLink
             :to="isAuthor === true ? '/manage/config' : '#'"
