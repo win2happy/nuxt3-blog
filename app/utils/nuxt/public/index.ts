@@ -15,3 +15,9 @@ export function DBOperate<T = any> (
     axios.post(`/api${apiPath}`, query).then(res => cb(res.data));
   }
 }
+
+export function logVisit(nid: number, ntype: string) {
+  if (import.meta.client && !isPrerender) {
+    axios.post("/api/db/log-visit", { nid, ntype }).catch(() => {});
+  }
+}

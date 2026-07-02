@@ -2,7 +2,7 @@ import config from "~~/config";
 import { useBlogItem } from "~/utils/hooks/useBlogItem";
 import { useMarkdownParser } from "~/utils/hooks/useMarkdownParser";
 import type { CommonItem } from "~/utils/common/types";
-import { DBOperate } from ".";
+import { DBOperate, logVisit } from ".";
 import { getCurrentTab, watchUntil } from "../utils";
 import { useUnmount } from "~/utils/hooks/useUnmount";
 
@@ -24,6 +24,7 @@ export async function useContentPage<T extends CommonItem> (onAfterInsertHtml?: 
 
   if (decryptedItem.value) {
     watchUntil(isAuthor, () => {
+      logVisit(decryptedItem.value!.id, targetTab);
       DBOperate({
         apiPath: "/db/inc-visitors",
         query: {

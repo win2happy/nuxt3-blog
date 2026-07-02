@@ -16,7 +16,15 @@ const magicFetch = async<T = any>(_path: string, transform: (_: string) => T): P
       return res;
     }
   } else if (isDev || isPrerender) {
-    return transform((await import("fs")).readFileSync("public/" + path, { encoding: "utf-8" }).toString());
+    const publicPath = isDev ? "public/" : process.cwd() + "/public/";
+    return transform((await import("fs")).readFileSync(publicPath + path, { encoding: "utf-8" }).toString());
+  } else if (import.meta.server) {
+    const publicPath = process.cwd() + "/public/";
+    try {
+      return transform((await import("fs")).readFileSync(publicPath + path, { encoding: "utf-8" }).toString());
+    } catch {
+      return transform("[]");
+    }
   }
   return transform("[]");
 };

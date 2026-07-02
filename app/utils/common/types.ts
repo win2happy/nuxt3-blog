@@ -90,3 +90,37 @@ export type AlgoliaBody = {
   cover: string;
   metaData: any;
 };
+
+export interface DashboardOverview {
+  total: number;
+  today: number;
+  thisWeek: number;
+  daily: { label: string; count: number }[];
+  monthly: { label: string; count: number }[];
+  topArticles: { ntype: string; nid: number; visitors: number }[];
+  articleCount: number;
+}
+
+export interface ContentStatsJSON {
+  totalArticles: number;
+  totalRecords: number;
+  totalKnowledges: number;
+  totalWords: number;
+  avgWordsPerArticle: number;
+  tagsCount: number;
+  tagDistribution: { tag: string; count: number; percentage: string }[];
+  publishByMonth: { label: string; count: number }[];
+  articlesWithCover: number;
+  articlesEncrypted: number;
+  articlesPinned: number;
+  commentsEnabled: number;
+  lenDistribution: { range: string; count: number }[];
+  topWords: { id: number; title: string; len: number }[];
+  contentBreakdown: { type: string; count: number; percentage: string }[];
+}
+
+export interface SnapshotData {
+  articles: { nid: number; ntype: string; visitors: number }[];
+  total: number;
+  generatedAt: number;
+}
