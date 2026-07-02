@@ -10,9 +10,15 @@ export default defineEventHandler(async (event) => {
     if (typeof nid !== "number" || typeof ntype !== "string") {
       throw createError({ statusCode: 400, data: "Invalid body" });
     }
-    appendLog(nid, ntype);
+
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("GitHub sync timeout")), 5000);
+    });
+
+    await Promise.race([appendLog(nid, ntype), timeoutPromise]);
     return { success: true };
   } catch (e: any) {
-    return createError({ statusCode: 500, data: e.toString() });
+    console.error("[VisitorLog] log-visit API error:", e);
+    return { success: true };
   }
 });
