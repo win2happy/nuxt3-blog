@@ -18,7 +18,7 @@ export async function isAuthor(token: string): Promise<boolean> {
           login
         }
         repository(name: "${__NB_GITHUB_REPO__}", owner: "${config.githubName}") {
-          ref(qualifiedName: "${useRuntimeConfig().app.githubBranch}") {
+          ref(qualifiedName: "${useRuntimeConfig().public.githubBranch}") {
             target {
               ... on Commit {
                 history(first: 1) {
