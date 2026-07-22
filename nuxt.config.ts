@@ -144,9 +144,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      stickers
-    },
-    app: {
+      stickers,
       githubBranch
     }
   },
@@ -226,13 +224,6 @@ export default defineNuxtConfig({
   telemetry: false,
 
   hooks: {
-    "vite:extendConfig"(config, { isClient }) {
-      if (isClient) {
-        (config.build?.rollupOptions?.output as any).manualChunks = {
-          // markdown: ["highlight.js", "katex", "marked"]
-        };
-      }
-    },
     "nitro:build:public-assets"(nitro) {
       generateSiteMap(nitro.options.output.publicDir);
       generateStatsJSON(nitro.options.output.publicDir);
